@@ -26,7 +26,7 @@ hold_mode_first_time_cancel_task = False
 last_time_pressed = 0
 last_time_released = 0
 key_pressed = False
-
+ignore_capslock_order = False
 
 def shortcut_correct(e: keyboard.KeyboardEvent):
     # 在我的 Windows 电脑上，left ctrl 和 right ctrl 的 keycode 都是一样的，
@@ -258,21 +258,28 @@ def click_mode(e: keyboard.KeyboardEvent):
 
     # 4. 为了解决在 Windows 下按键会自动重复的问题 : key_pressed 变量用于追踪按键是否已经被按下并记录时间。当按键第一次被按下时，记录时间并将 key_pressed 设为 True，防止重复记录时间。当按键释放时，将 key_pressed 重新设为 False，允许下一次按键记录新的时间。
 
+    # 5. click_mode单击模式:
+    # 5.1. 为了适配单击模式和AutoHotKey的显示功能, 必须强制 suppress=False
+    # 5.2. 恢复 CapsLock之前状态的功能: 必须配合AutoHotKey 的使用
+    # 5.3. 在config.py中增加`restore_key_click_mode`配置项, 用于控制是否恢复 CapsLock 之前的状态
+    # 5.4. 相应的, 在hint_while_recording.ini中增加`restoreKeyClickMode`配置项, 用于控制是否恢复 CapsLock 之前的状态
+
     global \
         last_time_pressed, \
         last_time_released, \
         key_pressed, \
         double_clicked, \
-        is_short_duration
+        is_short_duration, \
+        ignore_capslock_order
 
     if e.event_type == keyboard.KEY_DOWN and not key_pressed:
         # 計算是否屬於短時間內雙击`錄音鍵`
+        key_pressed = True
         is_short_duration = (
             True if time.time() - last_time_released < Config.threshold else False
         )
 
         last_time_pressed = time.time()
-        key_pressed = True
 
     elif e.event_type == keyboard.KEY_UP:
         last_time_released = time.time()
@@ -291,17 +298,30 @@ def click_mode(e: keyboard.KeyboardEvent):
             # cancel_task()
 
             # 判定为`長按`，发送原來的按键功能
-            keyboard.send(Config.speech_recognition_shortcut)
+            # keyboard.send(Config.speech_recognition_shortcut)
             key_pressed = False
             return
 
+        elif ignore_capslock_order:
+            key_pressed = False
+
+            if Config.restore_key_click_mode:
+                ignore_capslock_order = False
+                # print("忽略AutoHotKey发起的命令")
+                return
+
         # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀态
         elif not double_clicked and not is_short_duration:
+            if Config.restore_key_click_mode:
+                # 忽略 AutoHotKey 发起的命令
+                ignore_capslock_order = True
+
             launch_task()
             # `double_clicked`变量 在此处函数中 改为常駐 因此不需要以下的config判断
             # if Config.enable_double_click_opposite_state:
             double_clicked = True
             key_pressed = False
+
 
         # 任务在进行中, 且不判定为`短击`, 就结束和完成任务
         elif double_clicked and not is_short_duration:
@@ -310,6 +330,10 @@ def click_mode(e: keyboard.KeyboardEvent):
             # if Config.enable_double_click_opposite_state:
             double_clicked = False
             key_pressed = False
+
+            if Config.restore_key_click_mode:
+                # 忽略 AutoHotKey 发起的命令
+                ignore_capslock_order = True
             return
 
         # 任务在进行中, 且为`短击`, 判定爲需要輸出 `簡/繁`, 并且结束函数
@@ -319,6 +343,10 @@ def click_mode(e: keyboard.KeyboardEvent):
         ):
             Cosmic.opposite_state = not Cosmic.opposite_state
             key_pressed = False
+
+            if Config.restore_key_click_mode:
+                # 忽略 AutoHotKey 发起的命令
+                ignore_capslock_order = True
             # return
 
         # print(f'世界的尽头!')
@@ -399,5 +427,5 @@ def bond_shortcut():
         # 单击模式，必须得阻塞快捷键
         # 收到长按时，再模拟发送按键
         keyboard.hook_key(
-            Config.speech_recognition_shortcut, click_handler, suppress=True
+            Config.speech_recognition_shortcut, click_handler, suppress=False
         )

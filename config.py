@@ -47,9 +47,10 @@ class ClientConfig:
                                 # 改为 False，则关闭长按模式，也就是单击模式
                                 #       即：单击录音，再次单击停止
                                 #       且：长按会执行原本的单击功能
+                                # !!!注意!!! 此处应当和 hint_while_recording.ini 保持一致，否则提示会不准确
     suppress     = False        # 是否阻塞按键事件（让其它程序收不到这个按键消息）
     restore_key  = True         # 录音完成，松开按键后，是否自动再按一遍，以恢复 CapsLock 或 Shift 等按键之前的状态
-    restore_key_click_mode  = True # 只适用于click mode单击模式, 是否恢复 CapsLock 按键之前的状态
+    restore_key_click_mode  = True # 只适用于click mode单击模式, 是否恢复 CapsLock 按键之前的状态 !!!注意!!! 此功能必须和 hint_while_recording 一起使用.
     threshold    = 0.3          # 按下快捷键后，触发语音识别的(秒为单位)时间阈值 !!!注意!!! 此处的数字应当和 hint_while_recording.ini(毫秒为单位) 中的相同，否则提示会不准确
     paste        = True         # 是否以写入剪切板然后模拟 Ctrl-V 粘贴的方式输出结果
     restore_clipboard_after_paste = True         # 模拟粘贴后是否恢复剪贴板
