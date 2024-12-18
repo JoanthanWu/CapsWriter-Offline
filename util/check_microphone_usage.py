@@ -3,6 +3,8 @@ import time
 import winreg
 from pathlib import Path
 
+from config import ClientConfig as Config
+
 
 def read_qword_value(root_key, sub_path, value_name):
     try:
@@ -22,6 +24,19 @@ def read_qword_value(root_key, sub_path, value_name):
 
 
 def is_microphone_in_use():
+    if not Config.only_enable_microphones_when_pressed_record_shortcut:
+        return assume_by_keypress()
+    else:
+        match Config.check_microphone_usage_by:
+            case "注册表":
+                return check_by_registry()
+            case "按键":
+                return assume_by_keypress()
+            case _:
+                return check_by_registry()
+
+
+def check_by_registry():
     # Static variables
     if not hasattr(is_microphone_in_use, "last_check_time"):
         is_microphone_in_use.last_check_time = 0
@@ -59,6 +74,15 @@ def is_microphone_in_use():
             # print(send_signal_result)
             is_microphone_in_use.last_check_time = now
         return is_microphone_in_use.cached_result
+
+
+def assume_by_keypress():
+    import keyboard
+
+    if keyboard.is_pressed(Config.speech_recognition_shortcut):
+        return True
+    else:
+        return False
 
 
 def test():

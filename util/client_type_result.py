@@ -6,10 +6,8 @@ import asyncio
 
 
 async def type_result(text):
-
     # 模拟粘贴
     if Config.paste:
-
         # 保存剪切板
         try:
             # 初始化剪贴板模块
@@ -23,7 +21,7 @@ async def type_result(text):
         clipman.set(text)
 
         # 粘贴结果
-        if platform.system() == 'Darwin': # Mac
+        if platform.system() == "Darwin":  # Mac
             keyboard.press(55)
             keyboard.press(9)
             keyboard.release(55)
@@ -33,7 +31,7 @@ async def type_result(text):
                 keyboard.release(Config.offline_translate_shortcut)
             if keyboard.is_pressed(Config.online_translate_shortcut):
                 keyboard.release(Config.online_translate_shortcut)
-            keyboard.send('ctrl + v')
+            keyboard.send("ctrl + v")
 
         # 还原剪贴板
         if Config.restore_clipboard_after_paste:

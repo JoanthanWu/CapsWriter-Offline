@@ -62,11 +62,17 @@ def unmute_all_sessions():
 
 def translate_needed():
     # 确认是否需要翻译
-    if keyboard.is_pressed(Config.offline_translate_shortcut):
+    if (
+        keyboard.is_pressed(Config.offline_translate_shortcut)
+        and Config.use_offline_translate_function
+    ):
         Cosmic.offline_translate_needed = True
     else:
         Cosmic.offline_translate_needed = False
-    if keyboard.is_pressed(Config.online_translate_shortcut):
+    if (
+        keyboard.is_pressed(Config.online_translate_shortcut)
+        and Config.use_online_translate_function
+    ):
         Cosmic.online_translate_needed = True
     else:
         Cosmic.online_translate_needed = False

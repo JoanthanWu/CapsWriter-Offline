@@ -392,53 +392,46 @@ class GUI(QMainWindow):
 
     def start_script(self):
         # Start core_client.py and redirect output to the client queue
+        if Config.use_offline_translate_function:
+            self.translate_and_replace_selected_text_offline_process = subprocess.Popen(
+                [
+                    ".\\runtime\\pythonw_CapsWriter_Client.exe",
+                    ".\\util\\client_translate_and_replace_selected_text_offline.py",
+                ],
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            threading.Thread(
+                target=self.enqueue_output,
+                args=(
+                    self.translate_and_replace_selected_text_offline_process.stdout,
+                    self.output_queue_client,
+                ),
+                daemon=True,
+            ).start()
 
-        # While Debug error    for line in iter(out.readline, ''):
-        # Use this line to replace the original code
-        # self.core_client_process = subprocess.Popen(
-        #     [".\\runtime\\pythonw_CapsWriter_Client.exe", "core_client.py"],
-        #     creationflags=subprocess.CREATE_NO_WINDOW,
-        #     stdout=subprocess.PIPE,
-        #     stderr=subprocess.STDOUT,
-        #     text=True,
-        #     encoding="utf-8",
-        # )
-        self.translate_and_replace_selected_text_offline_process = subprocess.Popen(
-            [
-                ".\\runtime\\pythonw_CapsWriter_Client.exe",
-                ".\\util\\client_translate_and_replace_selected_text_offline.py",
-            ],
-            creationflags=subprocess.CREATE_NO_WINDOW,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
-        threading.Thread(
-            target=self.enqueue_output,
-            args=(
-                self.translate_and_replace_selected_text_offline_process.stdout,
-                self.output_queue_client,
-            ),
-            daemon=True,
-        ).start()
-        self.translate_and_replace_selected_text_online_process = subprocess.Popen(
-            [
-                ".\\runtime\\pythonw_CapsWriter_Client.exe",
-                ".\\util\\client_translate_and_replace_selected_text_online.py",
-            ],
-            creationflags=subprocess.CREATE_NO_WINDOW,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
-        threading.Thread(
-            target=self.enqueue_output,
-            args=(
-                self.translate_and_replace_selected_text_online_process.stdout,
-                self.output_queue_client,
-            ),
-            daemon=True,
-        ).start()
+        if Config.use_online_translate_function:
+            self.translate_and_replace_selected_text_online_process = subprocess.Popen(
+                [
+                    ".\\runtime\\pythonw_CapsWriter_Client.exe",
+                    ".\\util\\client_translate_and_replace_selected_text_online.py",
+                ],
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            threading.Thread(
+                target=self.enqueue_output,
+                args=(
+                    self.translate_and_replace_selected_text_online_process.stdout,
+                    self.output_queue_client,
+                ),
+                daemon=True,
+            ).start()
+
         if Config.use_search_selected_text_with_everything_function:
             self.search_selected_text_with_everything = subprocess.Popen(
                 [
@@ -458,6 +451,17 @@ class GUI(QMainWindow):
                 ),
                 daemon=True,
             ).start()
+
+        # While Debug error    for line in iter(out.readline, ''):
+        # Use this line to replace the original code
+        # self.core_client_process = subprocess.Popen(
+        #     [".\\runtime\\pythonw_CapsWriter_Client.exe", "core_client.py"],
+        #     creationflags=subprocess.CREATE_NO_WINDOW,
+        #     stdout=subprocess.PIPE,
+        #     stderr=subprocess.STDOUT,
+        #     text=True,
+        #     encoding="utf-8",
+        # )
         self.core_client_process = subprocess.Popen(
             [".\\runtime\\pythonw_CapsWriter_Client.exe", "core_client.py"],
             creationflags=subprocess.CREATE_NO_WINDOW,
@@ -640,7 +644,8 @@ def start_client_gui():
             "已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）"
         )
     if (
-        not check_process("hint_while_recording.exe")
+        Config.hint_while_recording_at_edit_position_powered_by_ahk
+        and not check_process("hint_while_recording.exe")
         and Path("hint_while_recording.exe").exists()
         # and Config.hold_mode
     ):

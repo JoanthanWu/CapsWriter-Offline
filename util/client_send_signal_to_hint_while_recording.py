@@ -3,6 +3,8 @@ from unittest import result
 
 import win32gui
 
+from config import ClientConfig as Config
+
 
 def encode_booleans(*args: bool) -> int:
     """
@@ -44,6 +46,9 @@ def send_signal_to_hint_while_recording(
         "AutoHotkey",
         str(exe_path),
     )
+    if not Config.hint_while_recording_at_edit_position_powered_by_ahk:
+        return "Feature not enabled"
+
     if hwnd:
         # print("Found window, handle is:", hwnd)
         encoded_bools = encode_booleans(

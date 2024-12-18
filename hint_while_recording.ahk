@@ -290,7 +290,7 @@ DefaultIni() {
     IniWrite("0xFF6666FF", IniFile, "Txt", "enTxtClolorB")
     IniWrite("16", IniFile, "Txt", "enTxtFontSize")
     IniWrite("在hintAtCursorPositionList中的程序将不会把“语音输入中”的提示显示在文本光标位置，而是显示在鼠标光标的位置", IniFile, "List", "Comment1")
-    IniWrite(":StartMenuExperienceHost.exe:wetype_update.exe:AnLink.exe:wps.exe:HBuilderX.exe:ShareX.exe:clipdiary-portable.exe:", IniFile, "List", "hintAtCursorPositionList")
+    IniWrite(":StartMenuExperienceHost.exe:wetype_update.exe:AnLink.exe:wps.exe:HBuilderX.exe:ShareX.exe:clipdiary-portable.exe:explorer.exe:", IniFile, "List", "hintAtCursorPositionList")
     IniWrite("在doNotShowHintList中的程序将不会显示“语音输入中”的提示", IniFile, "List", "Comment2")
     IniWrite(":PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini64.exe:", IniFile, "List", "doNotShowHintList")
 }

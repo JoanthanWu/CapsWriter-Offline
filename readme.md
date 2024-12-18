@@ -27,6 +27,21 @@
 
 # 👀 最新更新
 
+## 新增 可选项 通过注册表/按键判断是否语音输入中
+
+## 新增 可选项 是否启用离在线翻译和状态提示
+> start_online_translate_server = True # 启用在线翻译服务
+> start_offline_translate_server = True # 启用离线翻译服务
+> 
+> use_offline_translate_function = True # 启用离线翻译相关快捷键
+> use_online_translate_function = True # 启用在线翻译相关快捷键
+> 
+> hint_while_recording_at_edit_position_powered_by_ahk = True  # 是否启用 基于AHK的 输入光标位置的输入状态提示功能
+
+
+## 重写hint_while_recording.exe，实现更加精准的输入光标位置提示
+不再是监测按键的伪状态，而是由Python(win32gui.PostMessage)将语音输入状态传递给AHK(hwnd)
+
 ## 双击`录音键`临时转换 `简/繁` 体中文输出，可在 `config.py` 设置 `简/繁` 中文作为主要输出 (@JoanthanWu)
 
 ## 更美观的“语音输入中”提示，可在 `hint_while_recording.ini` 设置文本内容、颜色、排除列表等 (@JoanthanWu)

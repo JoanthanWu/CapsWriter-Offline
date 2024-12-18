@@ -6,6 +6,8 @@ from pathlib import Path
 class ServerConfig:
     addr = '0.0.0.0'
     speech_recognition_port = '6016'
+    start_online_translate_server = True # 启用在线翻译服务
+    start_offline_translate_server = True # 启用离线翻译服务
     offline_translate_port = '6017' # 离线翻译端口
     format_num = True  # 输出时是否将中文数字转为阿拉伯数字
     format_spell = True  # 输出时是否调整中英之间的空格 
@@ -29,9 +31,13 @@ class ClientConfig:
     offline_translate_port = '6017' # 离线翻译端口
     offline_translate_port_gemma2b = '11434' # Gemma 2B 离线翻译端口
     speech_recognition_shortcut     = 'caps lock'  # 控制录音的快捷键，默认是 CapsLock
+
+    use_offline_translate_function = True # 启用离线翻译相关快捷键
     offline_translate_shortcut          = 'left shift'          # 控制离线翻译的快捷键，默认是 Left Shift，按住Left Shift再按 CapsLock进行离线翻译
     offline_translate_and_replace_the_selected_text_shortcut = 'ctrl + alt + p' # 控制离线翻译将光标选中的中文翻译并替换为英文的快捷键，光标选择中文文本，按下 ctrl + alt + p 快捷键，替换中文为英文
                                                                         # 如果未选中任何文字,会将剪贴板的文字翻译为英文，并粘贴
+
+    use_online_translate_function = True # 启用在线翻译相关快捷键
     online_translate_shortcut   = 'right shift'         # 控制在线翻译的快捷键，默认是 Right Shift，按住Right Shift再按 CapsLock进行在线翻译
                                                     # 在线翻译基于 DeepLX，过于频繁的请求可能导致 IP 被封
                                                     # 如果出现429错误，则表示你的IP被DeepL暂时屏蔽了，请不要在短时间内频繁请求。
@@ -39,10 +45,12 @@ class ClientConfig:
                                                     # 常用的 EN JA RU ，更多选择参考 https://www.deepl.com/docs-api/translate-text
     online_translate_and_replace_the_selected_text_shortcut = 'ctrl + alt + [' # 控制在线翻译将光标选中的中文翻译并替换为 在线翻译目标语言 的快捷键，光标选择中文文本，按下 ctrl + alt + [ 快捷键，替换中文为 在线翻译目标语言
                                                                                 # 如果未选中任何文字,会将剪贴板的文字翻译为英文，并粘贴
+
     use_search_selected_text_with_everything_function = True # 设置是否启用 使用 everything 搜索选中的文字
     search_selected_text_with_everything_shortcut = 'ctrl + alt + f'    # 调用 everything 搜索光标选中的字符
                                                                         # 使用前需先安装 everything，https://www.voidtools.com/zh-cn/downloads/
     everything_exe_path = 'C:\Program Files\Everything\Everything.exe'  # 设置 everything 可执行文件位置
+
     hold_mode    = True         # 长按模式，按下录音，松开停止，像对讲机一样用。
                                 # 改为 False，则关闭长按模式，也就是单击模式
                                 #       即：单击录音，再次单击停止
@@ -89,8 +97,16 @@ class ClientConfig:
                                                             # 🤓 Open Home Folder With VSCode 
                                                             # 使用 VSCode 快速打开 CapsWriter 主目录
                                                             # 方便调试
+    hint_while_recording_at_edit_position_powered_by_ahk = True  # 是否启用 基于AHK的 输入光标位置的输入状态提示功能
     hint_while_recording_at_cursor_position = True  # 是否启用 跟随鼠标光标位置的新版输入状态提示功能
+    check_microphone_usage_by = "注册表"               # "按键" 或 ”注册表“
+                                                    # 默认通过监测注册表判断麦克风是否在被客户端使用进而确定是否在录音
+                                                    # 如果设置了 `only_enable_microphones_when_pressed_record_shortcut = False`
+                                                    # 会造成的鼠标光标旁边永远显示麦克风标志
+                                                    # 将强制忽略此项设置使用 "按键"
+                                                    # "按键" 是通过监测 `speech_recognition_shortcut` 状态是否按下进而推测是否在录音
     
+
     enable_double_click_opposite_state = True       # 是否启用,双击`录音键`临时转换 `简/繁` 体中文输出的功能
     convert_to_traditional_chinese_main = '简'      # `简/繁` 中文作为主要输出
     opencc_converter = "s2t.json"                   # OpenCC转换器
