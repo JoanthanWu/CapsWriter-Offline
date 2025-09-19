@@ -277,9 +277,11 @@ def click_mode(e: keyboard.KeyboardEvent):
 
     # 4. 为了解决在 Windows 下按键会自动重复的问题 : key_pressed 变量用于追踪按键是否已经被按下并记录时间。当按键第一次被按下时，记录时间并将 key_pressed 设为 True，防止重复记录时间。当按键释放时，将 key_pressed 重新设为 False，允许下一次按键记录新的时间。
     
-    # 20250918: click_mode : "double_clicked" 变量 在此处函数中 改为常駐, 他会导致 Config.enable_double_click_opposite_state 这个配置项失效， 需要修正
-    # Bug4: 20250919: click_mode : "Shift + double_clicked or double_clicked" 有機會導致恢復音頻播放失敗.. 原因不明，需要再跟进。 觀察: 先是停下播放之後，然後輸出文字後聽到一些聲音，但是很快就又停止了。 
-    # 解决方法-Bug4: 函数: "elif (double_clicked and is_short_duration)" : 這裏的函數 "restore_audio_playing()" 不應該加進來，不需要。 
+    # -[x] 20250918: click_mode : "double_clicked" 变量 在此处函数中 改为常駐, 他会导致 Config.enable_double_click_opposite_state 这个配置项失效， 需要修正
+            # 解决方法: client_recv_result.py : 把判断变量的位置改放在 async def recv_result() 后面。 同时把 client_shortcut_handler.py 里面的所有Config.enable_double_click_opposite_state 取消掉 。 
+
+    # -[x] Bug4: 20250919: click_mode : "Shift + double_clicked or double_clicked" 有機會導致恢復音頻播放失敗.. 原因不明，需要再跟进。 觀察: 先是停下播放之後，然後輸出文字後聽到一些聲音，但是很快就又停止了。 
+            # 解决方法-Bug4: 函数: "elif (double_clicked and is_short_duration)" : 這裏的函數 "restore_audio_playing()" 不應該加進來，不需要。 
     global \
         last_time_pressed, \
         last_time_released, \
@@ -547,19 +549,22 @@ def _handle_key_up(last_time_pressed, is_short_duration):
 
 def hold_mode(e: keyboard.KeyboardEvent):
     """像对讲机一样，按下录音，松开停止"""
-    # 改進: 20250918: 增加了 key_pressed 变量用于追踪按键是否已经被按下， 以免某些函数会被重复触发。
-    # 改進: 20250918: 在此函数中, 取消了 Cosmic.on 的运用, 改为了 last_time_released & last_time_pressed 变量来进行时间的记录和计算.
+    # -[x] 改進: 20250918: 增加了 key_pressed 变量用于追踪按键是否已经被按下， 以免某些函数会被重复触发。
+    # -[x] 改進: 20250918: 在此函数中, 取消了 Cosmic.on 的运用, 改为了 last_time_released & last_time_pressed 变量来进行时间的记录和计算.
 
-    # Bug1: 20250918: 在Hold Mode下, 1. 如果按下和弹起`錄音鍵` 单次的時間小于< Config.threshold 以及 2.双击的功能, 会导致播放中的浏览器或者音乐播放器 *不会恢复播放* 的状态。
-    #   解決方法-Bug1 20250919: 2.双击的功能: 不会回复播放的原因是因为第一次弹起來的時候, 恢復播放的时候会有一段空档期, 这段期间使用电平侦测-是否有应用在播放的方法就会失效。 解決方法是增加了 saved_result_for_restore_audio_playing_needed 变量来保存第一次的状态。 
-    #   解決方法-Bug1 20250919: 1.小于< Config.threshold: 单次按下和弹起录音键 ， 就会快速的停止和恢复播放。但是这两个指令间隔的时间太短，导致恢复的命令被吞掉了，所以把恢复的命令放到最后，让他有更多的时间执行。 同时`def cancel_task()` 和 `def finish_task()` 里面的恢复播放命令被取消了，放到独立的函數里执行。 
+    # -[x] Bug1: 20250918: 在Hold Mode下, 1. 如果按下和弹起`錄音鍵` 单次的時間小于< Config.threshold 以及 2.双击的功能, 会导致播放中的浏览器或者音乐播放器 *不会恢复播放* 的状态。
+        # -[x]  解決方法-Bug1 20250919: 2.双击的功能: 不会回复播放的原因是因为第一次弹起來的時候, 恢復播放的时候会有一段空档期, 这段期间使用电平侦测-是否有应用在播放的方法就会失效。 解決方法是增加了 saved_result_for_restore_audio_playing_needed 变量来保存第一次的状态。 
+        # -[x]  解決方法-Bug1 20250919: 1.小于< Config.threshold: 单次按下和弹起录音键 ， 就会快速的停止和恢复播放。但是这两个指令间隔的时间太短，导致恢复的命令被吞掉了，所以把恢复的命令放到最后，让他有更多的时间执行。 同时`def cancel_task()` 和 `def finish_task()` 里面的恢复播放命令被取消了，放到独立的函數里执行。 
 
-    # Bug2: 20250918: 在上述的改动后 ，需要继续观察是否还会存在"任务顺序错乱"的情况。
-    # Bug3: 20250918: holdmode = true: shift + 录音键(双击) 失效了, 变成了输出简体中文 。 holdmode = false: 正常。
-    # 更新 20250919: 需要更新最新版本的 "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09"
+    # -[!] Bug2: 20250918: 在上述的改动后 ，需要继续观察是否还会存在"任务顺序错乱"的情况。
+    # -[ ] Bug3: 20250918: holdmode = true: shift + 录音键(双击) 失效了, 变成了输出简体中文 。 holdmode = false: 正常。
+        # 解決方法-Bug3: 20250919: Config.enable_double_click_opposite_state= false: 修改成这个之后，他居然可以使用 "shift +双击" = 英文输出了
+        # 解決方法-Bug3: 20250919: 把 hold_mode() 里面的 Config.enable_double_click_opposite_state 删除掉, "shift +双击" = 中文输出， 看来BUG和这个 enable_double_click_opposite_state 有关， 需要继续解决。 (click_mode 没有这个问题)
 
-    # Bug5: 20250919: hold_mode: 录音键(双击) 有機會導致不會恢復播放(原本已在播放)
-    #    解決方法-Bug5: def launch_task(): "# 录音时暂停其他音频播放 且 有音频正在播放" 放回到中間之後, 只測試出一次沒有恢復播放的情況。 需要繼續觀察.. 
+    # -[ ] 更新 20250919: 需要更新最新版本的 "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09"
+
+    # -[!] Bug5: 20250919: hold_mode: 录音键(双击) 有機會導致不會恢復播放(原本已在播放)
+        # 解決方法-Bug5: def launch_task(): "# 录音时暂停其他音频播放 且 有音频正在播放" 放回到中間之後, 只測試出一次沒有恢復播放的情況。 需要繼續觀察.. 
     global \
         task, \
         key_pressed, \
@@ -582,11 +587,13 @@ def hold_mode(e: keyboard.KeyboardEvent):
 
 
             # 短時間內,按下第二次錄音鍵判定爲需要輸出 `簡/繁`
-            if is_short_duration and Config.enable_double_click_opposite_state:
+            if is_short_duration:
+            # and Config.enable_double_click_opposite_state:
                 double_clicked = True
 
             # 处理双击切换简/繁状态
-            if double_clicked and Config.enable_double_click_opposite_state:
+            if double_clicked:
+            # and Config.enable_double_click_opposite_state:
                 Cosmic.opposite_state = not Cosmic.opposite_state
 
             translate_needed()
@@ -621,8 +628,8 @@ def hold_mode(e: keyboard.KeyboardEvent):
                     # time.sleep(0.01)
                     keyboard.send(Config.speech_recognition_shortcut)
                 # 恢复輸出 `簡/繁` 原来的狀態
-                if Config.enable_double_click_opposite_state:
-                    double_clicked = False
+                #if Config.enable_double_click_opposite_state:
+                double_clicked = False
 
             # 20250918: 这里不应该向 AHK 发送 is_short_duration=True 的信号, 否则会导致"语音输入中"的提示不会进行取消 (跟AHK代码逻辑有关)， 最后，不影响AHK的提示。 
             send_signal_to_hint_while_recording(

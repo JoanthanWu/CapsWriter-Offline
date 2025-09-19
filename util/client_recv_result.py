@@ -98,17 +98,20 @@ async def recv_result():
                 online_translate_done = False
             elif convert_to_traditional_chinese_done:
                 # 根据'简/繁'转换设定,来选择输出内容的逻辑
-                match Config.convert_to_traditional_chinese_main:
-                    case "繁":
-                        if Cosmic.opposite_state:
-                            await type_result(text)
-                        else:
-                            await type_result(traditional_text)
-                    case _:
-                        if Cosmic.opposite_state:
-                            await type_result(traditional_text)
-                        else:
-                            await type_result(text)
+                if Config.enable_double_click_opposite_state:
+                    match Config.convert_to_traditional_chinese_main:
+                        case "繁":
+                            if Cosmic.opposite_state:
+                                await type_result(text)
+                            else:
+                                await type_result(traditional_text)
+                        case _:
+                            if Cosmic.opposite_state:
+                                await type_result(traditional_text)
+                            else:
+                                await type_result(text)
+                else:
+                    await type_result(text)
                 convert_to_traditional_chinese_done = False
             Cosmic.opposite_state = False
     except websockets.ConnectionClosedError:
