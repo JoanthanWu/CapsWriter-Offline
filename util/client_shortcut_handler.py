@@ -23,7 +23,8 @@ pool = ThreadPoolExecutor()
 pressed = False
 released = True
 event = Event()
-unpause_needed = False
+restore_audio_playing_needed  = False
+saved_result_for_restore_audio_playing_needed = False
 double_clicked = False
 is_short_duration = False
 hold_mode_first_time_cancel_task = False
@@ -68,6 +69,17 @@ def unmute_all_sessions():
             volume = session.SimpleAudioVolume
             volume.SetMute(0, None)
 
+def restore_audio_playing():
+    # 恢復音频的播放
+    global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed
+    # 处理音频暂停相关逻辑
+    print(f"restore_audio_playing  1. restore_audio_playing_needed:{restore_audio_playing_needed}")
+    restore_audio_playing_needed = saved_result_for_restore_audio_playing_needed
+    print(f"restore_audio_playing  2. restore_audio_playing_needed:{restore_audio_playing_needed}")
+    if Config.pause_other_audio and restore_audio_playing_needed:
+        keyboard.send("play/pause")
+        print(f"restore_audio_playing  3. restore_audio_playing_needed:{restore_audio_playing_needed}")
+        restore_audio_playing_needed  = False
 
 def translate_needed():
     # 确认是否需要翻译
@@ -132,14 +144,34 @@ def launch_task():
         mute_all_sessions()
 
     # 录音时暂停其他音频播放 且 有音频正在播放
-    global unpause_needed
-    if Config.pause_other_audio and not unpause_needed:
+    global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed
+    if Config.pause_other_audio and not restore_audio_playing_needed :
         if process_name := audio_playering_app_name():
-            if process_name != "ffplay.exe":
+            print(f"launch  1. Audio is currently playering by {process_name} .")
+            print(f"launch  1. restore_audio_playing_needed:{restore_audio_playing_needed}")
+            if process_name != "ffplay.exe" :
                 keyboard.send("play/pause")
-                unpause_needed = True
+                # if process_name != None:
+                restore_audio_playing_needed  = True
+                print(f"launch  A. process_name: {process_name} .")
+            # # 恢復原狀：修復因 "saved_result_for_restore_audio_playing_needed" 變量導致播放器誤播的狀況(在已經本身停播的情況下)。
+            # if process_name is None:
+            #     print(f"launch  B. process_name: {process_name} .")
+            #     saved_result_for_restore_audio_playing_needed = False
 
+            if not is_short_duration:
+                saved_result_for_restore_audio_playing_needed = restore_audio_playing_needed
+    print(f"launch  2. Audio is currently playering by {process_name} .")
+    print(f"launch  2. restore_audio_playing_needed:{restore_audio_playing_needed}")
+
+    # 恢復原狀：修復因 "saved_result_for_restore_audio_playing_needed" 變量導致播放器誤播的狀況(在已經本身停播的情況下)。
+    if process_name is None:
+        print(f"launch  B. process_name: {process_name} .")
+        saved_result_for_restore_audio_playing_needed = False
+        restore_audio_playing_needed = False
+        print(f"launch  3. restore_audio_playing_needed:{restore_audio_playing_needed}")
     # 通知录音线程可以向队列放数据了
+
     Cosmic.on = t1
 
     # 打印动画：正在录音
@@ -154,19 +186,25 @@ def launch_task():
 
 
 def cancel_task():
+    # # 恢復音频的播放
+    # global restore_audio_playing_needed 
+    # # 处理音频暂停相关逻辑
+    # print(f"cancel  1. restore_audio_playing_needed:{restore_audio_playing_needed}")
+    # restore_audio_playing_needed = saved_result_for_restore_audio_playing_needed
+    # print(f"cancel  2. restore_audio_playing_needed:{restore_audio_playing_needed}")
+    # if Config.pause_other_audio and restore_audio_playing_needed:
+    #     keyboard.send("play/pause")
+    #     restore_audio_playing_needed  = False
+
+
+
     # 通知停止录音，关掉滚动条
     Cosmic.on = False
     status.stop()
 
-    # 取消音频静音
+   # 取消音频静音
     if Config.mute_other_audio:
         unmute_all_sessions()
-
-    # 取消音频暂停
-    global unpause_needed
-    if Config.pause_other_audio and unpause_needed:
-        keyboard.send("play/pause")
-        unpause_needed = False
 
     # 发送取消任务的消息到队列
     asyncio.run_coroutine_threadsafe(
@@ -207,11 +245,16 @@ def finish_task():
 
         play_music(Config.stop_music_path, Config.stop_music_volume)
 
-    # 取消音频暂停
-    global unpause_needed
-    if Config.pause_other_audio and unpause_needed:
-        keyboard.send("play/pause")
-        unpause_needed = False
+    # # 恢復音频的播放
+    # global restore_audio_playing_needed 
+    # # 处理音频暂停相关逻辑
+    # restore_audio_playing_needed = saved_result_for_restore_audio_playing_needed
+    # print(f"Finish.1 restore_audio_playing_needed:{restore_audio_playing_needed}")
+    # if Config.pause_other_audio and restore_audio_playing_needed :
+    #     keyboard.send("play/pause")
+    #     restore_audio_playing_needed  = False
+    # print(f"Finish.2 restore_audio_playing_needed:{restore_audio_playing_needed}")
+
     if Config.only_enable_microphones_when_pressed_record_shortcut:
         # 结束音频流
         Cosmic.stream.stop()
@@ -233,14 +276,17 @@ def click_mode(e: keyboard.KeyboardEvent):
     # 3.1. 如果需要按下之后是根据按下(不需要抬起)的时间自动进行大小写切换的功能, 可以参考原来作者的代码`def count_down(e: Event):`
 
     # 4. 为了解决在 Windows 下按键会自动重复的问题 : key_pressed 变量用于追踪按键是否已经被按下并记录时间。当按键第一次被按下时，记录时间并将 key_pressed 设为 True，防止重复记录时间。当按键释放时，将 key_pressed 重新设为 False，允许下一次按键记录新的时间。
-
+    
+    # 20250918: click_mode : "double_clicked" 变量 在此处函数中 改为常駐, 他会导致 Config.enable_double_click_opposite_state 这个配置项失效， 需要修正
+    # Bug4: 20250919: click_mode : "Shift + double_clicked or double_clicked" 有機會導致恢復音頻播放失敗.. 原因不明，需要再跟进。 觀察: 先是停下播放之後，然後輸出文字後聽到一些聲音，但是很快就又停止了。 
+    # 解决方法-Bug4: 函数: "elif (double_clicked and is_short_duration)" : 這裏的函數 "restore_audio_playing()" 不應該加進來，不需要。 
     global \
         last_time_pressed, \
         last_time_released, \
         key_pressed, \
         double_clicked, \
         is_short_duration, \
-        unpause_needed
+        restore_audio_playing_needed 
 
     if e.event_type == keyboard.KEY_DOWN and not key_pressed:
         # 計算是否屬於短時間內雙击`錄音鍵`
@@ -270,6 +316,7 @@ def click_mode(e: keyboard.KeyboardEvent):
             # 判定为`長按`，发送原來的按键功能
             keyboard.send(Config.speech_recognition_shortcut)
             key_pressed = False
+            print(f"A")
             return
 
         # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀态
@@ -287,6 +334,8 @@ def click_mode(e: keyboard.KeyboardEvent):
             # if Config.enable_double_click_opposite_state:
             double_clicked = True
             key_pressed = False
+            print(f"B")
+            return
 
         # 任务在进行中, 且不判定为`短击`, 就结束和完成任务
         elif double_clicked and not is_short_duration:
@@ -298,9 +347,15 @@ def click_mode(e: keyboard.KeyboardEvent):
                 Cosmic.online_translate_needed,
                 Config.hold_mode,
             )
+
             # if Config.enable_double_click_opposite_state:
             double_clicked = False
             key_pressed = False
+
+            # 恢復音频的播放
+            print(f"C1")
+            restore_audio_playing()
+            print(f"C2")
             return
 
         # 任务在进行中, 且为`短击`, 判定爲需要輸出 `簡/繁`, 并且结束函数
@@ -316,8 +371,15 @@ def click_mode(e: keyboard.KeyboardEvent):
                 Cosmic.online_translate_needed,
                 Config.hold_mode,
             )
+
             Cosmic.opposite_state = not Cosmic.opposite_state
             key_pressed = False
+
+            # 恢復音频的播放
+            print(f"D1")
+            # 這裏的函數 "restore_audio_playing()" 不應該加進來，不需要。 
+            # restore_audio_playing()
+            print(f"D2")
             # return
 
         # print(f'世界的尽头!')
@@ -325,7 +387,7 @@ def click_mode(e: keyboard.KeyboardEvent):
 
 # ======================长按模式==================================
 
-
+'''
 def hold_mode(e: keyboard.KeyboardEvent):
     """像对讲机一样，按下录音，松开停止"""
     global \
@@ -333,7 +395,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
         double_clicked, \
         last_time_released, \
         hold_mode_first_time_cancel_task, \
-        unpause_needed
+        restore_audio_playing_needed 
 
     # 計算是否屬於短時間內按下`錄音鍵`
     is_short_duration = (
@@ -343,10 +405,10 @@ def hold_mode(e: keyboard.KeyboardEvent):
     # 短時間內,按下第二次錄音鍵判定爲需要輸出 `簡/繁`
     if is_short_duration and Config.enable_double_click_opposite_state:
         double_clicked = True
-        if Config.pause_other_audio and not unpause_needed:
+        if Config.pause_other_audio and not restore_audio_playing_needed :
             if process_name := audio_playering_app_name():
                 if process_name != "ffplay.exe":
-                    unpause_needed = True
+                    restore_audio_playing_needed  = True
 
     if e.event_type == "down" and not Cosmic.on:
         # 根據上一次是否短時間內(`is_short_duration`)按下錄音鍵,來判斷是否需要輸出 `簡/繁`
@@ -391,7 +453,189 @@ def hold_mode(e: keyboard.KeyboardEvent):
             Cosmic.online_translate_needed,
             Config.hold_mode,
         )
+'''
+'''
+def hold_mode(e: keyboard.KeyboardEvent):
+    """像对讲机一样，按下录音，松开停止"""
+    global task, double_clicked, last_time_released, key_pressed, last_time_pressed, is_short_duration
+    global hold_mode_first_time_cancel_task, restore_audio_playing_needed 
 
+    # 处理按键按下事件
+    if e.event_type == keyboard.KEY_DOWN:
+        # 仅在未按下状态时处理按下事件，防止重复触发
+        if not key_pressed:
+            key_pressed = True  # 标记为已按下
+            last_time_pressed = time.time()  # 统一获取当前时间，避免多次调用
+            # 计算是否属于短时间内按下录音键
+            is_short_duration = (last_time_pressed - last_time_released) < Config.threshold
+
+            # 处理双击逻辑
+            if is_short_duration and Config.enable_double_click_opposite_state:
+                double_clicked = True
+                _handle_audio_pause()
+
+            _handle_key_down(double_clicked, is_short_duration)
+    
+    # 处理按键松开事件（单独判断，不被key_pressed状态阻塞）
+    elif e.event_type == keyboard.KEY_UP:
+        # 仅在已按下状态时处理松开事件
+        if key_pressed:
+            last_time_released = time.time()  # 统一获取当前时间，避免多次调用
+            # is_short_duration = (last_time_pressed - last_time_released) < Config.threshold
+            _handle_key_up(last_time_pressed, is_short_duration)
+            key_pressed = False  # 标记为未按下
+
+
+def _handle_audio_pause():
+    global restore_audio_playing_needed 
+    """处理音频暂停相关逻辑"""
+    if Config.pause_other_audio and not restore_audio_playing_needed :
+        process_name = audio_playering_app_name()
+        if process_name and process_name != "ffplay.exe":
+            restore_audio_playing_needed  = True
+
+
+def _handle_key_down(double_clicked, is_short_duration):
+    """处理按键按下时的逻辑"""
+    # 处理双击切换简/繁状态
+    if double_clicked and Config.enable_double_click_opposite_state:
+        Cosmic.opposite_state = not Cosmic.opposite_state
+    
+    translate_needed()
+    send_signal_to_hint_while_recording(
+        True,
+        is_short_duration,
+        Cosmic.offline_translate_needed,
+        Cosmic.online_translate_needed,
+        Config.hold_mode,
+    )
+    # 启动录音任务
+    launch_task()
+
+
+def _handle_key_up(last_time_pressed, is_short_duration):
+    """处理按键松开时的逻辑"""
+    global last_time_released, hold_mode_first_time_cancel_task, double_clicked
+    
+    # 更新最后松开时间
+    # last_time_released = last_time_pressed
+    # duration = last_time_released - last_time_pressed
+
+    # 处理任务取消或完成
+    if is_short_duration and not double_clicked:
+        hold_mode_first_time_cancel_task = True
+        cancel_task()
+    else:
+        finish_task()
+        # 恢复按键状态
+        if not double_clicked and Config.restore_key:
+            time.sleep(0.01)
+            keyboard.send(Config.speech_recognition_shortcut)
+        # 重置双击状态
+        if Config.enable_double_click_opposite_state:
+            double_clicked = False
+
+    # 发送录音结束信号
+    send_signal_to_hint_while_recording(
+        False,
+        is_short_duration,
+        Cosmic.offline_translate_needed,
+        Cosmic.online_translate_needed,
+        Config.hold_mode,
+    )
+'''
+
+def hold_mode(e: keyboard.KeyboardEvent):
+    """像对讲机一样，按下录音，松开停止"""
+    # 改進: 20250918: 增加了 key_pressed 变量用于追踪按键是否已经被按下， 以免某些函数会被重复触发。
+    # 改進: 20250918: 在此函数中, 取消了 Cosmic.on 的运用, 改为了 last_time_released & last_time_pressed 变量来进行时间的记录和计算.
+
+    # Bug1: 20250918: 在Hold Mode下, 1. 如果按下和弹起`錄音鍵` 单次的時間小于< Config.threshold 以及 2.双击的功能, 会导致播放中的浏览器或者音乐播放器 *不会恢复播放* 的状态。
+    #   解決方法-Bug1 20250919: 2.双击的功能: 不会回复播放的原因是因为第一次弹起來的時候, 恢復播放的时候会有一段空档期, 这段期间使用电平侦测-是否有应用在播放的方法就会失效。 解決方法是增加了 saved_result_for_restore_audio_playing_needed 变量来保存第一次的状态。 
+    #   解決方法-Bug1 20250919: 1.小于< Config.threshold: 单次按下和弹起录音键 ， 就会快速的停止和恢复播放。但是这两个指令间隔的时间太短，导致恢复的命令被吞掉了，所以把恢复的命令放到最后，让他有更多的时间执行。 同时`def cancel_task()` 和 `def finish_task()` 里面的恢复播放命令被取消了，放到独立的函數里执行。 
+
+    # Bug2: 20250918: 在上述的改动后 ，需要继续观察是否还会存在"任务顺序错乱"的情况。
+    # Bug3: 20250918: holdmode = true: shift + 录音键(双击) 失效了, 变成了输出简体中文 。 holdmode = false: 正常。
+    # 更新 20250919: 需要更新最新版本的 "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09"
+
+    # Bug5: 20250919: hold_mode: 录音键(双击) 有機會導致不會恢復播放(原本已在播放)
+    #    解決方法-Bug5: def launch_task(): "# 录音时暂停其他音频播放 且 有音频正在播放" 放回到中間之後, 只測試出一次沒有恢復播放的情況。 需要繼續觀察.. 
+    global \
+        task, \
+        key_pressed, \
+        double_clicked, \
+        last_time_pressed, \
+        last_time_released, \
+        hold_mode_first_time_cancel_task, \
+        is_short_duration, \
+        restore_audio_playing_needed, \
+        saved_result_for_restore_audio_playing_needed
+    
+    # 处理按键按下事件
+    if e.event_type == "down":
+        if not key_pressed:
+            key_pressed = True  # 标记为已按下
+            print(f"1. restore_audio_playing_needed:{restore_audio_playing_needed}")
+            last_time_pressed = time.time()
+            # 計算是否屬於短時間內按下`錄音鍵`
+            is_short_duration = (last_time_pressed - last_time_released) < Config.threshold
+
+
+            # 短時間內,按下第二次錄音鍵判定爲需要輸出 `簡/繁`
+            if is_short_duration and Config.enable_double_click_opposite_state:
+                double_clicked = True
+
+            # 处理双击切换简/繁状态
+            if double_clicked and Config.enable_double_click_opposite_state:
+                Cosmic.opposite_state = not Cosmic.opposite_state
+
+            translate_needed()
+            send_signal_to_hint_while_recording(
+                True,
+                is_short_duration,
+                Cosmic.offline_translate_needed,
+                Cosmic.online_translate_needed,
+                Config.hold_mode,
+            )
+            # 启动录音任务
+            launch_task()
+
+    elif e.event_type == "up":
+        # 仅在已按下状态时处理松开事件
+        if key_pressed:
+            # 标记最后弹起的时间
+            last_time_released = time.time()
+            # 计算按键弹起来和按下的间隔
+            duration = last_time_released - last_time_pressed
+            # 取消或完成任务
+            if duration < Config.threshold and not double_clicked:
+                hold_mode_first_time_cancel_task = True
+                cancel_task()
+
+            else:
+                finish_task()
+                # 任务完成后, 还原释放案件的时间, 以免两个任务的时间间隔太短导致误判
+                last_time_released = 0
+                # 松开快捷键后，再按一次，恢复 CapsLock 或 Shift 等按键的状态
+                if not double_clicked and Config.restore_key:
+                    # time.sleep(0.01)
+                    keyboard.send(Config.speech_recognition_shortcut)
+                # 恢复輸出 `簡/繁` 原来的狀態
+                if Config.enable_double_click_opposite_state:
+                    double_clicked = False
+
+            # 20250918: 这里不应该向 AHK 发送 is_short_duration=True 的信号, 否则会导致"语音输入中"的提示不会进行取消 (跟AHK代码逻辑有关)， 最后，不影响AHK的提示。 
+            send_signal_to_hint_while_recording(
+                False,
+                False,
+                Cosmic.offline_translate_needed,
+                Cosmic.online_translate_needed,
+                Config.hold_mode,
+            )
+            # 恢復音频的播放
+            restore_audio_playing()
+            key_pressed = False  # 标记为未按下
+            print(f"Last. restore_audio_playing_needed:{restore_audio_playing_needed}")
 
 # ==================== 绑定 handler ===============================
 
