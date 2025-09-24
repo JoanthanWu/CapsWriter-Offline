@@ -31,6 +31,8 @@ hold_mode_first_time_cancel_task = False
 last_time_pressed = 0
 last_time_released = 0
 key_pressed = False
+saved_result_for_offline_translate_needed = False
+saved_result_for_online_translate_needed = False
 sessions = []
 
 
@@ -277,10 +279,10 @@ def click_mode(e: keyboard.KeyboardEvent):
 
     # 4. 为了解决在 Windows 下按键会自动重复的问题 : key_pressed 变量用于追踪按键是否已经被按下并记录时间。当按键第一次被按下时，记录时间并将 key_pressed 设为 True，防止重复记录时间。当按键释放时，将 key_pressed 重新设为 False，允许下一次按键记录新的时间。
     
-    # -[x] 20250918: click_mode : "double_clicked" 变量 在此处函数中 改为常駐, 他会导致 Config.enable_double_click_opposite_state 这个配置项失效， 需要修正
+    # - [x] 20250918: click_mode : "double_clicked" 变量 在此处函数中 改为常駐, 他会导致 Config.enable_double_click_opposite_state 这个配置项失效， 需要修正
             # 解决方法: client_recv_result.py : 把判断变量的位置改放在 async def recv_result() 后面。 同时把 client_shortcut_handler.py 里面的所有Config.enable_double_click_opposite_state 取消掉 。 
 
-    # -[x] Bug4: 20250919: click_mode : "Shift + double_clicked or double_clicked" 有機會導致恢復音頻播放失敗.. 原因不明，需要再跟进。 觀察: 先是停下播放之後，然後輸出文字後聽到一些聲音，但是很快就又停止了。 
+    # - [x] Bug4: 20250919: click_mode : "Shift + double_clicked or double_clicked" 有機會導致恢復音頻播放失敗.. 原因不明，需要再跟进。 觀察: 先是停下播放之後，然後輸出文字後聽到一些聲音，但是很快就又停止了。 
             # 解决方法-Bug4: 函数: "elif (double_clicked and is_short_duration)" : 這裏的函數 "restore_audio_playing()" 不應該加進來，不需要。 
     global \
         last_time_pressed, \
@@ -549,21 +551,24 @@ def _handle_key_up(last_time_pressed, is_short_duration):
 
 def hold_mode(e: keyboard.KeyboardEvent):
     """像对讲机一样，按下录音，松开停止"""
-    # -[x] 改進: 20250918: 增加了 key_pressed 变量用于追踪按键是否已经被按下， 以免某些函数会被重复触发。
-    # -[x] 改進: 20250918: 在此函数中, 取消了 Cosmic.on 的运用, 改为了 last_time_released & last_time_pressed 变量来进行时间的记录和计算.
+    # - [x] 改進: 20250918: 增加了 key_pressed 变量用于追踪按键是否已经被按下， 以免某些函数会被重复触发。
+    # - [x] 改進: 20250918: 在此函数中, 取消了 Cosmic.on 的运用, 改为了 last_time_released & last_time_pressed 变量来进行时间的记录和计算.
 
-    # -[x] Bug1: 20250918: 在Hold Mode下, 1. 如果按下和弹起`錄音鍵` 单次的時間小于< Config.threshold 以及 2.双击的功能, 会导致播放中的浏览器或者音乐播放器 *不会恢复播放* 的状态。
-        # -[x]  解決方法-Bug1 20250919: 2.双击的功能: 不会回复播放的原因是因为第一次弹起來的時候, 恢復播放的时候会有一段空档期, 这段期间使用电平侦测-是否有应用在播放的方法就会失效。 解決方法是增加了 saved_result_for_restore_audio_playing_needed 变量来保存第一次的状态。 
-        # -[x]  解決方法-Bug1 20250919: 1.小于< Config.threshold: 单次按下和弹起录音键 ， 就会快速的停止和恢复播放。但是这两个指令间隔的时间太短，导致恢复的命令被吞掉了，所以把恢复的命令放到最后，让他有更多的时间执行。 同时`def cancel_task()` 和 `def finish_task()` 里面的恢复播放命令被取消了，放到独立的函數里执行。 
+    # - [x] Bug1: 20250918: 在Hold Mode下, 1. 如果按下和弹起`錄音鍵` 单次的時間小于< Config.threshold 以及 2.双击的功能, 会导致播放中的浏览器或者音乐播放器 *不会恢复播放* 的状态。
+        # - [x]  解決方法-Bug1 20250919: 2.双击的功能: 不会回复播放的原因是因为第一次弹起來的時候, 恢復播放的时候会有一段空档期, 这段期间使用电平侦测-是否有应用在播放的方法就会失效。 解決方法是增加了 saved_result_for_restore_audio_playing_needed 变量来保存第一次的状态。 
+        # - [x]  解決方法-Bug1 20250919: 1.小于< Config.threshold: 单次按下和弹起录音键 ， 就会快速的停止和恢复播放。但是这两个指令间隔的时间太短，导致恢复的命令被吞掉了，所以把恢复的命令放到最后，让他有更多的时间执行。 同时`def cancel_task()` 和 `def finish_task()` 里面的恢复播放命令被取消了，放到独立的函數里执行。 
 
-    # -[!] Bug2: 20250918: 在上述的改动后 ，需要继续观察是否还会存在"任务顺序错乱"的情况。
-    # -[ ] Bug3: 20250918: holdmode = true: shift + 录音键(双击) 失效了, 变成了输出简体中文 。 holdmode = false: 正常。
-        # 解決方法-Bug3: 20250919: Config.enable_double_click_opposite_state= false: 修改成这个之后，他居然可以使用 "shift +双击" = 英文输出了
+    # - [?] Bug2: 20250918: 在上述的改动后 ，需要继续观察是否还会存在"任务顺序错乱"的情况。
+    # - [x] Bug3: 20250918: holdmode = true: shift + 录音键(双击) 失效了, 变成了输出简体中文 。 holdmode = false: 正常。
+        # 解決方法-Bug3: 20250919: Config.enable_double_click_opposite_state= false: 修改成这个之后，他居然可以使用 "shift +双击" = 英文输出了 (没有删除这个变量"enable_double_click_opposite_state"之前)
         # 解決方法-Bug3: 20250919: 把 hold_mode() 里面的 Config.enable_double_click_opposite_state 删除掉, "shift +双击" = 中文输出， 看来BUG和这个 enable_double_click_opposite_state 有关， 需要继续解决。 (click_mode 没有这个问题)
+        # 解決方法-Bug3: 20250924: 第二次按键抬起之前还"T3. offline_translate_needed:True", 第二次按键抬起之后"O1. offline_translate_needed:False", 完全不知道为什么有这个转变，因为这两个行动之间是没有任何关于"offline_translate_needed"的行动, 哪怕有转变之后再侦测一次"translate_needed()" 依然是"offline_translate_needed:False", 像是"shift按键" 被强行抬起了一样。 解决方法是引入"saved_result_for_offline_translate_needed"的变量储存第一次的状态。 
+        # - [?] 原因-Bug3: 20250924: 第一次按键抬起来的时候就会触发"恢复大小字母按键 keyboard.send(Config.speech_recognition_shortcut)" ， 导致该按键会被抬起，从而不能识别为按下, 因此，从这个动作之后的"translate_needed()"就会一直被认为没有按下"shift"。 20250924: 再想了想, 这个原因应该是不对的， 因为抬起的应该是"cap lock", 除非他會牵连這個 shift 按鍵？20250924: 这个牵连是有可能的, 因为 "shift" 键 = 临时切换大小写状态。 需要再继续寻找原因。。。
 
-    # -[ ] 更新 20250919: 需要更新最新版本的 "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09"
+    # - [x] 更新 20250919: 需要更新最新版本的 "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09"
+        # 解決方法-更新: 20250924: 更新成功了, 但是沒發現這個新模型有標點功能，因此需要加載額外的標點功能模型 。 最終的感覺不如舊的模型好，因此還原 。 
 
-    # -[!] Bug5: 20250919: hold_mode: 录音键(双击) 有機會導致不會恢復播放(原本已在播放)
+    # - [?] Bug5: 20250919: hold_mode: 录音键(双击) 有機會導致不會恢復播放(原本已在播放)
         # 解決方法-Bug5: def launch_task(): "# 录音时暂停其他音频播放 且 有音频正在播放" 放回到中間之後, 只測試出一次沒有恢復播放的情況。 需要繼續觀察.. 
     global \
         task, \
@@ -574,17 +579,19 @@ def hold_mode(e: keyboard.KeyboardEvent):
         hold_mode_first_time_cancel_task, \
         is_short_duration, \
         restore_audio_playing_needed, \
-        saved_result_for_restore_audio_playing_needed
+        saved_result_for_restore_audio_playing_needed, \
+        saved_result_for_offline_translate_needed, \
+        saved_result_for_online_translate_needed
     
     # 处理按键按下事件
     if e.event_type == "down":
         if not key_pressed:
             key_pressed = True  # 标记为已按下
             print(f"1. restore_audio_playing_needed:{restore_audio_playing_needed}")
+            print(f"T1. offline_translate_needed:{Cosmic.offline_translate_needed}")
             last_time_pressed = time.time()
             # 計算是否屬於短時間內按下`錄音鍵`
             is_short_duration = (last_time_pressed - last_time_released) < Config.threshold
-
 
             # 短時間內,按下第二次錄音鍵判定爲需要輸出 `簡/繁`
             if is_short_duration:
@@ -597,6 +604,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 Cosmic.opposite_state = not Cosmic.opposite_state
 
             translate_needed()
+            print(f"T2. offline_translate_needed:{Cosmic.offline_translate_needed}")
             send_signal_to_hint_while_recording(
                 True,
                 is_short_duration,
@@ -606,10 +614,18 @@ def hold_mode(e: keyboard.KeyboardEvent):
             )
             # 启动录音任务
             launch_task()
+            saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed
+            saved_result_for_online_translate_needed = Cosmic.online_translate_needed
+            print(f"T3. offline_translate_needed:{Cosmic.offline_translate_needed}")
 
     elif e.event_type == "up":
         # 仅在已按下状态时处理松开事件
         if key_pressed:
+            print(f"O1. offline_translate_needed:{Cosmic.offline_translate_needed}")
+            if is_short_duration:
+                Cosmic.offline_translate_needed = saved_result_for_offline_translate_needed
+                Cosmic.online_translate_needed = saved_result_for_online_translate_needed
+                print(f"O1A. offline_translate_needed:{Cosmic.offline_translate_needed}")
             # 标记最后弹起的时间
             last_time_released = time.time()
             # 计算按键弹起来和按下的间隔
@@ -618,9 +634,13 @@ def hold_mode(e: keyboard.KeyboardEvent):
             if duration < Config.threshold and not double_clicked:
                 hold_mode_first_time_cancel_task = True
                 cancel_task()
+                print(f"O2. offline_translate_needed:{Cosmic.offline_translate_needed}")
 
             else:
+                # translate_needed()
+                # Cosmic.offline_translate_needed = True
                 finish_task()
+                print(f"O3. offline_translate_needed:{Cosmic.offline_translate_needed}")
                 # 任务完成后, 还原释放案件的时间, 以免两个任务的时间间隔太短导致误判
                 last_time_released = 0
                 # 松开快捷键后，再按一次，恢复 CapsLock 或 Shift 等按键的状态
@@ -630,8 +650,10 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 # 恢复輸出 `簡/繁` 原来的狀態
                 #if Config.enable_double_click_opposite_state:
                 double_clicked = False
+                saved_result_for_offline_translate_needed = False
+                saved_result_for_online_translate_needed = False
 
-            # 20250918: 这里不应该向 AHK 发送 is_short_duration=True 的信号, 否则会导致"语音输入中"的提示不会进行取消 (跟AHK代码逻辑有关)， 最后，不影响AHK的提示。 
+            # 20250918: 增加了"key_pressed" 之后这里不应该向 AHK 发送 is_short_duration=True 的信号, 否则会导致"语音输入中"的提示不会进行取消 (跟AHK代码逻辑有关)， 最后，不影响AHK的提示。 
             send_signal_to_hint_while_recording(
                 False,
                 False,
@@ -642,6 +664,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
             # 恢復音频的播放
             restore_audio_playing()
             key_pressed = False  # 标记为未按下
+            print(f"O4. offline_translate_needed:{Cosmic.offline_translate_needed}")
             print(f"Last. restore_audio_playing_needed:{restore_audio_playing_needed}")
 
 # ==================== 绑定 handler ===============================
