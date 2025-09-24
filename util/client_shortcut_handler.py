@@ -147,11 +147,17 @@ def launch_task():
 
     # 录音时暂停其他音频播放 且 有音频正在播放
     global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed
-    if Config.pause_other_audio and not restore_audio_playing_needed :
+    if Config.pause_other_audio and not restore_audio_playing_needed:
+        # 针对双击导致停止和播放的指令过快的问题，增加了时间延迟
+        if is_short_duration:
+                # 试过的时间: 0.2✘; 0.3✘; 0.4✔; 0.5✔;1✔
+                time.sleep(0.4)
+                
+        print(f"is_short_duration: {is_short_duration}")
         if process_name := audio_playering_app_name():
             print(f"launch  1. Audio is currently playering by {process_name} .")
             print(f"launch  1. restore_audio_playing_needed:{restore_audio_playing_needed}")
-            if process_name != "ffplay.exe" :
+            if process_name != "ffplay.exe":
                 keyboard.send("play/pause")
                 # if process_name != None:
                 restore_audio_playing_needed  = True
@@ -279,11 +285,18 @@ def click_mode(e: keyboard.KeyboardEvent):
 
     # 4. 为了解决在 Windows 下按键会自动重复的问题 : key_pressed 变量用于追踪按键是否已经被按下并记录时间。当按键第一次被按下时，记录时间并将 key_pressed 设为 True，防止重复记录时间。当按键释放时，将 key_pressed 重新设为 False，允许下一次按键记录新的时间。
     
-    # - [x] 20250918: click_mode : "double_clicked" 变量 在此处函数中 改为常駐, 他会导致 Config.enable_double_click_opposite_state 这个配置项失效， 需要修正
+    # - [x] Bug6: 20250918: click_mode : "double_clicked" 变量 在此处函数中 改为常駐, 他会导致 Config.enable_double_click_opposite_state 这个配置项失效， 需要修正
             # 解决方法: client_recv_result.py : 把判断变量的位置改放在 async def recv_result() 后面。 同时把 client_shortcut_handler.py 里面的所有Config.enable_double_click_opposite_state 取消掉 。 
 
     # - [x] Bug4: 20250919: click_mode : "Shift + double_clicked or double_clicked" 有機會導致恢復音頻播放失敗.. 原因不明，需要再跟进。 觀察: 先是停下播放之後，然後輸出文字後聽到一些聲音，但是很快就又停止了。 
             # 解决方法-Bug4: 函数: "elif (double_clicked and is_short_duration)" : 這裏的函數 "restore_audio_playing()" 不應該加進來，不需要。 
+
+    # - [ ] 潜在的改善点: 20250924: 假如有两个应用在运行, 其中第1个在播放，第2个在暂停, 那么我进行录音，第一个会被暂停，而第2个在录音期间依然会被播放(靜音), 这不符合最初暂停所有的应用的设想. 
+        # 解决思路是根据每一个应用侦测它的播放状态, 最终根据此状态依次针对每一个应用进行判断是否恢复播放.但是需要解决的是:
+            # 1. 是否能指定某一个应用进行暂停或者播放？
+            # 2. 如何判断某一个应用是否正在播放？audio_playering_app_name() 给出的资讯需要放入数组中.
+        
+
     global \
         last_time_pressed, \
         last_time_released, \
@@ -569,7 +582,10 @@ def hold_mode(e: keyboard.KeyboardEvent):
         # 解決方法-更新: 20250924: 更新成功了, 但是沒發現這個新模型有標點功能，因此需要加載額外的標點功能模型 。 最終的感覺不如舊的模型好，因此還原 。 
 
     # - [?] Bug5: 20250919: hold_mode: 录音键(双击) 有機會導致不會恢復播放(原本已在播放)
-        # 解決方法-Bug5: def launch_task(): "# 录音时暂停其他音频播放 且 有音频正在播放" 放回到中間之後, 只測試出一次沒有恢復播放的情況。 需要繼續觀察.. 
+        # 观察-Bug5: def launch_task(): "# 录音时暂停其他音频播放 且 有音频正在播放" 放回到中間之後, 只測試出一次沒有恢復播放的情況。 需要繼續觀察.. 
+        # 观察-Bug5: 20250924: 第一次按下会暂停播放，抬起就会恢复播放, 然后短时间内第二次按下会静音，这里本应是需要暂停的, 但是会继续播放(这里不符合预想的结果,推测是因为有三次的快速操作,导致第三次的动作被吞掉了), 跟着第二次抬起(已经过了一段时间),就会被错误的暂停了(restore_audio_playing_needed = true)。 
+        # 解决方法-Bug5: 20250924: 在这里 def launch_task() 加上一个, 但凡是快速按下第二次(is_short_duration)就会延迟一段时间. 逻辑上以及实际测试只有 hold_mode 会应用这个延迟。 
+        
     global \
         task, \
         key_pressed, \
@@ -642,7 +658,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 finish_task()
                 print(f"O3. offline_translate_needed:{Cosmic.offline_translate_needed}")
                 # 任务完成后, 还原释放案件的时间, 以免两个任务的时间间隔太短导致误判
-                last_time_released = 0
+                # last_time_released = 0
                 # 松开快捷键后，再按一次，恢复 CapsLock 或 Shift 等按键的状态
                 if not double_clicked and Config.restore_key:
                     # time.sleep(0.01)
