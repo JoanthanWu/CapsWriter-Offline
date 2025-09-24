@@ -150,8 +150,8 @@ def launch_task():
     if Config.pause_other_audio and not restore_audio_playing_needed:
         # 针对双击导致停止和播放的指令过快的问题，增加了时间延迟
         if is_short_duration:
-                # 试过的时间: 0.2✘; 0.3✘; 0.4✔; 0.5✔;1✔
-                time.sleep(0.4)
+                # 试过的时间: 0.2✘; 0.3✘; 0.4✘; 0.5✔;1✔
+                time.sleep(0.6)
                 
         if process_name := audio_playering_app_name():
             if process_name != "ffplay.exe" :
@@ -423,8 +423,9 @@ def hold_mode(e: keyboard.KeyboardEvent):
             )
             # 启动录音任务
             launch_task()
-            saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed
-            saved_result_for_online_translate_needed = Cosmic.online_translate_needed
+            if not is_short_duration:
+                saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed
+                saved_result_for_online_translate_needed = Cosmic.online_translate_needed
 
     elif e.event_type == "up":
         # 仅在已按下状态时处理松开事件
