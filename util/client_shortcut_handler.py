@@ -33,6 +33,7 @@ last_time_released = 0
 key_pressed = False
 saved_result_for_offline_translate_needed = False
 saved_result_for_online_translate_needed = False
+unmute_task = None
 sessions = []
 
 
@@ -72,15 +73,31 @@ def unmute_all_sessions():
             volume.SetMute(0, None)
 
 
+# 封装需要异步执行的逻辑（延迟+取消静音）
+async def async_unmute_after_delay():
+    # 异步延迟0.3秒（不阻塞事件循环）
+    await asyncio.sleep(0.3)
+    # 执行取消静音操作
+    unmute_all_sessions()
+
+
 def restore_audio_playing():
+    # - [x] 改進: 20250925: 把 "cancel_task()" 和 "finish_task()" 裏面的恢復音頻音量的函數"unmute_all_sessions()"全放在這裏, 同时，采用了异步 + 延迟的方法，避免了阻塞主线程，以及避免一些"杂音"。
+
     # 恢復音频的播放
-    global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed
+    global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed, unmute_task
     # 处理音频暂停相关逻辑
     restore_audio_playing_needed = saved_result_for_restore_audio_playing_needed
 
     if Config.pause_other_audio and restore_audio_playing_needed:
         keyboard.send("play/pause")
         restore_audio_playing_needed  = False
+
+    # 取消音频静音, 在主线程中调用（非事件循环线程）, 这行代码会立即返回，不会阻塞主线程
+    unmute_task = asyncio.run_coroutine_threadsafe(
+        async_unmute_after_delay(),  # 提交封装好的异步任务
+        Cosmic.loop  # 目标事件循环
+    )
 
 
 def translate_needed():
@@ -104,10 +121,12 @@ def translate_needed():
 # 這個函數採用了: 把整組 pause_other_audio 相關的代碼放到 task = asyncio.run_coroutine_threadsafe(send_audio(),Cosmic.loop,) 的後面, 從而避免影響接收聲音。
 def launch_task():
     # - [x] 改進點: 20250925: time.sleep(0.6)這句代碼會阻塞整個主线程, 導致雙擊功能會有一點點的錄音延遲，不爽。
-        # 思路1: 把整組 pause_other_audio 相關的代碼放到 task = asyncio.run_coroutine_threadsafe(send_audio(),Cosmic.loop,) 的後面, 從而避免影響接收聲音。 為方便測試調整為10秒"time.sleep(10.6)", 測試結果: 是可行的。
+        # ✔思路1: 把整組 pause_other_audio 相關的代碼放到 task = asyncio.run_coroutine_threadsafe(send_audio(),Cosmic.loop,) 的後面, 從而避免影響接收聲音。 為方便測試調整為10秒"time.sleep(10.6)", 測試結果: 是可行的。
             # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
-            # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✔不會恢復播放, 但是有一點副作用就是必須"10秒"後才會恢復運行後面的代碼
+            # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✔會恢復播放, 但是有一點副作用就是必須"10秒"後才會恢復運行後面的代碼
                 # 這個副作用是可以接受，因此現在採用此辦法
+                # - Bug: 在應用程式全部暫停播放的情況下使用錄音會導致播放的情況
+                # - 只在hold_mode的情況出現, 是 "and not Config.hold_mode" 的判斷問題
 
         # 思路2: 採用异步async def delay_pause(), 為方便測試調整為10秒"asyncio.sleep(10.5)", 測試結果:
             # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
@@ -121,7 +140,7 @@ def launch_task():
 
         play_music(Config.start_music_path, Config.start_music_volume)
 
-    global hold_mode_first_time_cancel_task
+    global hold_mode_first_time_cancel_task, unmute_task
     # 确认是否需要翻译
     # 改为独立调用
     # translate_needed()
@@ -151,6 +170,14 @@ def launch_task():
     asyncio.run_coroutine_threadsafe(
         Cosmic.queue_in.put({"type": "begin", "time": t1, "data": None}), Cosmic.loop
     )
+
+    if is_short_duration and unmute_task is not None:
+        is_cancelled = unmute_task.cancel()
+        # if is_cancelled:
+        #     print("成功取消延迟的unmute操作")
+        # else:
+        #     print("取消失败（任务可能已执行或已完成）")
+        unmute_task = None
 
     # 录音时静音其他音频播放
     if Config.mute_other_audio:
@@ -195,10 +222,12 @@ def launch_task():
 # 這個函數採用了 异步async def delay_pause()
 def launch_task():
     # - [x] 改進點: 20250925: time.sleep(0.6)這句代碼會阻塞整個主线程, 導致雙擊功能會有一點點的錄音延遲，不爽。
-        # 思路1: 把整組 pause_other_audio 相關的代碼放到 task = asyncio.run_coroutine_threadsafe(send_audio(),Cosmic.loop,) 的後面, 從而避免影響接收聲音。 為方便測試調整為10秒"time.sleep(10.6)", 測試結果: 是可行的。
+        # ✔思路1: 把整組 pause_other_audio 相關的代碼放到 task = asyncio.run_coroutine_threadsafe(send_audio(),Cosmic.loop,) 的後面, 從而避免影響接收聲音。 為方便測試調整為10秒"time.sleep(10.6)", 測試結果: 是可行的。
             # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
-            # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✔不會恢復播放, 但是有一點副作用就是必須"10秒"後才會恢復運行後面的代碼
+            # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✔會恢復播放, 但是有一點副作用就是必須"10秒"後才會恢復運行後面的代碼
                 # 這個副作用是可以接受，因此現在採用此辦法
+                # - Bug: 在應用程式全部暫停播放的情況下使用錄音會導致播放的情況
+                    # - 只在hold_mode的情況出現, 是這個 "and not Config.hold_mode" 的判斷問題
 
         # 思路2: 採用异步async def delay_pause(), 為方便測試調整為10秒"asyncio.sleep(10.5)", 測試結果:
             # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
@@ -308,10 +337,6 @@ def cancel_task():
     Cosmic.on = False
     status.stop()
 
-   # 取消音频静音
-    if Config.mute_other_audio:
-        unmute_all_sessions()
-
     # 发送取消任务的消息到队列
     asyncio.run_coroutine_threadsafe(
         Cosmic.queue_in.put({"type": "cancel", "time": time.time(), "data": None}),
@@ -338,10 +363,6 @@ def finish_task():
         ),
         Cosmic.loop,
     )
-
-    # 取消音频静音
-    if Config.mute_other_audio:
-        unmute_all_sessions()
 
     # 结束任务时播放提示音
     import shutil
