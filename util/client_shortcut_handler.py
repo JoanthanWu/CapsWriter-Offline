@@ -34,6 +34,7 @@ key_pressed = False
 saved_result_for_offline_translate_needed = False
 saved_result_for_online_translate_needed = False
 unmute_task = None
+restore_capslock_task = None
 sessions = []
 
 
@@ -132,6 +133,7 @@ def launch_task():
             # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
             # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✘不會恢復播放
                 # 現在不採用異步的方法, 除非有辦法能解決短時間內抬起，不會恢復播放的問題
+            # Git: 753321e008117e227d666efba188543c4200b48e
 
     # 开始任务时播放提示音
     import shutil
@@ -218,120 +220,6 @@ def launch_task():
         restore_audio_playing_needed = False
 
 
-"""
-# 這個函數採用了 异步async def delay_pause()
-def launch_task():
-    # - [x] 改進點: 20250925: time.sleep(0.6)這句代碼會阻塞整個主线程, 導致雙擊功能會有一點點的錄音延遲，不爽。
-        # ✔思路1: 把整組 pause_other_audio 相關的代碼放到 task = asyncio.run_coroutine_threadsafe(send_audio(),Cosmic.loop,) 的後面, 從而避免影響接收聲音。 為方便測試調整為10秒"time.sleep(10.6)", 測試結果: 是可行的。
-            # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
-            # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✔會恢復播放, 但是有一點副作用就是必須"10秒"後才會恢復運行後面的代碼
-                # 這個副作用是可以接受，因此現在採用此辦法
-                # - Bug: 在應用程式全部暫停播放的情況下使用錄音會導致播放的情況
-                    # - 只在hold_mode的情況出現, 是這個 "and not Config.hold_mode" 的判斷問題
-
-        # 思路2: 採用异步async def delay_pause(), 為方便測試調整為10秒"asyncio.sleep(10.5)", 測試結果:
-            # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
-            # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✘不會恢復播放
-                # 現在不採用異步的方法, 除非有辦法能解決短時間內抬起，不會恢復播放的問題
-
-        
-    # 开始任务时播放提示音
-    import shutil
-
-    if shutil.which("ffplay") and Config.play_start_music:
-        from util.client_play_music import play_music
-
-        play_music(Config.start_music_path, Config.start_music_volume)
-
-    global hold_mode_first_time_cancel_task
-    # 确认是否需要翻译
-    # 改为独立调用
-    # translate_needed()
-
-    if (
-        not double_clicked
-        and Config.only_enable_microphones_when_pressed_record_shortcut
-    ):
-        # 重启音频流; 在双击情况下, 只在第一次的时候启动(单击模式)
-        stream_reopen()
-        Cosmic.stream.start()
-
-    # 长按模式(hold_mode)双击功能 第二次重启不适用于上面的判断, 因此，需要下面来判断是否重启音频流
-    # 长按模式(hold_mode)双击功能 確實需要第二次啓動音频流, 设计的时候就是如此, 因为会进行一次 start  cancel 的流程, 然后第二次啓動才是双击功能的录音
-    elif (
-        hold_mode_first_time_cancel_task
-        and double_clicked
-        and Config.only_enable_microphones_when_pressed_record_shortcut
-    ):
-        stream_reopen()
-        Cosmic.stream.start()
-        hold_mode_first_time_cancel_task = False
-    # 记录开始时间
-    t1 = time.time()
-
-    # 将开始标志放入队列
-    asyncio.run_coroutine_threadsafe(
-        Cosmic.queue_in.put({"type": "begin", "time": t1, "data": None}), Cosmic.loop
-    )
-
-    # 录音时静音其他音频播放
-    if Config.mute_other_audio:
-        mute_all_sessions()
-
-    # 录音时暂停其他音频播放 且 有音频正在播放
-    global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed, process_name
-    if Config.pause_other_audio and not restore_audio_playing_needed:
-
-        # 针对双击导致停止和播放的指令过快的问题，增加了时间延迟
-        if is_short_duration:
-            # 用异步任务执行延迟，不阻塞当前线程
-            async def delay_pause():
-                global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed, process_name
-
-                await asyncio.sleep(0.6)  # 异步延迟，不影响录音
-
-                if process_name := audio_playering_app_name():
-                    if process_name != "ffplay.exe":
-                        keyboard.send("play/pause")
-                        restore_audio_playing_needed = True
-
-                if process_name is None:
-                    # 恢復原狀：修復因 "saved_result_for_restore_audio_playing_needed" 變量導致播放器誤播的狀況(在已經本身停播的情況下)。
-                    saved_result_for_restore_audio_playing_needed = False
-                    restore_audio_playing_needed = False
-
-            # 启动异步任务，放入事件循环
-            asyncio.run_coroutine_threadsafe(delay_pause(), Cosmic.loop)
-
-        # 适用于非双击的情况
-        if not is_short_duration:
-            if process_name := audio_playering_app_name():
-                if process_name != "ffplay.exe" :
-                    keyboard.send("play/pause")
-                    restore_audio_playing_needed  = True
-
-            saved_result_for_restore_audio_playing_needed = restore_audio_playing_needed
-
-            # 恢復原狀：修復因 "saved_result_for_restore_audio_playing_needed" 變量導致播放器誤播的狀況(在已經本身停播的情況下)。
-            if process_name is None and not Config.hold_mode:
-                saved_result_for_restore_audio_playing_needed = False
-                restore_audio_playing_needed = False
-
-
-    # 通知录音线程可以向队列放数据了
-    Cosmic.on = t1
-
-    # 打印动画：正在录音
-    status.start()
-
-    # 启动识别任务
-    global task
-    task = asyncio.run_coroutine_threadsafe(
-        send_audio(),
-        Cosmic.loop,
-    )
-"""
-
 def cancel_task():
     # 通知停止录音，关掉滚动条
     Cosmic.on = False
@@ -378,6 +266,16 @@ def finish_task():
 
 
 # =================单击模式======================
+# 封装需要异步执行的原版 CapsLock 功能（延迟+恢复）
+async def original_capslock_function():
+    global restore_capslock_task
+    if Config.restore_key:
+        # 开始"倒数"至少0.3秒(threshold)
+        await asyncio.sleep(Config.threshold)
+        # "倒数"0.3秒后，如果该按键依然是被按下的状态，就执行原本功能
+        if keyboard.is_pressed(Config.speech_recognition_shortcut):
+            keyboard.send(Config.speech_recognition_shortcut)
+        restore_capslock_task = None
 
 
 def click_mode(e: keyboard.KeyboardEvent):
@@ -388,8 +286,8 @@ def click_mode(e: keyboard.KeyboardEvent):
     # 2.1. 原来的设计: 使用`CapsLock`开启大小写的功能, 在单击模式下`未触发`录音模式之前,长按这个按键切换有机率失败，但是进行录音模式`之后`, 成功的几率极大.
     # 2.2. 这是因为: `def manage_task(e: Event): `它是按下按键就立刻开启任务，在开启任务之后才进行判断是否`长/短`按。这就是导致有几率失败的原因
 
-    # 3. `長按` = 进行大小写切换的功能, 需要按键抬起后才能切换;
-    # 3.1. 如果需要按下之后是根据按下(不需要抬起)的时间自动进行大小写切换的功能, 可以参考原来作者的代码`def count_down(e: Event):`
+    # 3.改進點: `長按` = 进行大小写切换的功能, 需要按键抬起后才能切换;
+        # - [x] 改進: 20250926: 通过异步的方法实现了原版的长按功能(至少按下0.3秒,click_mode only), 在`长按`的过程中, 按键会自动重复, 就像原来的"caps lock"自己亮起的一样。 
 
     # 4. 为了解决在 Windows 下按键会自动重复的问题 : key_pressed 变量用于追踪按键是否已经被按下并记录时间。当按键第一次被按下时，记录时间并将 key_pressed 设为 True，防止重复记录时间。当按键释放时，将 key_pressed 重新设为 False，允许下一次按键记录新的时间。
     
@@ -410,35 +308,40 @@ def click_mode(e: keyboard.KeyboardEvent):
         key_pressed, \
         double_clicked, \
         is_short_duration, \
-        restore_audio_playing_needed 
+        restore_audio_playing_needed, \
+        restore_capslock_task
 
     if e.event_type == keyboard.KEY_DOWN and not key_pressed:
+        key_pressed = True
+
+        if restore_capslock_task is None:
+            restore_capslock_task = asyncio.run_coroutine_threadsafe(
+            original_capslock_function(),  # 提交封装好的异步任务
+            Cosmic.loop  # 目标事件循环
+            )
+
         # 計算是否屬於短時間內雙击`錄音鍵`
         is_short_duration = (
             True if time.time() - last_time_released < Config.threshold else False
         )
-
         last_time_pressed = time.time()
-        key_pressed = True
 
     elif e.event_type == keyboard.KEY_UP:
         last_time_released = time.time()
 
-        # 记录是否有任务; 此处已改用变量:`double_clicked` 来判断任务是否进行中
-        # on = Cosmic.on
+        # 取消 延迟恢复原版CapsLock功能的任务
+        if restore_capslock_task is not None:
+            restore_capslock_task_cancelled = restore_capslock_task.cancel()
+            # if restore_capslock_task_cancelled:
+            #     print("成功取消延迟的restore_capslock_task操作")
+            # else:
+            #     print("取消失败（任务可能已执行或已完成）")
+            restore_capslock_task = None
 
         # 如果大于`Config.threshold`的值, 判定为`長按`, 就取消本栈启动的任务(`cancel_task()`)
-        if last_time_released - last_time_pressed >= Config.threshold:
-            # 函数`cancel_task()` : 他和我想象中的功能可能不一样
-            # 我想象中的功能: `長按` = 进行大小写切换
-            # 原来的功能: 可能是 中断并且不输出 已经录入的语音文字
-            # 如果启动以下的函数`cancel_task()` : Bug 复现方法是 按一次`录音键`进入录音状态, 随后进行一次长按, 就会进入错乱状态.
-            # 如果没有特殊的需求, 现在的状况可以满足 `長按` = 进行大小写切换 的功能
-            # 否则需要进入函数`cancel_task()` 修改
-            # cancel_task()
-
+        if last_time_released - last_time_pressed >= Config.threshold and Config.restore_key:
             # 判定为`長按`，发送原來的按键功能
-            keyboard.send(Config.speech_recognition_shortcut)
+            # keyboard.send(Config.speech_recognition_shortcut)
             key_pressed = False
             return
 
@@ -553,7 +456,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
             if is_short_duration:
                 double_clicked = True
 
-            # 处理双击切换简/繁状态
+            # 处理双击切换简/繁状态, 当初为何使用这个double_clicked变量来判断？嗯，记不起来了. 可能是当时还没使用key_pressed来锁定
             if double_clicked:
                 Cosmic.opposite_state = not Cosmic.opposite_state
 
