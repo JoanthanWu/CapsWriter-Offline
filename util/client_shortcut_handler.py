@@ -268,7 +268,7 @@ def finish_task():
 # =================单击模式======================
 # 封装需要异步执行的原版 CapsLock 功能（延迟+恢复）
 async def original_capslock_function():
-    global restore_capslock_task
+    global restore_capslock_task, return_allowed
     if Config.restore_key:
         # 开始"倒数"至少0.3秒(threshold)
         await asyncio.sleep(Config.threshold)
@@ -276,6 +276,7 @@ async def original_capslock_function():
         if keyboard.is_pressed(Config.speech_recognition_shortcut):
             keyboard.send(Config.speech_recognition_shortcut)
         restore_capslock_task = None
+        return_allowed = True
 
 
 def click_mode(e: keyboard.KeyboardEvent):
@@ -288,6 +289,8 @@ def click_mode(e: keyboard.KeyboardEvent):
 
     # 3.改進點: `長按` = 进行大小写切换的功能, 需要按键抬起后才能切换;
         # - [x] 改進: 20250926: 通过异步的方法实现了原版的长按功能(至少按下0.3秒,click_mode only), 在`长按`的过程中, 按键会自动重复, 就像原来的"caps lock"自己亮起的一样。 
+        # - Bug: 20250926: 通过长按录音键后恢复原有的功能之后，立刻马上进行录音会失败
+		    # - [x] 解決方法: 引入 return_allowed 变量来引导进入return结束函数
 
     # 4. 为了解决在 Windows 下按键会自动重复的问题 : key_pressed 变量用于追踪按键是否已经被按下并记录时间。当按键第一次被按下时，记录时间并将 key_pressed 设为 True，防止重复记录时间。当按键释放时，将 key_pressed 重新设为 False，允许下一次按键记录新的时间。
     
@@ -309,10 +312,12 @@ def click_mode(e: keyboard.KeyboardEvent):
         double_clicked, \
         is_short_duration, \
         restore_audio_playing_needed, \
-        restore_capslock_task
+        restore_capslock_task, \
+        return_allowed
 
     if e.event_type == keyboard.KEY_DOWN and not key_pressed:
         key_pressed = True
+        return_allowed = False
 
         if restore_capslock_task is None:
             restore_capslock_task = asyncio.run_coroutine_threadsafe(
@@ -327,10 +332,10 @@ def click_mode(e: keyboard.KeyboardEvent):
         last_time_pressed = time.time()
 
     elif e.event_type == keyboard.KEY_UP:
-        last_time_released = time.time()
+        if restore_capslock_task is not None:
+            last_time_released = time.time()
 
         # 取消 延迟恢复原版CapsLock功能的任务
-        if restore_capslock_task is not None:
             restore_capslock_task_cancelled = restore_capslock_task.cancel()
             # if restore_capslock_task_cancelled:
             #     print("成功取消延迟的restore_capslock_task操作")
@@ -339,7 +344,7 @@ def click_mode(e: keyboard.KeyboardEvent):
             restore_capslock_task = None
 
         # 如果大于`Config.threshold`的值, 判定为`長按`, 就取消本栈启动的任务(`cancel_task()`)
-        if last_time_released - last_time_pressed >= Config.threshold and Config.restore_key:
+        if Config.restore_key and return_allowed:
             # 判定为`長按`，发送原來的按键功能
             # keyboard.send(Config.speech_recognition_shortcut)
             key_pressed = False
@@ -391,7 +396,7 @@ def click_mode(e: keyboard.KeyboardEvent):
                 Cosmic.online_translate_needed,
                 Config.hold_mode,
             )
-
+            
             Cosmic.opposite_state = not Cosmic.opposite_state
             key_pressed = False
             # return
