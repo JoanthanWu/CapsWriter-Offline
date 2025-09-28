@@ -27,6 +27,7 @@ restore_audio_playing_needed  = False
 saved_result_for_restore_audio_playing_needed = False
 double_clicked = False
 is_short_duration = False
+is_short_press = False
 hold_mode_first_time_cancel_task = False
 last_time_pressed = 0
 last_time_released = 0
@@ -91,6 +92,9 @@ def restore_audio_playing():
     restore_audio_playing_needed = saved_result_for_restore_audio_playing_needed
 
     if Config.pause_other_audio and restore_audio_playing_needed:
+        # hold_mode: 切换字母大小: 还是出现了一次恢复播放失败的情况, 保险起见专门为此情况增加了延迟
+        if Config.hold_mode and is_short_press:
+            time.sleep(0.1)
         keyboard.send("play/pause")
         restore_audio_playing_needed  = False
 
@@ -444,6 +448,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
         last_time_released, \
         hold_mode_first_time_cancel_task, \
         is_short_duration, \
+        is_short_press, \
         restore_audio_playing_needed, \
         saved_result_for_restore_audio_playing_needed, \
         saved_result_for_offline_translate_needed, \
@@ -489,9 +494,9 @@ def hold_mode(e: keyboard.KeyboardEvent):
             # 标记最后弹起的时间
             last_time_released = time.time()
             # 计算按键弹起来和按下的间隔
-            duration = last_time_released - last_time_pressed
+            is_short_press = (last_time_released - last_time_pressed) < Config.threshold
             # 取消或完成任务
-            if duration < Config.threshold and not double_clicked:
+            if is_short_press and not double_clicked:
                 hold_mode_first_time_cancel_task = True
                 cancel_task()
 
@@ -522,6 +527,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
 
             # 恢復音频的播放
             restore_audio_playing()
+            is_short_press = False
             key_pressed = False  # 标记为未按下
 
 # ==================== 绑定 handler ===============================
