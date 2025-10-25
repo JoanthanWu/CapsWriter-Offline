@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from tomlkit import parse
 
@@ -119,7 +120,7 @@ class ClientConfig:
     enable_double_click_opposite_state: bool = config["client"][
         "enable_double_click_opposite_state"
     ]
-    convert_to_traditional_chinese_main: str = config["client"][
+    convert_to_traditional_chinese_main: Literal["简", "繁"] = config["client"][
         "convert_to_traditional_chinese_main"
     ]
     opencc_converter: str = config["client"]["opencc_converter"]

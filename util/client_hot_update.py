@@ -1,46 +1,51 @@
-from os import getcwd, sep, path
+import os
+
+# 导入配置相关模块
+import sys
 import time
-from util.client_cosmic import console
-from util import hot_sub_zh
-from util import hot_sub_en
-from util import hot_sub_rule
-from util import hot_kwds
 from pathlib import Path
 
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
+from util import hot_kwds, hot_sub_en, hot_sub_rule, hot_sub_zh
+from util.client_cosmic import console
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from tomlkit import parse
 
 path_zh = Path() / "hot-zh.txt"
 path_en = Path() / "hot-en.txt"
 path_rule = Path() / "hot-rule.txt"
 path_kwds = Path() / "keywords.txt"
+config_toml_path = Path() / "config.toml"
 
 
 def update_hot_zh():
     if not path_zh.exists():
         with open(path_zh, "w", encoding="utf-8") as f:
-            f.write('# 在此文件放置中文热词，每行一个，开头带井号表示注释，会被省略')
+            f.write("# 在此文件放置中文热词，每行一个，开头带井号表示注释，会被省略")
     with open(path_zh, "r", encoding="utf-8") as f:
         num_hot_zh = hot_sub_zh.更新热词词典(f.read())
-    console.print(f'已载入 [green4]{num_hot_zh:5}[/] 条中文热词')
+    console.print(f"已载入 [green4]{num_hot_zh:5}[/] 条中文热词")
 
 
 def update_hot_en():
     if not path_en.exists():
-        with open(path_en, "w", encoding='utf-8') as f:
+        with open(path_en, "w", encoding="utf-8") as f:
             f.write(
-                '# 在此文件放置英文热词 \n# Put English hot words here, one per line. Line starts with # will be ignored. ')
+                "# 在此文件放置英文热词 \n# Put English hot words here, one per line. Line starts with # will be ignored. "
+            )
     with open(path_en, "r", encoding="utf-8") as f:
         num_hot_en = hot_sub_en.更新热词词典(f.read())
-    console.print(f'已载入 [green4]{num_hot_en:5}[/] 条英文热词')
+    console.print(f"已载入 [green4]{num_hot_en:5}[/] 条英文热词")
 
 
 def update_hot_rule():
     if not path_rule.exists():
-        with open(path_rule, "w", encoding='utf-8') as f:
+        with open(path_rule, "w", encoding="utf-8") as f:
             f.write(
-r'''# 在此文件放置自定义规则，每行一条正则表达式，
+                r"""# 在此文件放置自定义规则，每行一条正则表达式，
 # 左边是查找模式，右边是替换式，中间用带空格的等号分开
 # 以 # 开头的会被忽略，将查找和匹配用等号隔开，文本两边的空格会被省略。例如：
 
@@ -52,20 +57,51 @@ r'''# 在此文件放置自定义规则，每行一条正则表达式，
 (艾特)\s*(QQ)\s*点\s*            =     @qq.
 (艾特)\s*([一幺]六三)\s*点\s*     =     @163.
 (艾特)\s*(\w+)\s*(点)\s*(\w+)    =     @\2.\4
-''')
+"""
+            )
     with open(path_rule, "r", encoding="utf-8") as f:
         num_hot_rule = hot_sub_rule.更新热词词典(f.read())
-    console.print(f'已载入 [green4]{num_hot_rule:5}[/] 条自定义替换规则')
+    console.print(f"已载入 [green4]{num_hot_rule:5}[/] 条自定义替换规则")
 
 
 def update_hot_kwds():
     if not path_kwds.exists():
-        with open(path_kwds, "w", encoding='utf-8') as f:
+        with open(path_kwds, "w", encoding="utf-8") as f:
             f.write(
-                '# 在此文件放置日记关键词，每行一个，开头带井号表示注释，会被省略\n# 当识别结果以关键词开头时，会被记录到 「年份/月份/关键词-日期.md」文件中\n重要\n健康\n学习')
+                "# 在此文件放置日记关键词，每行一个，开头带井号表示注释，会被省略\n# 当识别结果以关键词开头时，会被记录到 「年份/月份/关键词-日期.md」文件中\n重要\n健康\n学习"
+            )
     with open(path_kwds, "r", encoding="utf-8") as f:
         num_kwd = hot_kwds.do_updata_kwd(f.read())
-    console.print(f'已载入 [green4]{num_kwd:5}[/] 条日记关键词')
+    console.print(f"已载入 [green4]{num_kwd:5}[/] 条日记关键词")
+
+
+def update_convert_to_traditional_chinese():
+    """专门更新繁简体转换配置"""
+    try:
+        # 重新加载配置文件
+        with config_toml_path.open("r", encoding="utf-8") as f:
+            config_str = f.read()
+            new_config = parse(config_str)
+
+        # 只更新繁简体转换配置
+        from util.config import ClientConfig as Config
+
+        old_value: Literal["简", "繁"] = Config.convert_to_traditional_chinese_main
+        new_value: Literal["简", "繁"] = new_config["client"][
+            "convert_to_traditional_chinese_main"
+        ]
+
+        if old_value != new_value:
+            Config.convert_to_traditional_chinese_main = new_value
+            console.print(f"[green4]繁简体转换配置已更新，单键输出 {new_value} 体[/]")
+        else:
+            console.print("[dim]繁简体转换配置无变化[/]")
+
+        return True
+
+    except Exception as e:
+        console.print(f"[red]繁简体转换配置热更新失败: {e}[/]")
+        return False
 
 
 def update_hot_all():
@@ -78,12 +114,13 @@ def update_hot_all():
 
 def observe_hot():
     observer = Observer()
-    observer.schedule(HotHandler(), '.', recursive=False)
+    observer.schedule(HotHandler(), ".", recursive=False)
     observer.start()
     return observer
 
+
 class HotHandler(FileSystemEventHandler):
-    """用于动态更新热词的处理器"""
+    """用于动态更新热词和配置的处理器"""
 
     last_time = 0
 
@@ -92,6 +129,7 @@ class HotHandler(FileSystemEventHandler):
         path_en: update_hot_en,
         path_rule: update_hot_rule,
         path_kwds: update_hot_kwds,
+        config_toml_path: update_convert_to_traditional_chinese,
     }
 
     def on_modified(self, event):
@@ -107,13 +145,17 @@ class HotHandler(FileSystemEventHandler):
         # 更新时间
         self.last_time = time.time()
 
-        # 延迟0.2秒，避免编辑器还没有将热词文件更新完成导致读空
+        # 延迟0.2秒，避免编辑器还没有将文件更新完成导致读空
         time.sleep(0.2)
-        console.print('[green4]检测到配置文件更新，[/]', end='')
+
+        if event_path == config_toml_path:
+            console.print("[green4]检测到配置文件更新，[/]", end="")
+        else:
+            console.print("[green4]检测到热词文件更新，[/]", end="")
 
         # 更新
         try:
             self.updates[event_path]()
             console.line()
         except Exception as e:
-            console.print(f'更新热词失败：{e}', style='bright_red')
+            console.print(f"更新失败：{e}", style="bright_red")

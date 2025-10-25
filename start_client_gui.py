@@ -5,6 +5,7 @@ import sys
 import threading
 from pathlib import Path
 from queue import Queue
+from typing import Literal
 
 import win32api
 import win32con
@@ -28,6 +29,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 from qt_material import apply_stylesheet
+from tomlkit import dumps, parse
 
 from util.check_microphone_usage import is_microphone_in_use
 from util.check_process import check_process
@@ -64,6 +66,7 @@ class Hint_While_Recording_At_Cursor_Position(QLabel):
 class GUI(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.config_toml_path = Path() / "config.toml"
         self.init_ui()
         self.output_queue_client = Queue()
         self.start_script()
@@ -204,6 +207,27 @@ class GUI(QMainWindow):
         vscode_home_folder_action = QAction("🤓 Open Home Folder With VSCode", self)
         chatglm_website_action = QAction("🤖 ChatGLM Website", self)
 
+        self.convert_to_traditional_chinese_main_action = QAction(
+            "⚙️ 默认使用 简/繁 体", self
+        )
+        # 获取当前值
+        try:
+            # 读取配置文件
+            with open(self.config_toml_path, "r", encoding="utf-8") as f:
+                config_str = f.read()
+                toml_config = parse(config_str)
+            old_value: Literal["简", "繁"] = toml_config["client"][
+                "convert_to_traditional_chinese_main"
+            ]
+            match old_value:
+                case "简":
+                    self.convert_to_traditional_chinese_main_action.setText("简体中文")
+                case "繁":
+                    self.convert_to_traditional_chinese_main_action.setText("繁體中文")
+        except Exception as e:
+            print(f"读取配置文件失败: {e}")
+            return
+
         github_website_action = QAction("🌐 GitHub Website", self)
         show_action = QAction("🪟 Show", self)
         restart_client_action = QAction("🔄 Restart Client", self)
@@ -218,6 +242,9 @@ class GUI(QMainWindow):
         vscode_home_folder_action.triggered.connect(self.vscode_home_folder)
         chatglm_website_action.triggered.connect(self.open_chatglm_website)
 
+        self.convert_to_traditional_chinese_main_action.triggered.connect(
+            self.switch_between_simplified_and_traditional
+        )
         github_website_action.triggered.connect(self.open_github_website)
         show_action.triggered.connect(self.showNormal)
         restart_client_action.triggered.connect(self.restart_client)
@@ -240,6 +267,7 @@ class GUI(QMainWindow):
 
         tray_menu.addMenu(edit_menu)
         tray_menu.addMenu(view_menu)
+        tray_menu.addAction(self.convert_to_traditional_chinese_main_action)
 
         tray_menu.addAction(github_website_action)
         tray_menu.addSeparator()
@@ -248,6 +276,50 @@ class GUI(QMainWindow):
         tray_menu.addAction(quit_action)
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
+
+    def switch_between_simplified_and_traditional(self):
+        # 获取当前值
+        try:
+            # 读取配置文件
+            with open(self.config_toml_path, "r", encoding="utf-8") as f:
+                config_str = f.read()
+                toml_config = parse(config_str)
+            old_value: Literal["简", "繁"] = toml_config["client"][
+                "convert_to_traditional_chinese_main"
+            ]
+        except Exception as e:
+            print(f"读取配置文件失败: {e}")
+            return
+
+        # 切换值
+        match old_value:
+            case "简":
+                new_value = "繁"
+            case "繁":
+                new_value = "简"
+        # 修改配置文件
+
+        try:
+            # 读取配置文件
+            with open(self.config_toml_path, "r", encoding="utf-8") as f:
+                config_str = f.read()
+                toml_config = parse(config_str)
+
+            # 修改配置
+            toml_config["client"]["convert_to_traditional_chinese_main"] = new_value
+
+            # 重新写入文件（使用新的文件句柄）
+            with open(self.config_toml_path, "w", encoding="utf-8") as f:
+                f.write(dumps(toml_config))
+
+            # 更新托盘菜单
+            match old_value:
+                case "简":
+                    self.convert_to_traditional_chinese_main_action.setText("繁體中文")
+                case "繁":
+                    self.convert_to_traditional_chinese_main_action.setText("简体中文")
+        except Exception as e:
+            print(f"修改配置文件失败: {e}")
 
     def restart_client(self):
         subprocess.Popen(
