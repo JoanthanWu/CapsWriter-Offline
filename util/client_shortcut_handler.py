@@ -363,6 +363,7 @@ def click_mode(e: keyboard.KeyboardEvent):
                 Cosmic.offline_translate_needed,
                 Cosmic.online_translate_needed,
                 Config.hold_mode,
+                Config.convert_to_traditional_chinese_main,
             )
             launch_task()
 
@@ -379,6 +380,7 @@ def click_mode(e: keyboard.KeyboardEvent):
                 Cosmic.offline_translate_needed,
                 Cosmic.online_translate_needed,
                 Config.hold_mode,
+                Config.convert_to_traditional_chinese_main,
             )
 
             double_clicked = False
@@ -399,6 +401,7 @@ def click_mode(e: keyboard.KeyboardEvent):
                 Cosmic.offline_translate_needed,
                 Cosmic.online_translate_needed,
                 Config.hold_mode,
+                Config.convert_to_traditional_chinese_main,
             )
             
             Cosmic.opposite_state = not Cosmic.opposite_state
@@ -477,6 +480,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 Cosmic.offline_translate_needed,
                 Cosmic.online_translate_needed,
                 Config.hold_mode,
+                Config.convert_to_traditional_chinese_main,
             )
             # 启动录音任务
             launch_task()
@@ -523,6 +527,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 Cosmic.offline_translate_needed,
                 Cosmic.online_translate_needed,
                 Config.hold_mode,
+                Config.convert_to_traditional_chinese_main,
             )
 
             # 恢復音频的播放

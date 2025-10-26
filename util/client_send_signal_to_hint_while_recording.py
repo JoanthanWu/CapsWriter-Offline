@@ -40,6 +40,7 @@ def send_signal_to_hint_while_recording(
     offline_translate: bool,
     online_translate: bool,
     hold_mode: bool,
+    convert_to_traditional_chinese_main,
 ):
     exe_path = Path().cwd() / "hint_while_recording.exe"
     hwnd = win32gui.FindWindow(
@@ -49,6 +50,10 @@ def send_signal_to_hint_while_recording(
     if not Config.hint_while_recording_at_edit_position_powered_by_ahk:
         return "Feature not enabled"
 
+    # print(f"convert_to_traditional_chinese_main: {convert_to_traditional_chinese_main}")
+    convert_to_traditional_chinese_main_bool = (convert_to_traditional_chinese_main == "繁")
+    # print(f"convert_to_traditional_chinese_main_bool: {convert_to_traditional_chinese_main_bool}")
+
     if hwnd:
         # print("Found window, handle is:", hwnd)
         encoded_bools = encode_booleans(
@@ -57,6 +62,7 @@ def send_signal_to_hint_while_recording(
             offline_translate,
             online_translate,
             hold_mode,
+            convert_to_traditional_chinese_main_bool,
         )
         result = send_signal(hwnd, 0x5555, encoded_bools, 0)
     else:
