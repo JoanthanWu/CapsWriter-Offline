@@ -30,6 +30,7 @@ global is_short_duration := False
 global offline_translate_needed := false
 global online_translate_needed := false
 global hold_mode := False
+global convert_to_traditional_chinese_main := False
 global bttRemoveLoopIndex := 0
 global lastX := 0
 global lastY := 0
@@ -82,14 +83,15 @@ OwnStyle4 := { TextColorLinearGradientStart: enTxtClolorB        ; ARGB
 ; ============================  主控  ============================
 
 MsgMonitor(wParam, lParam, msg, hwnd) {
-    global is_microphone_in_use, is_short_duration, offline_translate_needed, online_translate_needed, hold_mode, keyPressed, 调用次数, bttRemoveLoopIndex
+    global is_microphone_in_use, is_short_duration, offline_translate_needed, online_translate_needed, hold_mode, keyPressed, 调用次数, bttRemoveLoopIndex, convert_to_traditional_chinese_main
 
     is_microphone_in_use := (wParam & 1) != 0
     is_short_duration := (wParam & 2) != 0
     offline_translate_needed := (wParam & 4) != 0
     online_translate_needed := (wParam & 8) != 0
     hold_mode := (wParam & 16) != 0
-
+    convert_to_traditional_chinese_main := (wParam & 32) != 0
+    
     ; ToolTip "is_microphone_in_use= " is_microphone_in_use "`nis_short_duration= " is_short_duration "`n使用的次数: " 调用次数 "`noffline_translate_needed= " offline_translate_needed "`nonline_translate_needed= " online_translate_needed "`nhold_mode= " hold_mode "`n调用次数A= " 调用次数A "`n调用次数B= " 调用次数B "`n调用次数C= " 调用次数C "`nbttRemoveLoopIndex= " bttRemoveLoopIndex, 0, 1080, 9
     ; 调用次数 += 1
 
@@ -221,12 +223,22 @@ FollowingMouseLoop(*) {
 }
 
 TipShow(Txt, x, y) {
-    if enableBTT
+    if enableBTT {
         if Txt == "cnTxt" {
-            if is_short_duration
-                btt(cnTxtB, x, y - 3, 20, OwnStyle3)
-            else
-                btt(cnTxt, x, y - 3, 20, OwnStyle1)
+            ; 主要輸出文字是繁體的時候
+            if convert_to_traditional_chinese_main {
+                if is_short_duration
+                    btt(cnTxt, x, y - 3, 20, OwnStyle1)
+                else
+                    btt(cnTxtB, x, y - 3, 20, OwnStyle3)
+            }
+            ; 主要輸出文字是简体的时候
+            else {
+                if is_short_duration
+                    btt(cnTxtB, x, y - 3, 20, OwnStyle3)
+                else
+                    btt(cnTxt, x, y - 3, 20, OwnStyle1)
+            }
         }
         else {
             if is_short_duration
@@ -234,20 +246,33 @@ TipShow(Txt, x, y) {
             else
                 btt(enTxt, x, y - 3, 20, OwnStyle2)
         }
-    else
+    }
+    else {
         if Txt == "cnTxt" {
-            if is_short_duration
-                ToolTip(cnTxtB, x, y)
-            else
-                ToolTip(cnTxt, x, y)
-        }
+            ; 主要輸出文字是繁體的时候
+            if convert_to_traditional_chinese_main {
+                if is_short_duration
+                    ToolTip(cnTxt, x, y)
+                else
+                    ToolTip(cnTxtB, x, y)
+            }
+            ; 主要輸出文字是简体的时候
+            else {
+                if is_short_duration
+                    ToolTip(cnTxtB, x, y)
+                else
+                    ToolTip(cnTxt, x, y)
+            }
+        } 
         else {
             if is_short_duration
                 ToolTip(enTxtB, x, y)
             else
                 ToolTip(enTxt, x, y)
         }
+    }
 }
+
 
 BttRemoveLoop(*) {
     global keyPressed, bttRemoveLoopIndex
@@ -280,7 +305,7 @@ BttRemoveLoop(*) {
 DefaultIni() {
     IniWrite("1", IniFile, "BeautifulToolTip", "enableBTT")
     IniWrite("✦语音输入中‧‧‧", IniFile, "ShowText", "cnTxt")
-    IniWrite("✦语音输入中⇄", IniFile, "ShowText", "cnTxtB")
+    IniWrite("✦語音輸入中⇄", IniFile, "ShowText", "cnTxtB")
     IniWrite("✦VoiceTrans‧‧‧", IniFile, "ShowText", "enTxt")
     IniWrite("✦VoiceTrans⇄", IniFile, "ShowText", "enTxtB")
     IniWrite("0xFFCC7A00", IniFile, "Txt", "cnTxtClolorA")
