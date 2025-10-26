@@ -90,6 +90,19 @@ class GUI(QMainWindow):
         event.ignore()  # Ignore the close event
 
     def quit_app(self):
+        import logging
+
+        def setup_logging():
+            logging.basicConfig(
+                filename="log.txt",
+                level=logging.INFO,
+                format="%(asctime)s - %(levelname)s - %(message)s",
+                encoding="utf-8",
+            )
+
+        if not logging.getLogger().handlers:
+            setup_logging()
+
         # Terminate core_server.py process
         if hasattr(self, "core_server_process") and self.core_server_process:
             self.core_server_process.terminate()
@@ -102,24 +115,31 @@ class GUI(QMainWindow):
         QApplication.quit()
 
         # TODO: Quit models The above method can not completely exit the model, rename pythonw.exe to pythonw_CapsWriter.exe and taskkill. It's working but not the best way.
-        if Config.start_online_translate_server:
-            subprocess.Popen(
-                "taskkill /IM pythonw_CapsWriter_Server.exe /IM deeplx_windows_amd64.exe /F",
-                creationflags=subprocess.CREATE_NO_WINDOW,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,
-                text=True,
-            )
-        else:
-            subprocess.Popen(
-                "taskkill /IM pythonw_CapsWriter_Server.exe /F",
-                creationflags=subprocess.CREATE_NO_WINDOW,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                shell=True,
-                text=True,
-            )
+        try:
+            if Config.start_online_translate_server:
+                proc = subprocess.Popen(
+                    "taskkill /IM pythonw_CapsWriter_Server.exe /IM deeplx_windows_amd64.exe /F",
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True,
+                    text=True,
+                )
+            else:
+                proc = subprocess.Popen(
+                    "taskkill /IM pythonw_CapsWriter_Server.exe /F",
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True,
+                    text=True,
+                )
+            stdout, stderr = proc.communicate()
+            logging.info(f"Taskkill output: {stdout}")
+            if stderr:
+                logging.error(f"Taskkill errors: {stderr}")
+        except Exception as e:
+            logging.error(f"Error occurred while quitting the application: {e}")
 
     def on_tray_icon_activated(self, reason):
         # Called when the system tray icon is activated

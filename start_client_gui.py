@@ -430,6 +430,19 @@ class GUI(QMainWindow):
         event.ignore()  # Ignore the close event
 
     def quit_app(self):
+        import logging
+
+        def setup_logging():
+            logging.basicConfig(
+                filename="log.txt",
+                level=logging.INFO,
+                format="%(asctime)s - %(levelname)s - %(message)s",
+                encoding="utf-8",
+            )
+
+        if not logging.getLogger().handlers:
+            setup_logging()
+
         # Terminate core_client.py process
         if hasattr(self, "core_client_process") and self.core_client_process:
             self.core_client_process.terminate()
@@ -443,7 +456,7 @@ class GUI(QMainWindow):
 
         # TODO: Quit models The above method can not completely exit the model, rename pythonw.exe to pythonw_CapsWriter.exe and taskkill. It's working but not the best way.
         try:
-            subprocess.Popen(
+            proc = subprocess.Popen(
                 "taskkill /IM start_client_gui_admin.exe /IM start_client_gui.exe /IM pythonw_CapsWriter_Client.exe /IM hint_while_recording.exe /F",
                 creationflags=subprocess.CREATE_NO_WINDOW,
                 stdout=subprocess.PIPE,
@@ -451,8 +464,12 @@ class GUI(QMainWindow):
                 shell=True,
                 text=True,
             )
-        except Exception:
-            pass
+            stdout, stderr = proc.communicate()
+            logging.info(f"Taskkill output: {stdout}")
+            if stderr:
+                logging.error(f"Taskkill errors: {stderr}")
+        except Exception as e:
+            logging.error(f"Error occurred while quitting the application: {e}")
 
     def on_tray_icon_activated(self, reason):
         # Called when the system tray icon is activated

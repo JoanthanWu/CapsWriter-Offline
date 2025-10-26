@@ -5,25 +5,39 @@ from util.check_process import check_process
 
 
 def stop_exe(exe_name: str):
-    print(f"Stopping {exe_name}")
-    subprocess.Popen(
-        f"taskkill /IM {exe_name} /F",
-        creationflags=subprocess.CREATE_NO_WINDOW,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        shell=True,
-        text=True,
-    )
-    sleep(1)
-    if check_process(exe_name):
-        stop_exe(exe_name)
-    else:
-        return
+    import logging
+
+    def setup_logging():
+        logging.basicConfig(
+            filename="log.txt",
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            encoding="utf-8",
+        )
+
+    if not logging.getLogger().handlers:
+        setup_logging()
+    try:
+        logging.info(f"Stopping {exe_name}")
+        proc = subprocess.Popen(
+            f"taskkill /IM {exe_name} /F",
+            creationflags=subprocess.CREATE_NO_WINDOW,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            text=True,
+        )
+        stdout, stderr = proc.communicate()
+        logging.info(f"Taskkill output: {stdout}")
+        if stderr:
+            logging.error(f"Taskkill errors: {stderr}")
+    except Exception as e:
+        logging.error(f"Error stopping {exe_name}: {e}")
 
 
 def start_exe(exe_name: str):
-    print(f"Starting {exe_name}")
-    subprocess.Popen(
+    # print(f"Starting {exe_name}")
+    proc = subprocess.Popen(
         f'start "" "{exe_name}"',
         creationflags=subprocess.CREATE_NO_WINDOW,
         stdout=subprocess.PIPE,
@@ -31,11 +45,8 @@ def start_exe(exe_name: str):
         shell=True,
         text=True,
     )
-    sleep(1)
-    if not check_process(exe_name):
-        start_exe(exe_name)
-    else:
-        return
+    stdout, stderr = proc.communicate()
+    print(f"{stdout}, {stderr}")
 
 
 def restart_exe(exe_name: str):
