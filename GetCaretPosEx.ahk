@@ -18,15 +18,19 @@ GetCaretPosEx(&left?, &top?, &right?, &bottom?) {
 
     hwnd := getHwnd()
 
+    ; 包含 app-list.ahk 文件
+    #Include "app-list.ahk"
+
+    ; 从 app-list.ahk 中获取模式列表
+    /**
+     * @link https://github.com/abgox/InputTip/blob/main/src/utils/app-list.ahk
+     */
     disable_list := hintAtCursorPositionList . ""
-    Wpf_list := ":powershell_ise.exe:"
-    UIA_list := ":WINWORD.EXE:WindowsTerminal.exe:wt.exe:OneCommander.exe:YoudaoDict.exe:Mempad.exe:Taskmgr.exe:"
-    ; MSAA 可能有符号残留
-    MSAA_list := ":EXCEL.EXE:DingTalk.exe:Notepad.exe:Notepad3.exe:Quicker.exe:skylark.exe:aegisub32.exe:aegisub64.exe:aegisub.exe:PandaOCR.exe:PandaOCR.Pro.exe:VStart6.exe:TIM.exe:PowerToys.PowerLauncher.exe:Foxmail.exe:"
-    ; ACC_list := ":explorer.exe:ApplicationFrameHost.exe:"
-    Gui_UIA_list := ":POWERPNT.EXE:Notepad++.exe:firefox.exe:devenv.exe:"
-    ; 需要调用有兼容性问题的 dll 来更新光标位置的应用列表
-    Hook_list_with_dll := ":WeChat.exe:"
+    Wpf_list := getAppListForMode("WPF")
+    UIA_list := getAppListForMode("UIA")
+    MSAA_list := getAppListForMode("MSAA")
+    Gui_UIA_list := getAppListForMode("GUI_UIA")
+    Hook_list_with_dll := getAppListForMode("HOOK_DLL")
 
     if (InStr(disable_list, ":" exe_name ":")) {
         return 0
@@ -61,6 +65,21 @@ GetCaretPosEx(&left?, &top?, &right?, &bottom?) {
         }
     }
     return 0
+
+    ; 辅助函数：将应用数组转换为冒号分隔的字符串格式
+    getAppListForMode(modeName) {
+        try {
+            appArray := defaultModeList.HA[modeName]
+            result := ":"
+            for app in appArray {
+                result .= app . ":"
+            }
+            return result
+        }
+        catch {
+            return ":"
+        }
+    }
 
     getHwnd(hwnd := 0) {
         x64 := A_PtrSize == 8
