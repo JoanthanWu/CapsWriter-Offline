@@ -13,7 +13,7 @@
 2. 按下键盘上的 `Left Shift` 再按 `CapsLock` 可以将识别结果离线翻译为英文，并将识别结果立刻输入
 3. 按下键盘上的 `Right Shift` 再按 `CapsLock` 可以将识别结果[在线翻译](https://github.com/OwO-Network/DeepLX)为多国语言，默认设置翻译为日文，并将识别结果立刻输入
 4. 将音视频文件拖动到客户端 `start_client_gui.exe` 打开，即可转录生成 srt 字幕
-5. 按下客户端主界面的 `云贴` 按钮，即可将客户端文本框中的前 1024 个字节发布到[云剪贴板](https://cv.j20.cc/) ，并生成获取链接和二维码
+5. 按下客户端主界面的 `云贴` 按钮，即可将客户端文本框中内容发布到[云剪贴板](https://share.lanol.cn) ，并生成获取链接和二维码
 6. 按下键盘上的 `Ctrl` + `Alt` + `P` ，可以将光标选中的 `中文` [离线翻译](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en)为 `英文` ，并自动覆盖替换原文
 7. 按下键盘上的 `Ctrl` + `Alt` + `[` ，可以将光标选中的 `任意语言` [在线翻译](https://github.com/OwO-Network/DeepLX)为 `在线翻译目标语言` ，并自动覆盖替换原文
 8. 按下键盘上的 `Ctrl` + `Alt` + `F` ，可以使用 everything 搜索光标选中的文字
@@ -93,7 +93,7 @@
 > > 标题栏
 > >
 > > - 📌：置顶窗口，将它显示在其他窗口之上 / 不置顶
-> > - 云贴：按下客户端主界面的 `云贴` 按钮，即可将客户端文本框中的前 1024 个字节发布到[云剪贴板](https://cv.j20.cc/)（一个无依赖即用即走的剪切板） ，并生成获取链接和二维码。实测 5~1024 字节，不足字节补.超出字节无效。
+> > - 云贴：按下客户端主界面的 `云贴` 按钮，即可将客户端文本框中的内容发布到[云剪贴板](https://share.lanol.cn)（一个无依赖即用即走的剪切板） ，并生成获取链接和二维码。
 > >   ![alt text](assets/云贴.png)
 > > - 清空：清空文本框中的全部内容
 >
@@ -131,7 +131,7 @@
 17. 启动后自动缩小至托盘功能：默认 服务端 `start_server_gui.exe` 启动后不显示主窗口，自动缩小至托盘；客户端 `start_client_gui.exe` 显示主窗口。通过 `config.toml` 中 `shrink_automatically_to_tray` 配置
 18. 禁止多开功能：默认禁止多开，通过 `config.toml` 中 `only_run_once` 配置
 19. 一键启动功能：默认服务端 `start_server_gui.exe` 启动后，自动 **🛡️ 以管理员权限** 启动客户端 `start_client_gui_admin.exe`，通过 `config.toml` 中 `in_the_meantime_start_the_client_and_run_as_admin` 和 `In_the_meantime_start_the_client_as_admin` 配置
-20. 将文本上传至云剪切板，方便向 ios 设备分享。基于 [cv.j20.cc]() ，一个无依赖即用即走的剪切板。实测 5~1024 字节，不足字节补 `.` ，超出字节 `无效` 。
+20. 将文本上传至云剪切板，方便向 ios 设备分享。基于 https://share.lanol.cn (https://github.com/vastsa/FileCodeBox)，一个无依赖即用即走的剪切板。
 21. 将光标选中了中文离线翻译功能：按下 `Ctrl` + `Alt` + `P` ，可以将光标选中了中文离线翻译为英文，并自动覆盖替换原文。通过 `config.toml` 中 `offline_translate_and_replace_the_selected_text_shortcut` 配置
 22. 按下键盘上的 `Ctrl` + `Alt` + `[` ，可以将光标选中的 `任意语言` 在线翻译为 `在线翻译目标语言` ，并自动覆盖替换原文。通过 `config.toml` 中 `online_translate_and_replace_the_selected_text_shortcut` 和 `online_translate_target_languages` 配置
 23. 默认启用双击`录音键`临时转换 `简/繁` 体中文输出的功能，通过 `config.toml` 中 `enable_double_click_opposite_state` 配置

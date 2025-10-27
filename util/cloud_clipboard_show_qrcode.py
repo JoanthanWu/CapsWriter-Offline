@@ -72,16 +72,6 @@ def truncate_utf8(s, max_bytes=1024):
 
 
 def CloudClipboardShowQRCode(text):
-    # https://cv.j20.cc/  限制 *请输入5~1000个字符  实测最多1024字节
-    text = text.replace("\\n", " ").replace("\\t", " ")
-    byte_count = utf8_byte_count(text)
-
-    # print(byte_count)
-
-    if byte_count < 5:
-        text = text.ljust(5, ".")
-    if byte_count > 1024:
-        text = truncate_utf8(text)
     url = CloudClipboard().post_data(text)
     qrcode = QRCODE(url, url)
     qrcode.show()

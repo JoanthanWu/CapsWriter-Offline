@@ -1,90 +1,68 @@
-'''
+"""
 
-https://cv.j20.cc/
+https://share.lanol.cn/
 
 云剪切板
 
-一个无依赖即用即走的剪切板，支持 web curl
-
-
-*请输入5~1000个字符
-
 *使用说明:
 
-1. 提交文字或上传文件后得到一个唯一链接，例如 https://cv.j20.cc/b/xxxx
-
-2. 命令行提交文字 curl https://cv.j20.cc/api/board -d "text=示例文字"
-
-3. 命令行上传文件 curl https://cv.j20.cc/api/board -F "file=@some.file"
-
-4. 使用时，对于文字 curl https://cv.j20.cc/b/xxxx 或者 浏览器打开链接
-
-5. 使用时，对于文件 curl -O https://cv.j20.cc/b/xxxx 或者 浏览器打开链接下载
-
-6. 历史记录为48h内最近20条，依靠cookie标记
-
-'''
+https://github.com/vastsa/FileCodeBox/blob/master/docs/api/index.md
 
 
+"""
+
+import json
 
 import requests
-import json
-from html.parser import HTMLParser
 
-class MyHTMLParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.content = ""
-        self.in_content = False
-
-    def handle_starttag(self, tag, attrs):
-        if tag == "p" and attrs == [('id', 'content')]:
-            self.in_content = True
-
-    def handle_endtag(self, tag):
-        if tag == "p":
-            self.in_content = False
-
-    def handle_data(self, data):
-        if self.in_content:
-            self.content += data
 
 class CloudClipboard:
     def __init__(self):
-        self.url = 'https://cv.j20.cc/api/board'
+        self.upload_url = "https://share.lanol.cn/share/text/"
+        self.download_url_template = "https://share.lanol.cn/#/?code={}"
 
-    def post_data(self, text):
-        data = {'text': text}
-        response = requests.post(self.url, data=data)
-        if response.status_code == 200:
-            response_data = json.loads(response.text)
-            if 'k' in response_data['data']:
-                k_value = response_data['data']['k']
-                url = f'https://cv.j20.cc/b/{k_value}'
-                return url
+    def post_data(self, text, expire_value=1, expire_style="day"):
+        """
+        上传文本到云剪切板
+        :param text: 要上传的文本
+        :param expire_value: 过期数值
+        :param expire_style: 过期单位（day, week, month, year）
+        :return: 分享链接
+        """
+        data = {
+            "text": (None, text),
+            "expire_value": (None, str(expire_value)),
+            "expire_style": (None, expire_style),
+        }
+
+        try:
+            response = requests.post(self.upload_url, files=data)
+            response.raise_for_status()
+            result = response.json()
+
+            if result.get("code") == 200 and "detail" in result:
+                code = result["detail"].get("code")
+                if code:
+                    url = self.download_url_template.format(code)
+                    return url
             else:
-                # print('Failed to post data.')
+                print(f"上传失败: {result.get('message', '未知错误')}")
                 return None
-        else:
-            print(json.loads(response.text))
+
+        except requests.exceptions.RequestException as e:
+            print(f"网络错误: {e}")
+            return None
+        except json.JSONDecodeError as e:
+            print(f"解析响应失败: {e}")
+            if "response" in locals():
+                print(f"响应内容: {response.text}")
             return None
 
-    def get_data(self, url):
-        response = requests.get(url)
-        if response.status_code == 200:
-            parser = MyHTMLParser()
-            parser.feed(response.text)
-            content = parser.content
-            return content
-        else:
-            # print('Failed to get data.')
-            return None
+    def get_data(self, url): ...
 
-if __name__ == '__main__':
-    text = 'Hello https://cv.j20.cc/'
+
+if __name__ == "__main__":
+    text = "Hello https://share.lanol.cn/"
 
     url = CloudClipboard().post_data(text)
-    print(url)
-
-    content = CloudClipboard().get_data(url)
-    print(content)
+    print(f"{url}")

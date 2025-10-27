@@ -182,7 +182,7 @@ class GUI(QMainWindow):
     def create_cloudypaste_button(self):
         self.cloudypaste_button = QPushButton(chr(0xE753), self)
         self.cloudypaste_button.setToolTip(
-            "将文本上传至云剪切板，方便向ios设备分享。基于 cv.j20.cc ，一个无依赖即用即走的剪切板。实测5~1024字节，不足字节补.超出字节无效。"
+            "将文本上传至云剪切板，方便向ios设备分享。基于 share.lanol.cn ，一个无依赖即用即走的剪切板。"
         )
         self.cloudypaste_button.setMaximumSize(80, 30)
         self.cloudypaste_button.clicked.connect(self.cloudy_paste)
