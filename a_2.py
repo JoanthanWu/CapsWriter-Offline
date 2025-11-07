@@ -1,3 +1,4 @@
+# a_2.py :
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PySide6.QtGui import QFont
 

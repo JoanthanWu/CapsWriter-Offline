@@ -1,7 +1,9 @@
+# b_2.py :
 import sys
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QObject, Signal
 import a_2
+from c_2 import KeyboardThread
 
 class Controller(QObject):
     show_widgets_signal = Signal()
@@ -9,16 +11,25 @@ class Controller(QObject):
     def __init__(self):
         super().__init__()
         self.show_widgets_signal.connect(self._on_show_widgets)
-        self.widget = None  # 用于保存窗口对象的引用
+        self.widget = None
 
     def _on_show_widgets(self):
-        # 保存窗口对象到Controller的属性中，避免被回收
         self.widget = a_2.show_widgets()
 
 def run_app():
     app = QApplication(sys.argv)
     controller = Controller()
-    return app, controller
+
+    # 啟動鍵盤監聽線程
+    kb_thread = KeyboardThread()
+    kb_thread.trigger.connect(controller.show_widgets_signal.emit)
+    kb_thread.start()
+
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    run_app()
+
 
 
 # 问题出在窗口对象被创建后没有被持续引用，导致被 Python 垃圾回收机制销毁，从而出现 “一闪而过” 的现象。具体来说，a_2.show_widgets()创建的窗口对象在_on_show_widgets方法执行结束后就失去了引用，被自动回收了。
