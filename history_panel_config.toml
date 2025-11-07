@@ -1,0 +1,80 @@
+[[text_lines]]
+key = "simplified"
+title = "简"
+
+[[text_lines]]
+key = "traditional"
+title = "繁"
+
+[[text_lines]]
+key = "english"
+title = "译"
+
+[title]
+# C:\Windows\Fonts
+font_family = "Microsoft YaHei"
+font_size = 9
+font_bold = true
+font_italic = false
+color = [ 252, 220, 129, 255,]
+bg_color = [ 0, 0, 0, 0,]
+border_color = [ 0, 0, 0, 0,]
+border_width = 0
+min_width = 18
+max_width = 28
+padding = 1
+
+[content]
+font_family = "Microsoft YaHei"
+font_size = 9
+font_bold = false
+font_italic = false
+color = [ 255, 255, 255, 255,]
+bg_color = [ 0, 0, 0, 0,]
+border_color = [ 0, 0, 0, 0,]
+border_width = 0
+line_spacing = 3
+max_lines = 2
+width = 320
+ellipsis = "[...]"
+
+# 文本行布局的内边距（顺序：左、上、右、下）即内部组件（标题、内容、按钮）会紧贴布局的边缘，没有额外空白。
+margins = [0, 0, 0, 0]
+
+[widget]
+padding = [ 3, 3, 3, 3,]
+spacing = 5
+width = 350
+initial_x = 100
+initial_y = 100
+border_radius = 8
+border_width = 4
+
+[pinned]
+bg_colors = [ [ 155, 68, 0, 255,], [ 179, 92, 68, 255,],]
+border_colors = [ [ 84, 67, 50, 255,], [ 137, 103, 71, 255,],]
+
+[unpinned]
+bg_colors = [ [ 44, 79, 84, 255,], [ 31, 49, 52, 255,],]
+border_colors = [ [ 137, 103, 71, 255,], [ 84, 67, 50, 255,],]
+
+[button]
+size = [ 24, 20,]
+normal_color = [ 255, 204, 51, 255,]
+hover_color = [ 255, 255, 153, 255,]
+pinned_color = [ 200, 50, 50, 255,]
+pinned_hover_color = [ 166, 0, 0, 255,]
+review_color = [ 200, 50, 50, 255,]
+review_hover_color = [ 166, 0, 0, 255,]
+border_radius = 10
+show_pin = true
+show_copy = true
+show_paste = true
+show_type = true
+show_review = true
+
+[global]
+max_text_groups = 12
+auto_close_timeout = 1000
+window_stay_on_top = true
+window_frameless = true

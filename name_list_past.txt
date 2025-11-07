@@ -1,0 +1,40 @@
+﻿001 floating_label_demo.py
+002 floating_label_demo (半透明的矩形圓角藍色背景).py
+003 floating_label_demo (半浮動文字的右上角加一個小按鈕).py
+004 floating_label_demo (加上快捷鍵_keyboard).py
+004A floating_label_demo (加上快捷鍵_Qt).py
+005 floating_label_demo (三組按鈕) .py
+005A floating_label_demo (三組按鈕_改進佈局).py
+005B floating_label_demo (三組按鈕_膠囊佈局) ().py
+005B1 floating_label_demo (三組按鈕_膠囊佈局獨立測試).py
+005C floating_label_demo (4組按鈕_膠囊佈局).py
+005C1 floating_label_demo (4組按鈕_改善定住的狀態) .py
+005D floating_label_demo (倒計時的改善) .py
+006 floating_label_demo (逐一顯示最後 n 個變量的內容).py
+006A floating_label_demo (一次性顯示最後 n 個變量的內容) .py
+006B floating_label_demo (!Abandon!用一個「大容器」包住所有句子).py
+006C floating_label_demo (當按下任一個 📋所有 widget 都要關閉).py
+007 floating_label_demo (📌 釘住的功能實現).py
+007A floating_label_demo (📌 釘住的功能實現_增加頂替功能) .py
+007A1 floating_label_demo (📌 釘住的功能實現_增加頂替功能_模擬新增句子進來) .py
+007B floating_label_demo (📌 釘住的功能實現_叮住的句子寫入文件中) (2).py
+007C floating_label_demo (📌 釘住的功能實現_膠囊按鈕以及顏色) (2).py
+008 floating_label_demo (平常隱藏，只有滑鼠移到文字上時才在文字左上角顯示) .py
+009 floating_label_demo (固定大小 + 自動換行+ 超過第二行→超長文字省略號).py
+010 floating_label_demo (計算文字實際高度).py
+010A floating_label_demo (背景顏色加上邊框).py
+010B floating_label_demo (背景顏色加上邊框的顏色交替+糾正文字尾巴).py
+010C floating_label_demo (背景顏色加上邊框的顏色交替+修正高度+優化背景邊框顏色).py
+011 floating_label_demo (文字三位一體).py
+011A floating_label_demo (文字三位一體_修復按鈕消失).py
+011B floating_label_demo (文字三位一體_修復按鈕釘在左上角-鼠標顯示).py
+011C floating_label_demo (文字三位一體_修復鼠標按鈕顏色改變).py
+011D floating_label_demo (文字三位一體_鼠标停留在任何文字上时保持所有窗口显示，离开后才启动倒计时).py
+011E floating_label_demo (文字三位一體_鼠标停留在任何-widget上时保持所有窗口显示，离开-widget后才启动倒计时).py
+012 floating_label_demo (文字審查).py
+012A floating_label_demo (文字審查的按鈕).py
+013❌ floating_label_demo (鍵盤導航).py
+014 floating_label_demo (自定義變量).py
+014A floating_label_demo (自定義變量_title 和內容的比例).py
+014B floating_label_demo (自定義變量_字體格式).py
+014C floating_label_demo (自定義變量_邊距離).py
