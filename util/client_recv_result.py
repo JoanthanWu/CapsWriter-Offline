@@ -20,10 +20,57 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
+# ----------- smart_history_actions_panel -----------
+# if Config.enabled_smart_history_actions_panel:
+from util.smart_history_actions_panel import add_sentence_group
+
+buffer_group = {}
+def update_buffer(key, value):
+    global buffer_group
+    # 填入或更新元素
+    buffer_group[key] = value.strip()
+
+
+def flush_buffer():
+    global buffer_group
+    if buffer_group:
+        sent_group = buffer_group.copy()   # 建立副本
+        add_sentence_group(sent_group)     # 傳副本進去
+        buffer_group = {}                  # 清空暫存
+# ----------- smart_history_actions_panel -----------
+
+
 async def recv_result():
     if not await check_websocket():
         return
     console.print("[green]连接成功\n")
+
+    # --------------------------------------------------------测试数据
+    update_buffer('simplified', "from-client_recv_result.py update_buffer 这是简体AAA")
+    update_buffer('traditional', "from-client_recv_result.py update_buffer 繁體中文測試")
+    update_buffer('english', "from-client_recv_result.py update_buffer This is EnglishAAA")
+    flush_buffer()
+    # 测试数据z
+    test_groups = [
+        {
+            'traditional': "from-client_recv_result.py 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 ",
+        },
+        {
+            'simplified': "from-client_recv_result.py 这是一个只有简体的例子CCC",
+            'traditional': "",
+            'english': ""
+        },
+        {
+            'traditional': "from-client_recv_result.py 這是一個只有繁體的例子",
+        },
+        {
+            'english': "from-client_recv_result.py This is an English only exampleA."
+        }
+    ]
+    for group in test_groups:
+        add_sentence_group(group)
+    # 测试数据 ---------------------------------------------------
+
     try:
         while True:
             # 接收消息
@@ -41,6 +88,10 @@ async def recv_result():
 
             # 热词替换
             text = hot_sub(text)
+# ----------- smart_history_actions_panel -----------
+            # if Config.enabled_smart_history_actions_panel:
+            update_buffer('simplified', text)
+# ----------- smart_history_actions_panel -----------
 
             # 简繁转换
             convert_to_traditional_chinese_done = False
@@ -53,6 +104,12 @@ async def recv_result():
             if Cosmic.offline_translate_needed and not Cosmic.transcribe_subtitles:
                 offline_translated_text = await translate_offline(text)
                 offline_translate_done = True
+
+# ----------- smart_history_actions_panel -----------
+                # if Config.enabled_smart_history_actions_panel:
+                update_buffer('english', offline_translated_text)
+# ----------- smart_history_actions_panel -----------
+
                 Cosmic.offline_translate_needed = False
 
             # 在线翻译
@@ -60,6 +117,12 @@ async def recv_result():
             if Cosmic.online_translate_needed and not Cosmic.transcribe_subtitles:
                 online_translated_text = translate_online(text)
                 online_translate_done = True
+
+# ----------- smart_history_actions_panel -----------
+                # if Config.enabled_smart_history_actions_panel:
+                update_buffer('english', online_translated_text)
+# ----------- smart_history_actions_panel -----------
+
                 Cosmic.online_translate_needed = False
 
             if Config.save_audio:
@@ -105,14 +168,35 @@ async def recv_result():
                                 await type_result(text)
                             else:
                                 await type_result(traditional_text)
+
+# ----------- smart_history_actions_panel -----------
+                                # if Config.enabled_smart_history_actions_panel:
+                                update_buffer('traditional', traditional_text)
+# ----------- smart_history_actions_panel -----------
+
                         case _:
                             if Cosmic.opposite_state:
                                 await type_result(traditional_text)
+
+# ----------- smart_history_actions_panel -----------
+                                # if Config.enabled_smart_history_actions_panel:
+                                update_buffer('traditional', traditional_text)
+# ----------- smart_history_actions_panel -----------
+
                             else:
                                 await type_result(text)
                 else:
                     await type_result(text)
                 convert_to_traditional_chinese_done = False
+
+
+# ----------- smart_history_actions_panel -----------
+                # if Config.enabled_smart_history_actions_panel:
+                print(f"from-client_recv_result.py A: {buffer_group}")
+                flush_buffer()
+                print(f"from-client_recv_result.py B: {buffer_group}")
+# ----------- smart_history_actions_panel -----------
+
             Cosmic.opposite_state = False
     except websockets.ConnectionClosedError:
         console.print("[red]连接断开\n")

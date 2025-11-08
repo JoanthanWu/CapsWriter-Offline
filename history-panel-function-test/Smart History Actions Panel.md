@@ -10,6 +10,7 @@
 - ⛓ **Review**  
   将句子加入或移出审查清单，以免污染智能历史操作面板。
 
+
 ## 进度
 1. - ☑ 三位一體
 2. - ☑ 加入對比功能(文字審查功能)
@@ -27,11 +28,12 @@
 9. - ☑ 更改名字:
 	- 功能名字 : "智能历史操作面板 / Smart History Actions Panel"
 		- smart_history_actions_panel 
-		- 
+		- enabled_smart_history_actions_panel
 	- 产生的文件名字:
     	- history_panel_config.toml : 配置文件名字
     	- history_pinned_groups.json : 储存固定组的文件名字
     	- history_sanitize_list.txt : 审查列表文件名字
+    	- history_received_text.log : 接收到的文本日志文件名字(def add_sentence_group(new_group):)
 10. 優化潜在点
     1.  - [ ] ★★★ 面板堆积位置算法
 		- 现在是第一块面板在固定位置，然后通过 Y 轴计算下一个面板的位置，如果数量太多的话, 这样会导致面板出现在屏幕外，影响使用体验。
@@ -48,6 +50,7 @@
 			- 优化事件响应，避免高频触发鼠标进入 / 离开事件（enterEvent/leaveEvent）在多窗口场景下可能高频触发，尤其_delayed_leave_check的定时器若设置过短，会增加线程调度开销。优化方案：延长延迟检查时间（如从 50ms 增至 100ms），并在事件处理中增加判断（如当前窗口是否真的需要处理），减少无效调度。
 	7. - [ ] ☆ 精简内存占用，清理无效数据
 			- 精简内存占用，清理无效数据审查过的文本（reviewed_lines）会被拦截，但unpinned_groups中可能仍保留对应数据，占用内存。优化方案：每次加载审查记录后，过滤unpinned_groups和pinned_groups中已审查的文本组，及时清理无效数据。
+
 
 ## `history-panel-function-test` 目录结构
 ├─📄 010C smart_history_actions_panel_demo.py------------- # 以"行"为单位, 4个按钮功能正常
@@ -66,3 +69,19 @@
 ├─📄 history_pinned_groups.json--------------------------- # 储存已经钉住的"组",  以免重启后丢失
 ├─📄 history_sanitize_list.txt---------------------------- # 储存需要过滤的句子, 避免污染
 └─📄 Smart History Actions Panel.md----------------------- # 智能历史操作面板的进度和说明
+
+
+## 整合Smart History Actions Panel 进 CapsWriter-Offline-GUI 遇到的难题
+1. [致命] 无法正常把文字资料填进 PySide6 相关的函数中
+   1. 除了`start_client_gui.py - def start_client_gui()` 的资料可以透过 `smart_history_actions_panel.py - def add_sentence_group(new_group)` 传入 PySide6 相关的函数
+   2. 其他的 `.py 文件` 都无法正常把文字资料填进 PySide6 相关的函数中
+      1. 资料可以透过`smart_history_actions_panel.py - def add_sentence_group(new_group)` 传入, 但无法触发后面的 PySide6 相关的函数
+      2. 证据来自`smart_history_actions_panel.py - def add_sentence_group(new_group)` 的 `history_received_text.log` 文件输出.
+2. [重要] `keyboard库` 无法透过`shift + 双击录音键`来正常开关 面板
+   1. 目前使用只能暂时 `？` 问号\斜杠 来开关面板
+3. [重要] `keyboard库`的相关函数都无法透过面板的按钮(鼠标左键)来进行触发 (Demo 016号可以正常触发)
+   1. `keyboard.send("ctrl+v")` - 📑 **Copy**    
+   2. `keyboard.write(self.text)` - 📋 **Paste**
+   3. 其他的3个功能可以正常运用 - `📌Pin 📑Copy ⛓Review`
+4. [次要] 按钮的widgets背景 变成实色, 在 demo 中本来是透明的.
+5. [次要] 面板的文字内容和demo 中的排序不一样了，没那么整齐.

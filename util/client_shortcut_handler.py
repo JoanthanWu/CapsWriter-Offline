@@ -38,6 +38,27 @@ unmute_task = None
 restore_capslock_task = None
 sessions = []
 
+# ----------- smart_history_actions_panel -----------
+# if Config.enabled_smart_history_actions_panel:
+from PySide6.QtCore import QTimer
+from util.smart_history_actions_panel import (
+    load_reviewed_lines,
+    load_pinned,
+    KeyboardThread,
+    show_widgets,
+    add_sentence_group,
+    simulate_new_group,
+    to_qcolor,
+    to_css_rgba,
+    load_config,
+    merge_configs,
+    MultiLineElidedLabel,
+    TextLineWidget,
+    TextLineWidget
+)
+from start_client_gui import controller
+# ----------- smart_history_actions_panel -----------
+
 
 def shortcut_correct(e: keyboard.KeyboardEvent):
     # 在我的 Windows 电脑上，left ctrl 和 right ctrl 的 keycode 都是一样的，
@@ -469,11 +490,11 @@ def hold_mode(e: keyboard.KeyboardEvent):
             if is_short_duration:
                 double_clicked = True
 
+            translate_needed()
             # 处理双击切换简/繁状态, 当初为何使用这个double_clicked变量来判断？嗯，记不起来了. 可能是当时还没使用key_pressed来锁定
             if double_clicked:
                 Cosmic.opposite_state = not Cosmic.opposite_state
 
-            translate_needed()
             send_signal_to_hint_while_recording(
                 True,
                 is_short_duration,
@@ -494,6 +515,55 @@ def hold_mode(e: keyboard.KeyboardEvent):
             if is_short_duration:
                 Cosmic.offline_translate_needed = saved_result_for_offline_translate_needed
                 Cosmic.online_translate_needed = saved_result_for_online_translate_needed
+
+# ----------- smart_history_actions_panel -----------
+                # if Config.enabled_smart_history_actions_panel:
+                if Cosmic.offline_translate_needed or  Cosmic.online_translate_needed:
+                    cancel_task()
+                    send_signal_to_hint_while_recording(
+                        False,
+                        False,
+                        Cosmic.offline_translate_needed,
+                        Cosmic.online_translate_needed,
+                        Config.hold_mode,
+                        Config.convert_to_traditional_chinese_main,
+                    )
+                    # 恢復音频的播放
+                    restore_audio_playing()
+                    is_short_press = False
+                    key_pressed = False  # 标记为未按下
+
+# --------------------------------------------------------测试数据
+                    # 测试数据z
+                    test_groups = [
+                        {
+                            'traditional': "from-client_chortcut_handler.py 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 ",
+                        },
+                        {
+                            'simplified': "from-client_chortcut_handler.py 这是一个只有简体的例子",
+                            'traditional': "",
+                            'english': ""
+                        },
+                        {
+                            'traditional': "from-client_chortcut_handler.py 這是一個只有繁體的例子",
+                        },
+                        {
+                            'english': "from-client_chortcut_handler.py This is an English only example."
+                        }
+                    ]
+                    for group in test_groups:
+                        add_sentence_group(group)
+                    print("准备启动 qtimer")
+                    timer = QTimer()
+                    timer.timeout.connect(lambda: simulate_new_group("from-client_chortcut_handler.py(Auto) "))
+                    timer.start(3000)
+                    print("已经启动启动 qtimer")
+                    print("呼叫面板")
+                    controller.show_widgets_signal.emit()
+                    print("呼叫面板完成")
+
+                    return
+# ----------- smart_history_actions_panel -----------
 
             # 标记最后弹起的时间
             last_time_released = time.time()

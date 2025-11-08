@@ -11,7 +11,7 @@ import win32api
 import win32con
 import win32gui
 import win32print
-from PySide6.QtCore import QPoint, Qt, QTimer
+from PySide6.QtCore import QPoint, Qt, QTimer, Signal, QObject
 from PySide6.QtGui import QAction, QFont, QIcon, QWheelEvent
 from PySide6.QtWidgets import (
     QApplication,
@@ -34,6 +34,56 @@ from tomlkit import dumps, parse
 from util.check_microphone_usage import is_microphone_in_use
 from util.check_process import check_process
 from util.config import ClientConfig as Config
+
+
+# ----------- smart_history_actions_panel -----------
+# if Config.enabled_smart_history_actions_panel:
+from util.smart_history_actions_panel import (
+    load_reviewed_lines,
+    load_pinned,
+    KeyboardThread,
+    show_widgets,
+    add_sentence_group,
+    simulate_new_group,
+    to_qcolor,
+    to_css_rgba,
+    load_config,
+    merge_configs,
+    MultiLineElidedLabel,
+    TextLineWidget,
+    TextLineWidget
+)
+
+
+class MyController(QObject):
+    # 定义信号
+    show_widgets_signal = Signal()
+
+    def __init__(self):
+        super().__init__()
+        self.show_widgets_signal.connect(self._on_show_widgets)
+        self.widget = None  # 保存窗口对象引用（避免重复创建）
+        self.is_visible = False  # 新增：跟踪窗口可见性（初始隐藏）
+
+    def _on_show_widgets(self):
+        # 1. 如果窗口未创建，先创建（只创建一次）
+        if self.widget is None:
+            self.widget = show_widgets()  # 假设show_widgets()返回窗口实例
+
+        # 2. 根据当前状态切换显示/隐藏
+        if self.is_visible:
+            # 当前显示 → 隐藏
+            self.widget.hide()
+        else:
+            # 当前隐藏 → 显示
+            self.widget.show()
+
+        # 3. 反转状态（显示→隐藏，隐藏→显示）
+        self.is_visible = not self.is_visible
+
+
+controller = MyController()
+# ----------- smart_history_actions_panel -----------
 
 
 class Hint_While_Recording_At_Cursor_Position(QLabel):
@@ -744,6 +794,51 @@ def start_client_gui():
     gui = GUI()
     if not Config.shrink_automatically_to_tray:
         gui.show()
+
+    # ----------- smart_history_actions_panel -----------
+    # if Config.enabled_smart_history_actions_panel:
+    load_reviewed_lines()
+    load_pinned()
+
+    # --------------------------------------------------------测试数据
+    test_groups = [
+        {
+            'traditional': "from-start_client_gui.py 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 ",
+        },
+        {
+            'simplified': "from-start_client_gui.py 这是一个只有简体的例子",
+            'traditional': "",
+            'english': ""
+        },
+        {
+            'traditional': "from-start_client_gui.py 這是一個只有繁體的例子",
+        },
+        {
+            'english': "from-start_client_gui.py This is an English only example."
+        }
+    ]
+    for group in test_groups:
+        add_sentence_group(group)
+
+    # timer = QTimer()
+    # timer.timeout.connect(lambda: simulate_new_group("from-start_client_gui.py(Auto) "))
+    # timer.start(3000)
+    # 测试数据 ---------------------------------------------------
+
+    # 連接槽函數
+    # controller.show_widgets_signal.connect(show_widgets)
+
+    # 启动键盘监听线程
+    kb_thread = KeyboardThread()
+    # 关键：键盘触发时，发射控制器的信号（连接到toggle_panel）
+    kb_thread.trigger.connect(controller.show_widgets_signal.emit)
+    kb_thread.start()
+
+    # print("呼叫面板")
+    # controller.show_widgets_signal.emit()
+    # print("呼叫面板完成")
+    # ----------- smart_history_actions_panel -----------
+
     sys.exit(app.exec())
 
 
