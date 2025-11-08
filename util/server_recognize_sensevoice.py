@@ -41,7 +41,12 @@ def recognize(recognizer, task: Task):
     # 识别片段
     stream = recognizer.create_stream()
     stream.accept_waveform(task.samplerate, samples)
-    recognizer.decode_stream(stream)
+    try:
+        recognizer.decode_stream(stream)
+    except Exception:  # What's the Fuck? 😵 ValueError('string too long')
+        # print(f"识别出错，任务ID：{task.task_id}，错误信息：{e}")
+        task.is_final = True  # This can fix 'string too long', I don't know why. 🤣
+        return result
 
     # 记录识别时间
     result.time_start = task.time_start
