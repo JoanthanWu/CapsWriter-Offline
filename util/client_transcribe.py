@@ -8,6 +8,7 @@ import uuid
 from pathlib import Path
 
 import websockets
+from loguru import logger
 
 from util import srt_from_txt
 from util.client_check_websocket import check_websocket
@@ -18,24 +19,30 @@ from util.config import ClientConfig as Config
 
 
 async def transcribe_check(file: Path):
+    logger.add("logs/client_transcribe.log", rotation="10 MB", enqueue=True)
     # 检查连接
     if not await check_websocket():
         console.print("无法连接到服务端", style="bright_red")
+        logger.error("无法连接到服务端")
         sys.exit()
 
     if not file.exists():
         console.print(f"文件不存在：{file}", style="bright_red")
+        logger.error(f"文件不存在：{file}")
         return False
 
 
 async def transcribe_send(file: Path):
+    logger.add("logs/client_transcribe.log", rotation="10 MB", enqueue=True)
     # 获取连接
     websocket = Cosmic.websocket
 
     # 生成任务id
     task_id = str(uuid.uuid1())
     console.print(f"\n任务标识：{task_id}")
+    logger.info(f"任务标识：{task_id}")
     console.print(f"    处理文件：{file}")
+    logger.info(f"    处理文件：{file}")
 
     # 获取音频数据，ffmpeg输出采样率16000，单声道，float32格式
     ffmpeg_cmd = [
@@ -56,11 +63,13 @@ async def transcribe_send(file: Path):
     )
 
     console.print("    正在提取音频", end="\r")
+    logger.info("    正在提取音频")
 
     # 计算音频总长度
     audio_data = await process.stdout.read()
     audio_duration = len(audio_data) / 4 / 16000
     console.print(f"    音频长度：{audio_duration:.2f}s")
+    logger.info(f"    音频长度：{audio_duration:.2f}s")
 
     # 分块大小，例如60秒
     chunk_size = 16000 * 4 * 60  # 16000采样率，4字节每个样本，60秒
@@ -91,9 +100,11 @@ async def transcribe_send(file: Path):
             console.print(f"    发送进度：{progress:.2f}s", end="\r")
         except websockets.exceptions.ConnectionClosed as e:
             console.print(f"    连接断开，错误：{e}")
+            logger.error(f"连接断开，错误：{e}")
             # 处理连接断开的情况，例如重新连接或终止任务
             break
         if is_final:
+            logger.info("    音频数据发送完毕")
             break
 
     # 等待ffmpeg进程结束
@@ -101,6 +112,7 @@ async def transcribe_send(file: Path):
 
 
 async def transcribe_recv(file: Path):
+    logger.add("logs/client_transcribe.log", rotation="10 MB", enqueue=True)
     # 更新热词
     update_hot_all()
     # 实时更新热词
@@ -114,6 +126,7 @@ async def transcribe_recv(file: Path):
         message = json.loads(message)
         console.print(f"    转录进度: {message['duration']:.2f}s", end="\r")
         if message["is_final"]:
+            logger.info("    收到最终转录结果")
             break
 
     # 解析结果
@@ -141,5 +154,7 @@ async def transcribe_recv(file: Path):
 
     process_duration = message["time_complete"] - message["time_start"]
     console.print(f"\033[K    处理耗时：{process_duration:.2f}s")
+    logger.info(f"    处理耗时：{process_duration:.2f}s")
     # console.print(f"    识别结果：\n[green]{message['text']}")
     console.print(f"    识别结果：\n[green]{text_merge}")
+    logger.info(f"    识别结果：\n{message['text']}")

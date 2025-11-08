@@ -87,6 +87,10 @@ def get_scout(line, words, cursor):
     # 如果因越界导致无法探察，说明出现严重错误
     if not scout_list:
         print("[bold red]字幕匹配出现出现严重错误，越界导致无法探察[/bold red]")
+        from loguru import logger
+
+        logger.add("logs/srt_from_txt.log", rotation="10 MB", enqueue=True)
+        logger.error("字幕匹配出现出现严重错误，越界导致无法探察")
         return False
 
     # 找到得分最好的侦察员
@@ -106,6 +110,10 @@ def lines_match_words(text_lines: List[str], words: List) -> List[srt.Subtitle]:
                 'word' : 'good'
                 }
     """
+    from loguru import logger
+
+    logger.add("logs/srt_from_txt.log", rotation="10 MB", enqueue=True)
+
     # 初始化 fail_count
     fail_count = 0
     # 空的字幕列表
@@ -122,11 +130,14 @@ def lines_match_words(text_lines: List[str], words: List) -> List[srt.Subtitle]:
         scout = get_scout(line, words, cursor)
         if not scout:  # 没有结果表明出错，应提前结束
             print(f"[bold red]字幕行内容不匹配: {line}[/bold red]")
+            logger.error(f"字幕行内容不匹配: {line}")
             tokens = "".join(
                 [x["word"] for x in words[max(0, cursor - 20) : cursor + 20]]
             )
             print(f"[bold red]words 列表中的单词内容: {tokens}[/bold red]")
+            logger.error(f"words 列表中的单词内容: {tokens}")
             print("[bold red]字幕匹配出现错误[/bold red]")
+            logger.error("字幕匹配出现错误")
             break
         cursor, score = scout.start, scout.score
 
@@ -136,6 +147,7 @@ def lines_match_words(text_lines: List[str], words: List) -> List[srt.Subtitle]:
         # 避免越界
         if cursor >= words_num:
             print(f"[bold red]字幕匹配越界，{cursor} >= {words_num}[/bold red]")
+            logger.error(f"字幕匹配越界，{cursor} >= {words_num}")
             break
 
         # 初始化
@@ -219,6 +231,11 @@ def one_task(media_file: Path):
     srt_file = media_file.with_suffix(".srt")
     if (not txt_file.exists()) or (not json_file.exists()):
         print(f"[bold red]无法找到 {media_file}对应的txt、json文件，跳过[/bold red]")
+        from loguru import logger
+
+        logger.add("logs/srt_from_txt.log", rotation="10 MB", enqueue=True)
+        logger.error(f"无法找到 {media_file}对应的txt、json文件，跳过")
+
         return None
 
     # 获取带有时间戳的分词列表，获取分行稿件，匹配得到 srt

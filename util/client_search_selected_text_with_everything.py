@@ -29,6 +29,14 @@ async def on_hotkey_pressed():
         except clipman.exceptions.ClipmanBaseException as e:
             temp = e
             console.print(e)
+            from loguru import logger
+
+            logger.add(
+                "logs/client_search_selected_text_with_everything.log",
+                rotation="10 MB",
+                enqueue=True,
+            )
+            logger.error(f"获取剪贴板内容时出错: {e}")
         text = temp
         # 控制台输出
         console.print(f"选中文本：{text}")
@@ -38,6 +46,14 @@ async def on_hotkey_pressed():
         )
     except Exception as e:
         console.print(e)
+        from loguru import logger
+
+        logger.add(
+            "logs/client_search_selected_text_with_everything.log",
+            rotation="10 MB",
+            enqueue=True,
+        )
+        logger.error(f"热键处理时出错: {e}")
 
 
 def hotkey_callback():
@@ -58,6 +74,14 @@ async def search_selected_text_with_everything():
         await asyncio.Event().wait()  # 阻塞当前协程，直到被取消或热键被触发
     except Exception as e:
         console.print(e)
+        from loguru import logger
+
+        logger.add(
+            "logs/client_search_selected_text_with_everything.log",
+            rotation="10 MB",
+            enqueue=True,
+        )
+        logger.error(f"主函数出错: {e}")
     finally:
         keyboard.remove_hotkey(
             Config.search_selected_text_with_everything_shortcut

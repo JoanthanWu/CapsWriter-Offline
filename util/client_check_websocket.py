@@ -17,7 +17,12 @@ class Handler:
         elif isinstance(e, Exception):
             return True
         else:
-            print(e)
+            from loguru import logger
+
+            logger.add(
+                "logs/client_check_websocket.log", rotation="10 MB", enqueue=True
+            )
+            logger.error(f"检查WebSocket连接时出错: {e}")
 
 
 async def check_websocket() -> bool:
