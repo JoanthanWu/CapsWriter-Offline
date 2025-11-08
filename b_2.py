@@ -10,11 +10,16 @@ class Controller(QObject):
 
     def __init__(self):
         super().__init__()
-        self.show_widgets_signal.connect(self._on_show_widgets)
+        self.show_widgets_signal.connect(self._toggle_widget)
         self.widget = None
 
-    def _on_show_widgets(self):
-        self.widget = a_2.show_widgets()
+    def _toggle_widget(self):
+        if self.widget and self.widget.isVisible():
+            self.widget.close()
+            self.widget = None
+        else:
+            self.widget = a_2.show_widgets()
+            self.widget.show()
 
 def run_app():
     app = QApplication(sys.argv)
@@ -39,3 +44,4 @@ if __name__ == "__main__":
 # 在Controller类中添加了self.widget属性，用于存储a_2.show_widgets()创建的窗口对象。
 # 当_on_show_widgets调用时，将窗口对象赋值给self.widget，这样窗口对象就有了持续的引用（被Controller实例持有），不会被垃圾回收。
 # 窗口对象得以保留，因此能正常显示，文字也会正确渲染。
+

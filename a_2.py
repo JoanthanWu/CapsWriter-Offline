@@ -23,5 +23,4 @@ def show_widgets():
     layout.addWidget(label)
     layout.setContentsMargins(20, 20, 20, 20)
 
-    w.show()
-    return w
+    return w  # 注意：不再呼叫 show()，由 Controller 控制

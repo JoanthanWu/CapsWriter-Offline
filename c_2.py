@@ -11,7 +11,10 @@ class KeyboardThread(QThread):
                 self.trigger.emit()
 
         keyboard.hook_key("/", handler, suppress=True)
-        keyboard.wait()
+
+        # 永遠保持線程活著
+        while True:
+            keyboard.read_event()  # 阻塞式讀取事件，避免線程退出
 
 
 if __name__ == "__main__":
