@@ -2,7 +2,7 @@
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PySide6.QtGui import QFont
 
-def show_widgets():
+def create_widget():
     w = QWidget()
     w.setWindowTitle("Demo: 背景 + 邊框 + 文字")
     w.resize(300, 150)
