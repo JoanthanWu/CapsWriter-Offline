@@ -150,6 +150,7 @@ class GUI(QMainWindow):
             stderr=subprocess.STDOUT,
             text=True,
             encoding="utf-8",
+            errors="replace",
         )
         threading.Thread(
             target=self.enqueue_output,

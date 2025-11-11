@@ -114,7 +114,6 @@ async def ws_recv(websocket):
     sockets[str(websocket.id)] = websocket
     sockets_id.append(str(websocket.id))
     console.print(f"接客了：{websocket}\n", style="yellow")
-    logger.info(f"接客了：{websocket}")
 
     # 设定分段长度
     seg_duration = 15
