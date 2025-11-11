@@ -4,7 +4,7 @@
 # websocat ws://localhost:6017/
 # {"text": "你好，世界！"}
 
-# .\runtime\python.exe .\util\client_translate_online.py
+# .\runtime\python.exe .\util\client_translate_offline.py
 
 
 import asyncio
@@ -38,7 +38,7 @@ async def translate_text(text):
 
 
 # 定义WebSocket处理函数
-async def offline_translate_server(websocket, path):
+async def offline_translate_server(websocket):
     async for message in websocket:
         data = json.loads(message)
         text_to_translate = data.get("text", "")
@@ -51,11 +51,32 @@ async def offline_translate_server(websocket, path):
 
 
 def run_offline_translate_service():
-    start_server = websockets.serve(
-        offline_translate_server, ClientConfig.addr, Config.offline_translate_port
+    from loguru import logger
+
+    logger.add(
+        "logs/server_run_offline_translate_service.log",
+        rotation="10 MB",
+        enqueue=True,
     )
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
+
+    async def main():
+        # 使用async with来管理服务器生命周期
+        async with websockets.serve(
+            offline_translate_server, ClientConfig.addr, Config.offline_translate_port
+        ) as server:
+            # logger.info(
+            #     f"离线翻译服务启动在 {ClientConfig.addr}:{Config.offline_translate_port}"
+            # )
+            await server.serve_forever()
+
+    asyncio.run(main())
+
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("离线翻译服务器被用户中断")
+    except Exception as e:
+        logger.error(f"离线翻译服务器错误: {e}")
 
 
 if __name__ == "__main__":

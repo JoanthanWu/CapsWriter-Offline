@@ -11,27 +11,39 @@ from util.client_create_file import create_file
 from util.client_finish_file import finish_file
 from util.client_write_file import write_file
 from util.config import ClientConfig as Config
+from websockets.protocol import State
 
 
 async def send_message(message):
+    from loguru import logger
+
+    logger.add("logs/client_send_audio.log", rotation="10 MB", enqueue=True)
     # 发送数据
-    if Cosmic.websocket is None or Cosmic.websocket.closed:
+    if Cosmic.websocket is None or Cosmic.websocket.state in [
+        State.CLOSED,
+        State.CLOSING,
+    ]:
         if message["is_final"]:
             task_id = message["task_id"]
             if task_id in Cosmic.audio_files:
                 Cosmic.audio_files.pop(task_id)
                 console.print("    服务端未连接，无法发送\n")
+                logger.error(f"服务端未连接，任务ID：{task_id}，无法发送")
             else:
                 console.print(f"    无法找到任务ID：{task_id}，无法移除\n")
+                logger.error(f"无法找到任务ID：{task_id}，无法移除")
     else:
         try:
             await Cosmic.websocket.send(json.dumps(message))
         except websockets.ConnectionClosedError:
             if message["is_final"]:
                 console.print("[red]连接中断了")
+                logger.error("连接中断了，WebSocket连接关闭错误。is_final=True")
+            logger.error("连接中断了，WebSocket连接关闭错误。is_final=False")
         except Exception as e:
-            print("出错了")
-            print(e)
+            console.print("出错了")
+            console.print(e)
+            logger.error(f"发送消息时出错: {e}")
 
 
 async def send_audio():
@@ -129,3 +141,7 @@ async def send_audio():
                 break
     except Exception as e:
         console.print(e)
+        from loguru import logger
+
+        logger.add("logs/client_send_audio.log", rotation="10 MB", enqueue=True)
+        logger.error(f"发送音频时出错: {e}")

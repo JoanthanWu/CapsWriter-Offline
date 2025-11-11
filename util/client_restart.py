@@ -1,24 +1,15 @@
 import subprocess
-from time import sleep
 
 from util.check_process import check_process
 
 
 def stop_exe(exe_name: str):
-    import logging
+    from loguru import logger
 
-    def setup_logging():
-        logging.basicConfig(
-            filename="log.txt",
-            level=logging.INFO,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-            encoding="utf-8",
-        )
+    logger.add("logs/client_restart.log", rotation="10 MB", enqueue=True)
 
-    if not logging.getLogger().handlers:
-        setup_logging()
     try:
-        logging.info(f"Stopping {exe_name}")
+        logger.info(f"Stopping {exe_name}")
         proc = subprocess.Popen(
             f"taskkill /IM {exe_name} /F",
             creationflags=subprocess.CREATE_NO_WINDOW,
@@ -28,14 +19,17 @@ def stop_exe(exe_name: str):
             text=True,
         )
         stdout, stderr = proc.communicate()
-        logging.info(f"Taskkill output: {stdout}")
+        logger.info(f"Taskkill output: {stdout}")
         if stderr:
-            logging.error(f"Taskkill errors: {stderr}")
+            logger.error(f"Taskkill errors: {stderr}")
     except Exception as e:
-        logging.error(f"Error stopping {exe_name}: {e}")
+        logger.error(f"Error stopping {exe_name}: {e}")
 
 
 def start_exe(exe_name: str):
+    from loguru import logger
+
+    logger.add("logs/client_restart.log", rotation="10 MB", enqueue=True)
     # print(f"Starting {exe_name}")
     proc = subprocess.Popen(
         f'start "" "{exe_name}"',
@@ -46,7 +40,11 @@ def start_exe(exe_name: str):
         text=True,
     )
     stdout, stderr = proc.communicate()
-    print(f"{stdout}, {stderr}")
+    # print(f"{stdout}, {stderr}")
+    logger.info(f"Starting {exe_name}")
+    logger.info(f"Start output: {stdout}")
+    if stderr:
+        logger.error(f"Start errors: {stderr}")
 
 
 def restart_exe(exe_name: str):

@@ -51,7 +51,9 @@ def send_signal_to_hint_while_recording(
         return "Feature not enabled"
 
     # print(f"convert_to_traditional_chinese_main: {convert_to_traditional_chinese_main}")
-    convert_to_traditional_chinese_main_bool = (convert_to_traditional_chinese_main == "繁")
+    convert_to_traditional_chinese_main_bool = (
+        convert_to_traditional_chinese_main == "繁"
+    )
     # print(f"convert_to_traditional_chinese_main_bool: {convert_to_traditional_chinese_main_bool}")
 
     if hwnd:
@@ -91,3 +93,11 @@ if __name__ == "__main__":
         True,
     )
     print(result)
+    from loguru import logger
+
+    logger.add(
+        "logs/client_send_signal_to_hint_while_recording.log",
+        rotation="10 MB",
+        enqueue=True,
+    )
+    logger.info(f"Result: {result}")

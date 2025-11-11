@@ -17,7 +17,12 @@ class Handler:
         elif isinstance(e, Exception):
             return True
         else:
-            print(e)
+            from loguru import logger
+
+            logger.add(
+                "logs/client_check_websocket.log", rotation="10 MB", enqueue=True
+            )
+            logger.error(f"检查WebSocket连接时出错: {e}")
 
 
 async def check_websocket() -> bool:
@@ -26,7 +31,9 @@ async def check_websocket() -> bool:
     for _ in range(3):
         with Handler():
             Cosmic.websocket = await websockets.connect(
-                f"ws://{Config.addr}:{Config.speech_recognition_port}", max_size=None
+                f"ws://{Config.addr}:{Config.speech_recognition_port}",
+                subprotocols=["binary"],
+                max_size=None,
             )
             return True
     else:

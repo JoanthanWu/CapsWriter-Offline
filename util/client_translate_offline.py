@@ -34,6 +34,10 @@ async def translate_offline(text):
         return trans_text
     except Exception as e:
         print(f"An error occurred: {e}")
+        from loguru import logger
+
+        logger.add("logs/client_translate_offline.log", rotation="10 MB", enqueue=True)
+        logger.error(f"离线翻译时出错: {e}")
         return None
 
 

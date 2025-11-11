@@ -350,7 +350,7 @@ class ModelPathsConfigPage(SiPage):
                         "MAIN_WINDOW"
                     ].LayerRightMessageSidebar().send(
                         title="标点模型目录路径 路径不可为空",
-                        text="已恢复默认值：models/punc_ct-transformer_cn-en",
+                        text="已恢复默认值：models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12",
                         msg_type=3,
                         icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
                         fold_after=5000,
@@ -358,9 +358,9 @@ class ModelPathsConfigPage(SiPage):
                 except ValueError:
                     pass
                 self.punc_model_dir_path_selector.path_input.lineEdit().setText(
-                    "models/punc_ct-transformer_cn-en"
+                    "models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12"
                 )
-                self.punc_model_dir = "models/punc_ct-transformer_cn-en"
+                self.punc_model_dir = "models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12"
         is_valid, error = ValueCheck.is_dir_exist(self.punc_model_dir)
         from rich import print
 
@@ -371,12 +371,12 @@ class ModelPathsConfigPage(SiPage):
 
         if error:
             self.punc_model_dir_path_selector.path_input.lineEdit().setText(
-                "models/punc_ct-transformer_cn-en"
+                "models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12"
             )
             try:
                 SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
                     title="标点模型目录路径 路径位置错误",
-                    text=f"{self.punc_model_dir} - {error}\n已恢复默认值：models/punc_ct-transformer_cn-en",
+                    text=f"{self.punc_model_dir} - {error}\n已恢复默认值：models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12",
                     msg_type=3,
                     icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
                     fold_after=5000,
@@ -530,7 +530,7 @@ class ModelPathsConfigPage(SiPage):
             self.punc_model_dir_path_selector = SelectPath(
                 self,
                 title="标点模型目录路径",
-                label_text='默认值："models/punc_ct-transformer_cn-en"',
+                label_text='默认值："models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12"',
                 default_path=self.config["model_paths"]["punc_model_dir"],
                 file_filter="",
                 mode="directory",

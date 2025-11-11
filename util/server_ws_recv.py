@@ -1,13 +1,12 @@
 import json
 import time
-import base64
-import asyncio
-import websockets
 from base64 import b64decode
 
-from util.server_cosmic import console, Cosmic
-from util.server_classes import Task, Result
+import websockets
+
 from util.my_status import Status
+from util.server_classes import Task
+from util.server_cosmic import Cosmic, console
 
 status_mic = Status("正在接收音频", spinner="point")
 
@@ -22,6 +21,7 @@ class Cache:
 
 async def message_handler(websocket, message, cache: Cache):
     """处理得到的音频流数据"""
+    from loguru import logger
 
     queue_in = Cosmic.queue_in
 
@@ -51,6 +51,10 @@ async def message_handler(websocket, message, cache: Cache):
             status_mic.start()
         if source == "file" and is_start:
             console.print("正在接收音频文件...")
+            logger.add("logs/server_ws_recv.log", rotation="10 MB", enqueue=True)
+            logger.info(
+                f"正在接收音频文件..., 任务ID：{task_id}, Socket ID：{socket_id}"
+            )
 
         # 若缓冲已达到分段长度，将片段作为任务提交
         while len(cache.chunks) / 4 / 16000 >= seg_threshold:
@@ -76,6 +80,8 @@ async def message_handler(websocket, message, cache: Cache):
             status_mic.stop()
         elif source == "file":
             print(f"音频文件接收完毕，时长 {cache.frame_num / 16000 / 4:.2f}s")
+            logger.add("logs/server_ws_recv.log", rotation="10 MB", enqueue=True)
+            logger.info(f"音频文件接收完毕，时长 {cache.frame_num / 16000 / 4:.2f}s")
 
         # 客户端说片段结束，将缓冲区音频识别
         task = Task(
@@ -99,13 +105,16 @@ async def message_handler(websocket, message, cache: Cache):
 
 async def ws_recv(websocket):
     global status_mic
+    from loguru import logger
 
+    logger.add("logs/server_ws_recv.log", rotation="10 MB", enqueue=True)
     # 登记 socket 到字典，以 socket id 字符串为索引
     sockets = Cosmic.sockets
     sockets_id = Cosmic.sockets_id
     sockets[str(websocket.id)] = websocket
     sockets_id.append(str(websocket.id))
     console.print(f"接客了：{websocket}\n", style="yellow")
+    logger.info(f"接客了：{websocket}")
 
     # 设定分段长度
     seg_duration = 15
@@ -127,16 +136,21 @@ async def ws_recv(websocket):
         console.print(
             "ConnectionClosed...",
         )
+        logger.info("ConnectionClosed...")
     except websockets.exceptions.ConnectionClosedError:
         console.print("ConnectionClosed...")
+        logger.info("ConnectionClosedError..., socket closed unexpectedly")
     except websockets.ConnectionClosed:
         console.print(
             "ConnectionClosed...",
         )
+        logger.info("ConnectionClosed..., socket closed normally")
     except websockets.InvalidState:
         console.print("InvalidState...")
+        logger.info("InvalidState..., invalid websocket state")
     except Exception as e:
         console.print("Exception:", e)
+        logger.error(f"Exception in ws_recv: {e}")
     finally:
         status_mic.stop()
         status_mic.on = False

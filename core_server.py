@@ -100,7 +100,7 @@ def init():
         console.print(f"出错了：{e}", style="bright_red")
         console.input("...")
     except Exception as e:
-        print(e)
+        console.print(e)
     finally:
         Cosmic.queue_out.put(None)
         sys.exit(0)
