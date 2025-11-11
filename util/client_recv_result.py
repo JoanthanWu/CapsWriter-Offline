@@ -32,8 +32,8 @@ async def recv_result():
             text = message["text"]
             delay = message["time_complete"] - message["time_submit"]
 
-            # 如果非最终结果，继续等待
-            if not message["is_final"]:
+            # 如果非最终结果或文本为空，继续等待
+            if not message["is_final"] or not text.strip():
                 continue
 
             # 消除末尾标点
@@ -64,9 +64,12 @@ async def recv_result():
 
             if Config.save_audio:
                 # 重命名录音文件
-                file_audio = rename_audio(
-                    message["task_id"], text, message["time_start"]
-                )
+                try:
+                    file_audio = rename_audio(
+                        message["task_id"], text, message["time_start"]
+                    )
+                except Exception:
+                    file_audio = None
             else:
                 file_audio = None
 

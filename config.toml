@@ -242,20 +242,20 @@ enable_double_click_opposite_state = true
 convert_to_traditional_chinese_main = "简"
 # `简/繁` 中文作为主要输出
 
-opencc_converter = "s2t.json"
+opencc_converter = "s2t"
 # OpenCC 转换器
-# s2t.json Simplified Chinese to Traditional Chinese 简体到繁体
-# t2s.json Traditional Chinese to Simplified Chinese 繁体到简体
-# s2tw.json Simplified Chinese to Traditional Chinese (Taiwan Standard) 简体到台湾正体
-# tw2s.json Traditional Chinese (Taiwan Standard) to Simplified Chinese 台湾正体到简体
-# s2hk.json Simplified Chinese to Traditional Chinese (Hong Kong Standard) 简体到香港繁体（香港小学学习字词表标准）
-# hk2s.json Traditional Chinese (Hong Kong Standard) to Simplified Chinese 香港繁体（香港小学学习字词表标准）到简体
-# s2twp.json Simplified Chinese to Traditional Chinese (Taiwan Standard) with Taiwanese idiom 简体到繁体（台湾正体标准）并转换为台湾常用词汇
-# tw2sp.json Traditional Chinese (Taiwan Standard) to Simplified Chinese with Mainland Chinese idiom 繁体（台湾正体标准）到简体并转换为中国大陆常用词汇
-# t2tw.json Traditional Chinese (OpenCC Standard) to Taiwan Standard 繁体（OpenCC 标准）到台湾正体
-# t2hk.json Traditional Chinese (OpenCC Standard) to Hong Kong Standard 繁体（OpenCC 标准）到香港繁体（香港小学学习字词表标准）
-# t2jp.json Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁体（OpenCC 标准，旧字体）到日文新字体
-# jp2t.json New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
+# s2t Simplified Chinese to Traditional Chinese 简体到繁体
+# t2s Traditional Chinese to Simplified Chinese 繁体到简体
+# s2tw Simplified Chinese to Traditional Chinese (Taiwan Standard) 简体到台湾正体
+# tw2s Traditional Chinese (Taiwan Standard) to Simplified Chinese 台湾正体到简体
+# s2hk Simplified Chinese to Traditional Chinese (Hong Kong Standard) 简体到香港繁体（香港小学学习字词表标准）
+# hk2s Traditional Chinese (Hong Kong Standard) to Simplified Chinese 香港繁体（香港小学学习字词表标准）到简体
+# s2twp Simplified Chinese to Traditional Chinese (Taiwan Standard) with Taiwanese idiom 简体到繁体（台湾正体标准）并转换为台湾常用词汇
+# tw2sp Traditional Chinese (Taiwan Standard) to Simplified Chinese with Mainland Chinese idiom 繁体（台湾正体标准）到简体并转换为中国大陆常用词汇
+# t2tw Traditional Chinese (OpenCC Standard) to Taiwan Standard 繁体（OpenCC 标准）到台湾正体
+# t2hk Traditional Chinese (OpenCC Standard) to Hong Kong Standard 繁体（OpenCC 标准）到香港繁体（香港小学学习字词表标准）
+# t2jp Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁体（OpenCC 标准，旧字体）到日文新字体
+# jp2t New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
 
 
 # ======================DeepLX 配置==================================
@@ -289,7 +289,7 @@ paraformer_path = "models/paraformer-offline-zh/model.int8.onnx"
 paraformer_tokens_path = "models/paraformer-offline-zh/tokens.txt"
 # Paraformer tokens 路径
 
-punc_model_dir = "models/punc_ct-transformer_cn-en"
+punc_model_dir = "models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12"
 # 标点模型目录
 
 opus_mt_dir = "models/Helsinki-NLP--opus-mt-zh-en"

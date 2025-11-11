@@ -31,7 +31,9 @@ async def check_websocket() -> bool:
     for _ in range(3):
         with Handler():
             Cosmic.websocket = await websockets.connect(
-                f"ws://{Config.addr}:{Config.speech_recognition_port}", max_size=None
+                f"ws://{Config.addr}:{Config.speech_recognition_port}",
+                subprotocols=["binary"],
+                max_size=None,
             )
             return True
     else:

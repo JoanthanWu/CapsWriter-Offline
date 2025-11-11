@@ -163,7 +163,7 @@ if __name__ == "__main__":
             ".txt",
         ],
         [
-            "models/punc_ct-transformer_cn-en",
+            "models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12",
             None,
         ],
         [

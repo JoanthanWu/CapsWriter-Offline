@@ -16,6 +16,10 @@ def translate_online(text):
     r = httpx.post(url=DeepLX.api, data=post_data, timeout=60).text
     # 将JSON字符串解析为Python字典
     data = json.loads(r)
+    if data.get("code") != 200:
+        return data.get(
+            "message"
+        )  # too many requests, your IP has been blocked by DeepL temporarily, please don't request it frequently in a short time
     # 获取alternatives数组中的第一个字符串
     first_alternative = data.get("alternatives", [])[0]
     # 输出第一个替代字符串

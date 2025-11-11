@@ -11,6 +11,7 @@ from util.client_create_file import create_file
 from util.client_finish_file import finish_file
 from util.client_write_file import write_file
 from util.config import ClientConfig as Config
+from websockets.protocol import State
 
 
 async def send_message(message):
@@ -18,7 +19,10 @@ async def send_message(message):
 
     logger.add("logs/client_send_audio.log", rotation="10 MB", enqueue=True)
     # 发送数据
-    if Cosmic.websocket is None or Cosmic.websocket.closed:
+    if Cosmic.websocket is None or Cosmic.websocket.state in [
+        State.CLOSED,
+        State.CLOSING,
+    ]:
         if message["is_final"]:
             task_id = message["task_id"]
             if task_id in Cosmic.audio_files:

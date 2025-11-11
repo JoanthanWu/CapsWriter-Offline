@@ -1,10 +1,9 @@
 import sys
 import webbrowser
-from io import BytesIO
 
 import qrcode
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtGui import QColor, QImage, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 
 from util.cloud_clipboard import CloudClipboard
@@ -13,6 +12,7 @@ from util.cloud_clipboard import CloudClipboard
 class QRCODE(QWidget):
     def __init__(self, text, qr_data):
         super().__init__()
+        self.qr_data = qr_data  # Store the URL for opening later
 
         self.setWindowTitle("Text and QR Code Display")
         layout = QVBoxLayout(self)
@@ -34,25 +34,51 @@ class QRCODE(QWidget):
         qr.add_data(qr_data)
         qr.make(fit=True)
 
-        # Create an image from the QR Code instance
-        img = qr.make_image(fill_color="black", back_color="white")
-        img_buffer = BytesIO()
-        img.save(img_buffer)
-        qimg = QImage.fromData(img_buffer.getvalue())
+        # Create QR code image using Qt instead of PIL
+        qr_matrix = qr.get_matrix()
+        self.create_qr_image_from_matrix(qr_matrix, layout)
 
-        # Create a pixmap and a label for the QR code
-        qr_pixmap = QPixmap.fromImage(qimg)
+    def create_qr_image_from_matrix(self, qr_matrix, layout):
+        """Create QR code image from matrix data using Qt"""
+        # Calculate image size
+        matrix_size = len(qr_matrix)
+        box_size = 10  # Pixel size for each QR code module
+        border = 4
+        size = (matrix_size + 2 * border) * box_size
+
+        # Create QImage
+        image = QImage(size, size, QImage.Format.Format_RGB32)
+        image.fill(QColor("white"))
+
+        # Create painter
+        painter = QPainter(image)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor("black"))
+
+        # Draw QR code modules
+        for y in range(matrix_size):
+            for x in range(matrix_size):
+                if qr_matrix[y][x]:
+                    # Draw black square for QR module
+                    rect_x = (x + border) * box_size
+                    rect_y = (y + border) * box_size
+                    painter.drawRect(rect_x, rect_y, box_size, box_size)
+
+        painter.end()
+
+        # Create pixmap and label for the QR code
+        qr_pixmap = QPixmap.fromImage(image)
         qr_label = QLabel()
         qr_label.setPixmap(qr_pixmap)
-        qr_label.mousePressEvent = self.open_url  # Connect the event
+        qr_label.mousePressEvent = self.open_url
         layout.addWidget(qr_label)
 
     def open_url(self, event):
-        webbrowser.open(self.qr_data)  # Use the instance variable
+        webbrowser.open(self.qr_data)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
-            self.close()  # Close the window on ESC press
+            self.close()
 
 
 def utf8_byte_count(s):

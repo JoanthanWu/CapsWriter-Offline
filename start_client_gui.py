@@ -367,10 +367,13 @@ class GUI(QMainWindow):
 
     def on_monitor_toggled(self, state):
         # 检查复选框的选中状态
-        if state == 2:  # 2 表示选中状态
-            self.update_timer.start(100)
-        else:
-            self.update_timer.stop()
+        try:
+            if state == 2:  # 2 表示选中状态
+                self.update_timer.start(100)
+            else:
+                self.update_timer.stop()
+        except AttributeError:
+            pass  # 'GUI' object has no attribute 'update_timer' # 忽略该错误，因为初始化时还没有创建update_timer
 
     # def window_stay_on_top_toggled(self):
     #     # 切换窗口置顶状态
