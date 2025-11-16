@@ -83,15 +83,46 @@ async def main_file(files: List[Path]):
     show_file_tips()
 
     for file in files:
-        if file.suffix in [".txt", ".json", "srt"]:
-            adjust_srt(file)
-        else:
-            await transcribe_check(file)
-            await asyncio.gather(transcribe_send(file), transcribe_recv(file))
+        try:
+            if file.suffix in [".txt", ".json", ".srt"]:
+                adjust_srt(file)
+            else:
+                # 为每个文件重新建立连接
+                await transcribe_check(file)
+                await asyncio.gather(transcribe_send(file), transcribe_recv(file))
+                console.print(f"[bold green]已完成转录: {file.name}[/bold green]")
 
+                # 处理完成后关闭连接，为下一个文件做准备
+                if Cosmic.websocket:
+                    try:
+                        await Cosmic.websocket.close()
+                    except:
+                        pass
+                    Cosmic.websocket = None
+
+        except Exception as e:
+            console.print(f"[bold red]处理文件 {file.name} 时出错: {e}[/bold red]")
+            from loguru import logger
+
+            logger.add("logs/core_client_file.log", rotation="10 MB", enqueue=True)
+
+            logger.error(f"处理文件 {file.name} 时出错: {e}")
+            # 确保出错时重置连接
+            if Cosmic.websocket:
+                try:
+                    await Cosmic.websocket.close()
+                except:
+                    pass
+                Cosmic.websocket = None
+            continue
+
+    # 最终清理
     if Cosmic.websocket:
-        await Cosmic.websocket.close()
-    input("\n按回车退出\n")
+        try:
+            await Cosmic.websocket.close()
+        except:
+            pass
+    input("\n所有文件处理完成，按回车退出\n")
 
 
 def init_mic():

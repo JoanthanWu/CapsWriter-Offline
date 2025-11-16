@@ -113,48 +113,69 @@ async def transcribe_send(file: Path):
 
 async def transcribe_recv(file: Path):
     logger.add("logs/client_transcribe.log", rotation="10 MB", enqueue=True)
+
+    # 检查连接是否有效
+    if Cosmic.websocket is None:
+        console.print("[red]WebSocket连接不存在，无法接收结果[/red]")
+        logger.error("WebSocket连接不存在，无法接收结果")
+        return
+
     # 更新热词
     update_hot_all()
     # 实时更新热词
     observer = observe_hot()
 
-    # 获取连接
-    websocket = Cosmic.websocket
+    try:
+        # 接收结果
+        async for message in Cosmic.websocket:
+            message = json.loads(message)
+            console.print(f"    转录进度: {message['duration']:.2f}s", end="\r")
+            if message["is_final"]:
+                logger.info("    收到最终转录结果")
+                break
 
-    # 接收结果
-    async for message in websocket:
-        message = json.loads(message)
-        console.print(f"    转录进度: {message['duration']:.2f}s", end="\r")
-        if message["is_final"]:
-            logger.info("    收到最终转录结果")
-            break
+        # 解析结果
+        text_merge = message["text"]
+        # 热词替换
+        text_merge = hot_sub(text_merge)
+        # text_split = re.sub("[，。？]", "\n", text_merge)
+        text_split = re.sub("([，。？])", r"\1\n", text_merge)
+        timestamps = message["timestamps"]
+        tokens = message["tokens"]
 
-    # 解析结果
-    text_merge = message["text"]
-    # 热词替换
-    text_merge = hot_sub(text_merge)
-    # text_split = re.sub("[，。？]", "\n", text_merge)
-    text_split = re.sub("([，。？])", r"\1\n", text_merge)
-    timestamps = message["timestamps"]
-    tokens = message["tokens"]
+        # 得到文件名
+        json_filename = Path(file).with_suffix(".json")
+        txt_filename = Path(file).with_suffix(".txt")
+        merge_filename = Path(file).with_suffix(".merge.txt")
 
-    # 得到文件名
-    json_filename = Path(file).with_suffix(".json")
-    txt_filename = Path(file).with_suffix(".txt")
-    merge_filename = Path(file).with_suffix(".merge.txt")
+        # 写入结果
+        with open(merge_filename, "w", encoding="utf-8") as f:
+            f.write(text_merge)
+        with open(txt_filename, "w", encoding="utf-8") as f:
+            f.write(text_split)
+        with open(json_filename, "w", encoding="utf-8") as f:
+            json.dump(
+                {"timestamps": timestamps, "tokens": tokens}, f, ensure_ascii=False
+            )
+        srt_from_txt.one_task(txt_filename)
 
-    # 写入结果
-    with open(merge_filename, "w", encoding="utf-8") as f:
-        f.write(text_merge)
-    with open(txt_filename, "w", encoding="utf-8") as f:
-        f.write(text_split)
-    with open(json_filename, "w", encoding="utf-8") as f:
-        json.dump({"timestamps": timestamps, "tokens": tokens}, f, ensure_ascii=False)
-    srt_from_txt.one_task(txt_filename)
+        process_duration = message["time_complete"] - message["time_start"]
+        console.print(f"\033[K    处理耗时：{process_duration:.2f}s")
+        logger.info(f"    处理耗时：{process_duration:.2f}s")
+        console.print(f"    识别结果：\n[green]{text_merge}")
+        logger.info(f"    识别结果：\n{message['text']}")
 
-    process_duration = message["time_complete"] - message["time_start"]
-    console.print(f"\033[K    处理耗时：{process_duration:.2f}s")
-    logger.info(f"    处理耗时：{process_duration:.2f}s")
-    # console.print(f"    识别结果：\n[green]{message['text']}")
-    console.print(f"    识别结果：\n[green]{text_merge}")
-    logger.info(f"    识别结果：\n{message['text']}")
+    except websockets.exceptions.ConnectionClosed as e:
+        console.print(f"[red]连接已关闭，无法接收文件 {file.name} 的结果: {e}[/red]")
+        logger.error(f"连接已关闭，无法接收文件 {file.name} 的结果: {e}")
+    except Exception as e:
+        console.print(f"[red]接收文件 {file.name} 的结果时出错: {e}[/red]")
+        logger.error(f"接收文件 {file.name} 的结果时出错: {e}")
+        import traceback
+
+        traceback.print_exc()
+    finally:
+        # 确保停止文件观察器
+        if observer:
+            observer.stop()
+            observer.join()

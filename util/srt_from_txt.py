@@ -40,7 +40,7 @@ def get_scout(line, words, cursor):
     while _ <= scout_num:
         # 新建一个侦察兵
         scout = Scout()
-        scout.text = re.sub("[,.?:%，。？、\s\d]", "", line.lower())
+        scout.text = re.sub(r"[,.?:%，。？、\s\d]", "", line.lower())
         _ += 1
 
         # 找到起始点
@@ -224,26 +224,39 @@ def get_lines(txt_file: Path) -> List[str]:
     return text_lines
 
 
+def preprocess_text_lines(text_lines, words):
+    """预处理文本行，提高匹配成功率"""
+    processed_lines = []
+
+    for line in text_lines:
+        if not line.strip():
+            continue
+
+        # 清理文本
+        clean_line = re.sub(r"[^\w\u4e00-\u9fff]", "", line.lower())
+
+        # 如果行太短，考虑与下一行合并
+        if len(clean_line) < 3 and processed_lines:
+            processed_lines[-1] = processed_lines[-1] + " " + line.strip()
+        else:
+            processed_lines.append(line.strip())
+
+    return processed_lines
+
+
 def one_task(media_file: Path):
-    # 配置要打开的文件
     txt_file = media_file.with_suffix(".txt")
     json_file = media_file.with_suffix(".json")
     srt_file = media_file.with_suffix(".srt")
     if (not txt_file.exists()) or (not json_file.exists()):
         print(f"[bold red]无法找到 {media_file}对应的txt、json文件，跳过[/bold red]")
-        from loguru import logger
-
-        logger.add("logs/srt_from_txt.log", rotation="10 MB", enqueue=True)
-        logger.error(f"无法找到 {media_file}对应的txt、json文件，跳过")
-
         return None
 
-    # 获取带有时间戳的分词列表，获取分行稿件，匹配得到 srt
     words = get_words(json_file)
     text_lines = get_lines(txt_file)
-    subtitle_list = lines_match_words(text_lines, words)
+    processed_lines = preprocess_text_lines(text_lines, words)
+    subtitle_list = lines_match_words(processed_lines, words)
 
-    # 写入 srt
     with open(srt_file, "w", encoding="utf-8") as f:
         f.write(srt.compose(subtitle_list))
 
@@ -257,13 +270,7 @@ def main(files: List[Path]):
 if __name__ == "__main__":
     # main([Path(r"C:\Users\user0\Downloads\武林外传.E01-E04.DVDRip.x264.AC3-CMCT.txt")])
 
-    main(
-        [
-            Path(
-                r"C:\Users\user0\Downloads\Video\4-2 Linux计划任务管理 (014000-3343720).txt"
-            )
-        ]
-    )
+    main([Path(r"C:\Users\user0\Downloads\转录问题\1-项目简介.txt")])
 
     # merge_filename = Path(
     #     r"C:\Users\user0\Downloads\武林外传.E01-E04.DVDRip.x264.AC3-CMCT.merge.txt"
