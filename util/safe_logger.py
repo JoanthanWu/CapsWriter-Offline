@@ -3,6 +3,7 @@ import sys
 import threading
 from pathlib import Path
 
+from util.config import DebugConfig as Config
 from loguru import logger
 
 
@@ -103,6 +104,7 @@ class ThreadSafeLogger:
 
         # 获取日志文件路径
         log_file = self.get_log_file_path()
+        log_level = Config.logger_level
 
         # 文件日志配置
         logger.add(
@@ -110,8 +112,7 @@ class ThreadSafeLogger:
             rotation="10 MB",
             retention="7 days",
             enqueue=True,
-            # level="TRACE",
-            level="ERROR",
+            level=log_level,
             backtrace=True,
             diagnose=True,
             catch=True,
@@ -123,14 +124,13 @@ class ThreadSafeLogger:
 
         logger.add(
             sink=sys.stderr,
-            # level="TRACE",
-            level="ERROR",
+            level=log_level,
             catch=True,
         )
 
-        # script_name = self.get_script_name()
-        # logger.info(f"日志文件已创建: {log_file.absolute()}")
-        # logger.info(f"当前脚本: {script_name}")
+        # 记录日志系统初始化信息
+        # logger.info(f"日志系统已初始化，级别: {log_level}")
+        # logger.info(f"日志文件: {log_file.absolute()}")
 
 
 # 创建便捷的初始化函数

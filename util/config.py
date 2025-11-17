@@ -10,6 +10,11 @@ with config_toml_path.open("r", encoding="utf-8") as f:
     config = parse(config_str)
 
 
+# 调试配置
+class DebugConfig:
+    logger_level: str = config["debug"]["logger_level"]
+
+
 # 服务端配置
 class ServerConfig:
     model: str = config["server"]["model"]
@@ -189,6 +194,7 @@ def print_config():
 
     console = Console()
     config_classes = [
+        DebugConfig,
         ServerConfig,
         ClientConfig,
         DeepLXConfig,
