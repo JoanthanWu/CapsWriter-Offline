@@ -94,10 +94,7 @@ if __name__ == "__main__":
     )
     print(result)
     from loguru import logger
+    from util.safe_logger import init_logging
 
-    logger.add(
-        "logs/client_send_signal_to_hint_while_recording.log",
-        rotation="10 MB",
-        enqueue=True,
-    )
-    logger.info(f"Result: {result}")
+    init_logging()
+    logger.debug(f"Result: {result}")

@@ -89,10 +89,9 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
 
         if task.socket_id not in sockets_id:  # 检查任务所属的连接是否存活
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add(
-                "logs/server_init_recognizer.log", rotation="10 MB", enqueue=True
-            )
+            init_logging()
 
             logger.info(
                 f"连接已关闭，放弃识别任务，任务ID：{task.task_id}，Socket ID：{task.socket_id}"

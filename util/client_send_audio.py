@@ -16,8 +16,9 @@ from websockets.protocol import State
 
 async def send_message(message):
     from loguru import logger
+    from util.safe_logger import init_logging
 
-    logger.add("logs/client_send_audio.log", rotation="10 MB", enqueue=True)
+    init_logging()
     # 发送数据
     if Cosmic.websocket is None or Cosmic.websocket.state in [
         State.CLOSED,
@@ -142,6 +143,7 @@ async def send_audio():
     except Exception as e:
         console.print(e)
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add("logs/client_send_audio.log", rotation="10 MB", enqueue=True)
+        init_logging()
         logger.error(f"发送音频时出错: {e}")

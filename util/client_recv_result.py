@@ -120,19 +120,22 @@ async def recv_result():
     except websockets.ConnectionClosedError:
         console.print("[red]连接断开\n")
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add("logs/client_recv_result.log", rotation="10 MB", enqueue=True)
+        init_logging()
         logger.error("连接断开，WebSocket连接关闭错误。")
     except websockets.ConnectionClosedOK:
         console.print("[red]连接断开\n")
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add("logs/client_recv_result.log", rotation="10 MB", enqueue=True)
+        init_logging()
         logger.error("连接断开，WebSocket连接正常关闭。")
     except Exception as e:
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add("logs/client_recv_result.log", rotation="10 MB", enqueue=True)
+        init_logging()
         logger.error(f"接收识别结果时出错: {e}")
     finally:
         return

@@ -193,10 +193,9 @@ def launch_task():
                 )
             except Exception as e:
                 from loguru import logger
+                from util.safe_logger import init_logging
 
-                logger.add(
-                    "logs/client_shortcut_handler.log", rotation="10 MB", enqueue=True
-                )
+                init_logging()
                 logger.error(f"Failed to create new event loop: {e}")
         else:
             raise

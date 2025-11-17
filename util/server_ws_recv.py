@@ -22,6 +22,7 @@ class Cache:
 async def message_handler(websocket, message, cache: Cache):
     """处理得到的音频流数据"""
     from loguru import logger
+    from util.safe_logger import init_logging
 
     queue_in = Cosmic.queue_in
 
@@ -51,7 +52,7 @@ async def message_handler(websocket, message, cache: Cache):
             status_mic.start()
         if source == "file" and is_start:
             console.print("正在接收音频文件...")
-            logger.add("logs/server_ws_recv.log", rotation="10 MB", enqueue=True)
+            init_logging()
             logger.info(
                 f"正在接收音频文件..., 任务ID：{task_id}, Socket ID：{socket_id}"
             )
@@ -80,7 +81,7 @@ async def message_handler(websocket, message, cache: Cache):
             status_mic.stop()
         elif source == "file":
             print(f"音频文件接收完毕，时长 {cache.frame_num / 16000 / 4:.2f}s")
-            logger.add("logs/server_ws_recv.log", rotation="10 MB", enqueue=True)
+            init_logging()
             logger.info(f"音频文件接收完毕，时长 {cache.frame_num / 16000 / 4:.2f}s")
 
         # 客户端说片段结束，将缓冲区音频识别
@@ -106,8 +107,9 @@ async def message_handler(websocket, message, cache: Cache):
 async def ws_recv(websocket):
     global status_mic
     from loguru import logger
+    from util.safe_logger import init_logging
 
-    logger.add("logs/server_ws_recv.log", rotation="10 MB", enqueue=True)
+    init_logging()
     # 登记 socket 到字典，以 socket id 字符串为索引
     sockets = Cosmic.sockets
     sockets_id = Cosmic.sockets_id
@@ -138,15 +140,15 @@ async def ws_recv(websocket):
         logger.info("ConnectionClosed...")
     except websockets.exceptions.ConnectionClosedError:
         console.print("ConnectionClosed...")
-        logger.info("ConnectionClosedError..., socket closed unexpectedly")
+        logger.error("ConnectionClosedError..., socket closed unexpectedly")
     except websockets.ConnectionClosed:
         console.print(
             "ConnectionClosed...",
         )
-        logger.info("ConnectionClosed..., socket closed normally")
+        logger.error("ConnectionClosed..., socket closed normally")
     except websockets.InvalidState:
         console.print("InvalidState...")
-        logger.info("InvalidState..., invalid websocket state")
+        logger.error("InvalidState..., invalid websocket state")
     except Exception as e:
         console.print("Exception:", e)
         logger.error(f"Exception in ws_recv: {e}")

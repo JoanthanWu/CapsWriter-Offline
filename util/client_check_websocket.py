@@ -18,10 +18,9 @@ class Handler:
             return True
         else:
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add(
-                "logs/client_check_websocket.log", rotation="10 MB", enqueue=True
-            )
+            init_logging()
             logger.error(f"检查WebSocket连接时出错: {e}")
 
 

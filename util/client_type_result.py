@@ -18,8 +18,9 @@ async def type_result(text):
         except clipman.exceptions.ClipmanBaseException as e:
             temp = e
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add("logs/client_type_result.log", rotation="10 MB", enqueue=True)
+            init_logging()
             logger.error(f"获取剪贴板内容时出错: {e}")
 
         # 复制结果

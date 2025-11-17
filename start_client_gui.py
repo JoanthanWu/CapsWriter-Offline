@@ -226,8 +226,9 @@ class GUI(QMainWindow):
                     self.convert_to_traditional_chinese_main_action.setText("繁體中文")
         except Exception as e:
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add("logs/client_gui_init.log", rotation="10 MB")
+            init_logging()
             logger.error(f"读取配置文件失败: {e}")
             return
 
@@ -292,10 +293,9 @@ class GUI(QMainWindow):
             ]
         except Exception as e:
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add(
-                "logs/client_gui_switch_simplified_traditional.log", rotation="10 MB"
-            )
+            init_logging()
             logger.error(f"读取配置文件失败: {e}")
             return
 
@@ -328,10 +328,9 @@ class GUI(QMainWindow):
                     self.convert_to_traditional_chinese_main_action.setText("简体中文")
         except Exception as e:
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add(
-                "logs/client_gui_switch_simplified_traditional.log", rotation="10 MB"
-            )
+            init_logging()
             logger.error(f"修改配置文件失败: {e}")
 
     def restart_client(self):
@@ -447,8 +446,9 @@ class GUI(QMainWindow):
 
     def quit_app(self):
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add("logs/client_gui_quit.log", rotation="10 MB", enqueue=True)
+        init_logging()
 
         # Terminate core_client.py process
         if hasattr(self, "core_client_process") and self.core_client_process:
@@ -472,7 +472,7 @@ class GUI(QMainWindow):
                 text=True,
             )
             stdout, stderr = proc.communicate()
-            logger.info(f"Taskkill output: {stdout}")
+            logger.debug(f"Taskkill output: {stdout}")
             if stderr:
                 logger.error(f"Taskkill errors: {stderr}")
         except Exception as e:
@@ -598,9 +598,10 @@ class GUI(QMainWindow):
                 self.berthToRight(x, y, width, height, screenWidth, screenHeight)
             else:
                 from loguru import logger
+                from util.safe_logger import init_logging
 
-                logger.add("logs/client_gui_check_window_active.log", rotation="10 MB")
-                logger.info("窗口无需恢复停靠")
+                init_logging()
+                logger.debug("窗口无需恢复停靠")
                 pass
 
     def mousePressEvent(self, event):
@@ -760,25 +761,26 @@ def start_client_gui():
 
 def Print_Screen_Scale():
     from loguru import logger
+    from util.safe_logger import init_logging
 
-    logger.add("logs/client_gui_print_screen_scale.log", rotation="10 MB")
+    init_logging()
     # 获取屏幕的宽度和高度
     hDC = win32gui.GetDC(0)
     screen_width = win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES)
     screen_height = win32print.GetDeviceCaps(hDC, win32con.DESKTOPVERTRES)
     print(f"屏幕尺寸: {screen_width}x{screen_height}")
-    logger.info(f"屏幕尺寸: {screen_width}x{screen_height}")
+    logger.debug(f"屏幕尺寸: {screen_width}x{screen_height}")
     # 获取逻辑的宽度和高度
     logical_width = win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN)
     logical_height = win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN)
     print(f"逻辑尺寸: {logical_width}x{logical_height}")
-    logger.info(f"逻辑尺寸: {logical_width}x{logical_height}")
+    logger.debug(f"逻辑尺寸: {logical_width}x{logical_height}")
     # 计算缩放比例
     global scale_x, scale_y
     scale_x = screen_width / logical_width
     scale_y = screen_height / logical_height
     print(f"屏幕缩放比例: {scale_x}, {scale_y}")
-    logger.info(f"屏幕缩放比例: {scale_x}, {scale_y}")
+    logger.debug(f"屏幕缩放比例: {scale_x}, {scale_y}")
 
 
 def read_file_list(file_list_path: Path):
@@ -798,8 +800,9 @@ if __name__ == "__main__":
             files = read_file_list(args.file_list)
         except Exception as e:
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add("logs/client_gui_read_file_list.log", rotation="10 MB")
+            init_logging()
             logger.error(f"读取文件列表失败: {e}")
             sys.exit(1)
     else:
@@ -815,8 +818,9 @@ if __name__ == "__main__":
             subprocess.Popen(command, cwd=str(CapsWriter_path))
         except Exception as e:
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add("logs/client_gui_start_process.log", rotation="10 MB")
+            init_logging()
             logger.error(f"启动进程失败: {e}")
     else:
         # GUI

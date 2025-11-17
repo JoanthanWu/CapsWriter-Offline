@@ -30,8 +30,9 @@ class CloudClipboard:
         :return: 分享链接
         """
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add("logs/cloud_clipboard.log", rotation="10 MB", enqueue=True)
+        init_logging()
         data = {
             "text": (None, text),
             "expire_value": (None, str(expire_value)),

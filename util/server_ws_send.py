@@ -53,6 +53,7 @@ async def ws_send():
         except Exception as e:
             print(e)
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add("logs/server_ws_send.log", rotation="10 MB", enqueue=True)
+            init_logging()
             logger.error(f"发送识别结果时出错: {e}")

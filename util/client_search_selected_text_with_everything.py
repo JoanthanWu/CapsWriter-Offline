@@ -30,12 +30,9 @@ async def on_hotkey_pressed():
             temp = e
             console.print(e)
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add(
-                "logs/client_search_selected_text_with_everything.log",
-                rotation="10 MB",
-                enqueue=True,
-            )
+            init_logging()
             logger.error(f"获取剪贴板内容时出错: {e}")
         text = temp
         # 控制台输出
@@ -47,12 +44,9 @@ async def on_hotkey_pressed():
     except Exception as e:
         console.print(e)
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add(
-            "logs/client_search_selected_text_with_everything.log",
-            rotation="10 MB",
-            enqueue=True,
-        )
+        init_logging()
         logger.error(f"热键处理时出错: {e}")
 
 
@@ -75,12 +69,9 @@ async def search_selected_text_with_everything():
     except Exception as e:
         console.print(e)
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add(
-            "logs/client_search_selected_text_with_everything.log",
-            rotation="10 MB",
-            enqueue=True,
-        )
+        init_logging()
         logger.error(f"主函数出错: {e}")
     finally:
         keyboard.remove_hotkey(

@@ -88,8 +88,9 @@ def get_scout(line, words, cursor):
     if not scout_list:
         print("[bold red]字幕匹配出现出现严重错误，越界导致无法探察[/bold red]")
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add("logs/srt_from_txt.log", rotation="10 MB", enqueue=True)
+        init_logging()
         logger.error("字幕匹配出现出现严重错误，越界导致无法探察")
         return False
 
@@ -111,8 +112,9 @@ def lines_match_words(text_lines: List[str], words: List) -> List[srt.Subtitle]:
                 }
     """
     from loguru import logger
+    from util.safe_logger import init_logging
 
-    logger.add("logs/srt_from_txt.log", rotation="10 MB", enqueue=True)
+    init_logging()
 
     # 初始化 fail_count
     fail_count = 0

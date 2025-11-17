@@ -91,8 +91,9 @@ class GUI(QMainWindow):
 
     def quit_app(self):
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add("logs/server_gui_quit.log", rotation="10 MB")
+        init_logging()
 
         # Terminate core_server.py process
         if hasattr(self, "core_server_process") and self.core_server_process:
@@ -126,7 +127,7 @@ class GUI(QMainWindow):
                     text=True,
                 )
             stdout, stderr = proc.communicate()
-            logger.info(f"Taskkill output: {stdout}")
+            logger.debug(f"Taskkill output: {stdout}")
             if stderr:
                 logger.error(f"Taskkill errors: {stderr}")
         except Exception as e:

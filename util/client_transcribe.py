@@ -9,6 +9,7 @@ from pathlib import Path
 
 import websockets
 from loguru import logger
+from util.safe_logger import init_logging
 
 from util import srt_from_txt
 from util.client_check_websocket import check_websocket
@@ -19,7 +20,7 @@ from util.config import ClientConfig as Config
 
 
 async def transcribe_check(file: Path):
-    logger.add("logs/client_transcribe.log", rotation="10 MB", enqueue=True)
+    init_logging()
     # 检查连接
     if not await check_websocket():
         console.print("无法连接到服务端", style="bright_red")
@@ -33,16 +34,15 @@ async def transcribe_check(file: Path):
 
 
 async def transcribe_send(file: Path):
-    logger.add("logs/client_transcribe.log", rotation="10 MB", enqueue=True)
-    # 获取连接
-    websocket = Cosmic.websocket
+    init_logging()
+    websocket = Cosmic.websocket  # 获取连接
 
     # 生成任务id
     task_id = str(uuid.uuid1())
     console.print(f"\n任务标识：{task_id}")
-    logger.info(f"任务标识：{task_id}")
+    logger.debug(f"任务标识：{task_id}")
     console.print(f"    处理文件：{file}")
-    logger.info(f"    处理文件：{file}")
+    logger.debug(f"    处理文件：{file}")
 
     # 获取音频数据，ffmpeg输出采样率16000，单声道，float32格式
     ffmpeg_cmd = [
@@ -63,13 +63,13 @@ async def transcribe_send(file: Path):
     )
 
     console.print("    正在提取音频", end="\r")
-    logger.info("    正在提取音频")
+    logger.debug("    正在提取音频")
 
     # 计算音频总长度
     audio_data = await process.stdout.read()
     audio_duration = len(audio_data) / 4 / 16000
     console.print(f"    音频长度：{audio_duration:.2f}s")
-    logger.info(f"    音频长度：{audio_duration:.2f}s")
+    logger.debug(f"    音频长度：{audio_duration:.2f}s")
 
     # 分块大小，例如60秒
     chunk_size = 16000 * 4 * 60  # 16000采样率，4字节每个样本，60秒
@@ -104,7 +104,7 @@ async def transcribe_send(file: Path):
             # 处理连接断开的情况，例如重新连接或终止任务
             break
         if is_final:
-            logger.info("    音频数据发送完毕")
+            logger.debug("    音频数据发送完毕")
             break
 
     # 等待ffmpeg进程结束
@@ -112,7 +112,7 @@ async def transcribe_send(file: Path):
 
 
 async def transcribe_recv(file: Path):
-    logger.add("logs/client_transcribe.log", rotation="10 MB", enqueue=True)
+    init_logging()
 
     # 检查连接是否有效
     if Cosmic.websocket is None:
@@ -131,7 +131,7 @@ async def transcribe_recv(file: Path):
             message = json.loads(message)
             console.print(f"    转录进度: {message['duration']:.2f}s", end="\r")
             if message["is_final"]:
-                logger.info("    收到最终转录结果")
+                logger.debug("    收到最终转录结果")
                 break
 
         # 解析结果
@@ -161,9 +161,9 @@ async def transcribe_recv(file: Path):
 
         process_duration = message["time_complete"] - message["time_start"]
         console.print(f"\033[K    处理耗时：{process_duration:.2f}s")
-        logger.info(f"    处理耗时：{process_duration:.2f}s")
+        logger.debug(f"    处理耗时：{process_duration:.2f}s")
         console.print(f"    识别结果：\n[green]{text_merge}")
-        logger.info(f"    识别结果：\n{message['text']}")
+        logger.debug(f"    识别结果：\n{message['text']}")
 
     except websockets.exceptions.ConnectionClosed as e:
         console.print(f"[red]连接已关闭，无法接收文件 {file.name} 的结果: {e}[/red]")

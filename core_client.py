@@ -103,8 +103,9 @@ async def main_file(files: List[Path]):
         except Exception as e:
             console.print(f"[bold red]处理文件 {file.name} 时出错: {e}[/bold red]")
             from loguru import logger
+            from util.safe_logger import init_logging
 
-            logger.add("logs/core_client_file.log", rotation="10 MB", enqueue=True)
+            init_logging()
 
             logger.error(f"处理文件 {file.name} 时出错: {e}")
             # 确保出错时重置连接
@@ -140,8 +141,9 @@ def init_file(files: List[Path]):
     用 CapsWriter Server 转录音视频文件，生成 srt 字幕
     """
     from loguru import logger
+    from util.safe_logger import init_logging
 
-    logger.add("logs/core_client_file.log", rotation="10 MB", enqueue=True)
+    init_logging()
     logger.info(f"开始转录文件，参数：{files}")
     try:
         asyncio.run(main_file(files))

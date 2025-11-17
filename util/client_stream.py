@@ -53,8 +53,9 @@ def stream_reopen():
 def stream_open():
     # 显示录音所用的音频设备
     from loguru import logger
+    from util.safe_logger import init_logging
 
-    logger.add("logs/client_stream.log", rotation="10 MB", enqueue=True)
+    init_logging()
     channels = 1
     try:
         device = sd.query_devices(kind="input")
@@ -63,7 +64,7 @@ def stream_open():
         console.print(
             f"使用默认音频设备：[italic]{device_name}，声道数：{channels}", end="\n\n"
         )
-        # logger.info(f"使用默认音频设备：{device_name}，声道数：{channels}")
+        logger.debug(f"使用默认音频设备：{device_name}，声道数：{channels}")
     except UnicodeDecodeError:
         console.print(
             "由于编码问题，暂时无法获得麦克风设备名字", end="\n\n", style="bright_red"

@@ -17,14 +17,16 @@ def check_process(name):
         )
     except FileNotFoundError:
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add("logs/check_process.log", rotation="10 MB", enqueue=True)
+        linit_logging()
         logger.error("未找到命令，检查是否安装在环境中。")
         return False
     except Exception as e:
         from loguru import logger
+        from util.safe_logger import init_logging
 
-        logger.add("logs/check_process.log", rotation="10 MB", enqueue=True)
+        init_logging()
         logger.error(f"检查进程时出错: {e}")
         return False
 

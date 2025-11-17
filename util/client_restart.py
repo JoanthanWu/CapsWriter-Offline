@@ -5,8 +5,9 @@ from util.check_process import check_process
 
 def stop_exe(exe_name: str):
     from loguru import logger
+    from util.safe_logger import init_logging
 
-    logger.add("logs/client_restart.log", rotation="10 MB", enqueue=True)
+    init_logging()
 
     try:
         logger.info(f"Stopping {exe_name}")
@@ -19,7 +20,7 @@ def stop_exe(exe_name: str):
             text=True,
         )
         stdout, stderr = proc.communicate()
-        logger.info(f"Taskkill output: {stdout}")
+        logger.debug(f"Taskkill output: {stdout}")
         if stderr:
             logger.error(f"Taskkill errors: {stderr}")
     except Exception as e:
@@ -28,8 +29,9 @@ def stop_exe(exe_name: str):
 
 def start_exe(exe_name: str):
     from loguru import logger
+    from util.safe_logger import init_logging
 
-    logger.add("logs/client_restart.log", rotation="10 MB", enqueue=True)
+    init_logging()
     # print(f"Starting {exe_name}")
     proc = subprocess.Popen(
         f'start "" "{exe_name}"',

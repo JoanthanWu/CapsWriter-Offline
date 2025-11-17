@@ -52,12 +52,9 @@ async def offline_translate_server(websocket):
 
 def run_offline_translate_service():
     from loguru import logger
+    from util.safe_logger import init_logging
 
-    logger.add(
-        "logs/server_run_offline_translate_service.log",
-        rotation="10 MB",
-        enqueue=True,
-    )
+    init_logging()
 
     async def main():
         # 使用async with来管理服务器生命周期
