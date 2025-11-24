@@ -8,9 +8,14 @@ import asyncio
 import clipman
 import keyboard
 
+from util.check_libretranslate_service import check_libretranslate_service
 from util.client_cosmic import console
-from util.client_translate_online import translate_online
 from util.config import ClientConfig as Config
+
+if check_libretranslate_service():
+    from util.client_translate_online_libretranslate import translate_online
+else:
+    from util.client_translate_online import translate_online
 
 
 async def on_hotkey_pressed():
@@ -31,6 +36,7 @@ async def on_hotkey_pressed():
             temp = e
             console.print(e)
             from loguru import logger
+
             from util.safe_logger import init_logging
 
             init_logging()
@@ -49,6 +55,7 @@ async def on_hotkey_pressed():
     except Exception as e:
         console.print(e)
         from loguru import logger
+
         from util.safe_logger import init_logging
 
         init_logging()
@@ -75,6 +82,7 @@ async def translate_and_replace_selected_text_online():
     except Exception as e:
         console.print(e)
         from loguru import logger
+
         from util.safe_logger import init_logging
 
         init_logging()

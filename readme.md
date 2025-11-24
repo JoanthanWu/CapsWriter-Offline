@@ -11,11 +11,11 @@
 
 1. 按下键盘上的大写锁定键 `CapsLock` ，录音开始，当松开大写锁定键时，就会识别你的录音，并将识别结果立刻输入
 2. 按下键盘上的 `Left Shift` 再按 `CapsLock` 可以将识别结果离线翻译为英文，并将识别结果立刻输入
-3. 按下键盘上的 `Right Shift` 再按 `CapsLock` 可以将识别结果[在线翻译](https://github.com/OwO-Network/DeepLX)为多国语言，默认设置翻译为日文，并将识别结果立刻输入
+3. 按下键盘上的 `Right Shift` 再按 `CapsLock` 可以将识别结果在线翻译（[LibreTranslate](https://github.com/LibreTranslate/LibreTranslate) / [DeepLX](https://github.com/OwO-Network/DeepLX)）为多国语言，默认设置翻译为日文，并将识别结果立刻输入
 4. 将音视频文件拖动到客户端 `start_client_gui.exe` 打开，即可转录生成 srt 字幕
 5. 按下客户端主界面的 `云贴` 按钮，即可将客户端文本框中内容发布到[云剪贴板](https://share.lanol.cn) ，并生成获取链接和二维码
 6. 按下键盘上的 `Ctrl` + `Alt` + `P` ，可以将光标选中的 `中文` [离线翻译](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en)为 `英文` ，并自动覆盖替换原文
-7. 按下键盘上的 `Ctrl` + `Alt` + `[` ，可以将光标选中的 `任意语言` [在线翻译](https://github.com/OwO-Network/DeepLX)为 `在线翻译目标语言` ，并自动覆盖替换原文
+7. 按下键盘上的 `Ctrl` + `Alt` + `[` ，可以将光标选中的 `任意语言` 在线翻译（[LibreTranslate](https://github.com/LibreTranslate/LibreTranslate) / [DeepLX](https://github.com/OwO-Network/DeepLX)）为 `在线翻译目标语言` ，并自动覆盖替换原文
 8. 按下键盘上的 `Ctrl` + `Alt` + `F` ，可以使用 everything 搜索光标选中的文字
 9. 快速双击 `CapsLock` ，可语音输入繁体。长按 `CapsLock` 实现按键原有功能切换大写锁定。
 10. 可通过 `edit_config_gui.exe` 图形化配置界面安全地修改客户端/服务端配置，也可手动修改 `config.toml` 文件
@@ -31,6 +31,11 @@
 
 <details>
 <summary><h1">展开最近更新</h1></summary>
+
+## 新增 优先使用 LibreTranslate 在线翻译服务
+> 服务端启动时，会自动检查 config.toml 中 LibreTranslate api 地址是否可用
+> 如果可用，则优先使用 LibreTranslate 在线翻译服务；
+> 如果不可用，则会自动切换到 DeepLX 在线翻译服务
 
 ## 新增 可选项 开始和结束任务时播放提示音
 > 可在 `config.toml` 设置是否启用，以及音频文件路径和音量。需要ffplay.exe
@@ -116,7 +121,7 @@
 2. 完全离线、无限时长、低延迟、高准确率、中英混输、中译英、自动阿拉伯数字、自动调整中英间隔
 3. 防干扰功能：默认录音时静音并暂停其他音频播放，避免音乐干扰语音输入，通过 `config.toml` 中 `mute_other_audio` 和 `pause_other_audio` 配置
 4. 离线翻译功能：离线翻译模型[Helsinki-NLP/opus-mt-zh-en](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en) ，组合键 按住 `Left Shift` 再按 `CapsLock` 进行翻译，方便同时需要输入中文和英文翻译的场景。通过 `config.toml` 中 `offline_translate_shortcut` 配置
-5. 在线翻译功能：基于 [DeepLX](https://github.com/OwO-Network/DeepLX) 可以将识别结果在线翻译为多国语言，默认翻译为日文。过于频繁的请求可能导致 IP 被封。组合键 按住 `Right Shift` 再按 `CapsLock` 进行翻译，方便同时需要输入中文和英文翻译的场景。通过 `config.toml` 中 `online_translate_shortcut` 和 `trans_online_target_languages` 配置
+5. 在线翻译功能：服务端启动时，会自动检查 config.toml 中 [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate) api 地址是否可用，如果可用，则优先使用 LibreTranslate 在线翻译服务；如果不可用，则会自动切换到 DeepLX 在线翻译服务。基于 [DeepLX](https://github.com/OwO-Network/DeepLX) 可以将识别结果在线翻译为多国语言，默认翻译为日文。过于频繁的请求可能导致 IP 被封。组合键 按住 `Right Shift` 再按 `CapsLock` 进行翻译，方便同时需要输入中文和英文翻译的场景。通过 `config.toml` 中 `online_translate_shortcut` 和 `trans_online_target_languages` 配置
 6. 转录功能：将音视频文件拖动到客户端 `start_client_gui.exe` 打开，即可转录生成 srt 字幕
 7. 热词功能：可以在 `hot-en.txt hot-zh.txt hot-rule.txt` 中添加三种热词，客户端动态载入
 8. 日记功能：默认每次录音识别后，识别结果记录在 `年份/月份/日期.md` ，录音文件保存在 `年份/月份/assets`
@@ -156,7 +161,7 @@
 3. 音视频文件转录功能依赖于 `FFmpeg`，打包版本已内置 `FFmpeg`
 4. 默认的快捷键是 `caps lock`，你可以打开 `core_client.py` 进行修改
 5. 输入状态提示功能由 [AutoHotKeyV2](https://www.autohotkey.com/download/) `hint_while_recording.exe` 实现，修改 `config.toml` 默认快捷键并**不会**改变提示的按键设置，需要编辑 `hint_while_recording.ahk` 并自行编译替换 `hint_while_recording.exe`
-6. 在线翻译基于 [DeepLX](https://github.com/OwO-Network/DeepLX) ，过于频繁的请求可能导致 IP 被封，如果出现 429 错误，则表示你的 IP 被 DeepL 暂时屏蔽了，请不要在短时间内频繁请求
+6. 在线翻译基于 [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate) 或 [DeepLX](https://github.com/OwO-Network/DeepLX)）。服务端启动时，会自动检查 config.toml 中 LibreTranslate api 地址是否可用，如果可用，则优先使用 LibreTranslate 在线翻译服务；如果不可用，则会自动切换到 DeepLX 在线翻译服务。[DeepLX](https://github.com/OwO-Network/DeepLX)过于频繁的请求可能导致 IP 被封，如果出现 429 /502 / 503 错误，则表示你的 IP 被 DeepL 暂时屏蔽了，请不要在短时间内频繁请求
 7. 当某程序以管理员权限运行，可能会出现有识别结果但是却无法在那个程序输入文字的状况，例如：`Listary` 、`PixPin` 等。这是因为 `start_client_gui.exe` 默认以用户权限运行客户端，运行在用户权限的程序无法控制管理员权限的程序。你可以关闭用户权限运行的客户端，尝试使用 `start_client_gui_admin.exe` 以管理员权限运行客户端
 8. 添加开机自启动的方法：
 
@@ -199,6 +204,19 @@
 你可以使用 `edit_config_gui.exe` 图形界面工具方便且安全地修改 服务端、客户端的配置，也可以直接编辑 `config.toml` ，在开头部分有注释，指导你修改服务端、客户端的：
 
 ```toml
+# 调试
+[debug]
+logger_level = "ERROR" # 调试日志级别
+# 级别名称
+# TRACE           5
+# DEBUG           10
+# INFO            20
+# SUCCESS         25
+# WARNING         30
+# ERROR           40
+# CRITICAL        50
+
+
 # ======================服务端配置==================================
 [server]
 model = "Sensevoice"
@@ -288,6 +306,11 @@ online_translate_shortcut = "right shift"
 # 控制在线翻译的快捷键，默认是 Right Shift，按住 Right Shift 再按 CapsLock 进行在线翻译
 # 在线翻译基于 DeepLX，过于频繁的请求可能导致 IP 被封
 # 如果出现 429 错误，则表示你的 IP 被 DeepL 暂时屏蔽了，请不要在短时间内频繁请求
+
+online_translate_target_languages_libretranslate = "ja"
+# LibreTranslate 在线翻译目标语言
+#
+# https://www.iso.org/iso-639-language-code
 
 online_translate_target_languages = "JA"
 # 在线翻译目标语言
@@ -459,6 +482,16 @@ opencc_converter = "s2t"
 # jp2t New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
 
 
+# ======================LibreTranslate 配置==================================
+[libretranslate]
+api = "http://192.168.3.248:5000/"
+# api = "https://libretranslate.com/"
+# 官方 https://libretranslate.com/ 需要API Key，https://portal.libretranslate.com/
+# 建议自行部署 https://github.com/LibreTranslate/LibreTranslate
+# Libre Translate 离/在线翻译地址
+# 如果此地址不可用（ 返回非 200 状态码），则使用 DeepLX 作为在线翻译服务
+
+
 # ======================DeepLX 配置==================================
 
 [deeplx]
@@ -570,7 +603,7 @@ debug = false
 enableBTT=1
 [ShowText]
 cnTxt=✦语音输入中‧‧‧
-cnTxtB=✦语音输入中⇄
+cnTxtB=✦語音輸入中⇄
 enTxt=✦VoiceTrans‧‧‧
 enTxtB=✦VoiceTrans⇄
 [Txt]
@@ -582,7 +615,7 @@ enTxtClolorB=0xFF6666FF
 enTxtFontSize=16
 [List]
 Comment1=在hintAtCursorPositionList中的程序将不会把“语音输入中”的提示显示在文本光标位置，而是显示在鼠标光标的位置
-hintAtCursorPositionList=:StartMenuExperienceHost.exe:wetype_update.exe:AnLink.exe:wps.exe:HBuilderX.exe:ShareX.exe:clipdiary-portable.exe:explorer.exe:
+hintAtCursorPositionList=:StartMenuExperienceHost.exe:wetype_update.exe:AnLink.exe:wps.exe:HBuilderX.exe:ShareX.exe:clipdiary-portable.exe:explorer.exe:firefox.exe:
 Comment2=在doNotShowHintList中的程序将不会显示“语音输入中”的提示
 doNotShowHintList=:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini64.exe:
 ```
@@ -647,7 +680,7 @@ doNotShowHintList=:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini
 
 - [yiyu-earth/sherpa-onnx-paraformer-zh-2024-04-25](https://huggingface.co/yiyu-earth/sherpa-onnx-paraformer-zh-2024-04-25)
 
-另外，还使用了阿里巴巴的标点符号模型，大小约 1GB：
+标点符号模型：
 
 - [sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12](https://www.modelscope.cn/models/csukuangfj/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12/summary)
 

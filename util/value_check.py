@@ -81,6 +81,18 @@ class ValueCheck:
         except ValueError:
             return False, "快捷键格式不正确"
 
+    @staticmethod
+    def is_valid_url(url: str):
+        """验证URL格式"""
+        if not url:
+            return False, "URL不能为空"
+
+        # 简单的URL格式验证
+        if not url.startswith(("http://", "https://")):
+            return False, "URL必须以http://或https://开头"
+
+        return True, None
+
 
 if __name__ == "__main__":
     # 测试
@@ -202,3 +214,18 @@ if __name__ == "__main__":
             print(f"[green]{hotkey}[/green]")
         else:
             print(f"[red]{hotkey} - {error if error else '无效'}[/red]")
+
+    # 测试URL
+    url_list = [
+        "http://www.baidu.com",
+        "https://www.google.com",
+        "ftp://www.ftp.com",
+        "invalid_url",
+    ]
+
+    for url in url_list:
+        is_valid, error = ValueCheck.is_valid_url(url)
+        if is_valid:
+            print(f"[green]{url}[/green]")
+        else:
+            print(f"[red]{url} - {error if error else '无效'}[/red]")

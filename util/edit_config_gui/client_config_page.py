@@ -105,6 +105,11 @@ class ClientConfigPage(SiPage):
         self.online_translate_shortcut_set_default.clicked.connect(
             lambda: self.online_translate_shortcut.lineEdit().setText("right shift")
         )
+        self.online_translate_target_languages_libretranslate_set_default.clicked.connect(
+            lambda: self.online_translate_target_languages_libretranslate.menu().setIndex(
+                0
+            )
+        )
         self.online_translate_target_languages_set_default.clicked.connect(
             lambda: self.online_translate_target_languages.menu().setIndex(0)
         )
@@ -1409,7 +1414,68 @@ class ClientConfigPage(SiPage):
             self.online_translate_shortcut_linear_attaching.addWidget(
                 self.online_translate_shortcut
             )
-            # 在线翻译目标语言
+            # 在线翻译目标语言 LibreTranslate 支持的语言
+            # https://www.iso.org/iso-639-language-code
+            self.online_translate_target_languages_libretranslate = SiComboBox(self)
+            self.online_translate_target_languages_libretranslate.resize(256, 32)
+            self.online_translate_target_languages_libretranslate.addOption("zh")
+            self.online_translate_target_languages_libretranslate.addOption("en")
+            self.online_translate_target_languages_libretranslate.addOption("ru")
+            self.online_translate_target_languages_libretranslate.addOption("fr")
+            self.online_translate_target_languages_libretranslate.addOption("ko")
+            match self.config["client"][
+                "online_translate_target_languages_libretranslate"
+            ]:
+                case "zh":
+                    self.online_translate_target_languages_libretranslate.menu().setIndex(
+                        0
+                    )
+                case "en":
+                    self.online_translate_target_languages_libretranslate.menu().setIndex(
+                        1
+                    )
+                case "ru":
+                    self.online_translate_target_languages_libretranslate.menu().setIndex(
+                        2
+                    )
+                case "fr":
+                    self.online_translate_target_languages_libretranslate.menu().setIndex(
+                        3
+                    )
+                case "ko":
+                    self.online_translate_target_languages_libretranslate.menu().setIndex(
+                        4
+                    )
+                case _:
+                    self.online_translate_target_languages_libretranslate.addOption(
+                        self.config["client"][
+                            "online_translate_target_languages_libretranslate"
+                        ]
+                    )
+                    self.online_translate_target_languages_libretranslate.menu().setIndex(
+                        -1
+                    )
+            self.online_translate_target_languages_libretranslate_set_default = (
+                SetDefaultButton(self)
+            )
+            self.online_translate_target_languages_libretranslate_linear_attaching = (
+                SiOptionCardLinear(self)
+            )
+            self.online_translate_target_languages_libretranslate_linear_attaching.setTitle(
+                "在线翻译目标语言 LibreTranslate",
+                '默认值："ja"\n更多选择参考 https://github.com/uav4geo/LibreTranslate/blob/master/docs/LANGUAGES.md 手动修改 config.toml',
+            )
+            self.online_translate_target_languages_libretranslate_linear_attaching.load(
+                SiGlobal.siui.iconpack.get("ic_fluent_translate_regular")
+            )
+            self.online_translate_target_languages_libretranslate_linear_attaching.addWidget(
+                self.online_translate_target_languages_libretranslate_set_default
+            )
+            self.online_translate_target_languages_libretranslate_linear_attaching.addWidget(
+                self.online_translate_target_languages_libretranslate
+            )
+
+            # 在线翻译目标语言 DeepLX 支持的语言
             # 常用的 EN JA RU，更多选择参考 https://www.deepl.com/docs-api/translate-text
             self.online_translate_target_languages = SiComboBox(self)
             self.online_translate_target_languages.resize(256, 32)
@@ -1492,6 +1558,9 @@ class ClientConfigPage(SiPage):
             self.use_online_translate_function_changed()
             self.online_translate_container.addWidget(
                 self.online_translate_shortcut_linear_attaching
+            )
+            self.online_translate_container.addWidget(
+                self.online_translate_target_languages_libretranslate_linear_attaching
             )
             self.online_translate_container.addWidget(
                 self.online_translate_target_languages_linear_attaching
@@ -1626,10 +1695,12 @@ class ClientConfigPage(SiPage):
     def use_online_translate_function_changed(self):
         if self.use_online_translate_function.isChecked():
             self.online_translate_shortcut_linear_attaching.show()
+            self.online_translate_target_languages_libretranslate_linear_attaching.show()
             self.online_translate_target_languages_linear_attaching.show()
             self.online_translate_and_replace_the_selected_text_shortcut_linear_attaching.show()
         else:
             self.online_translate_shortcut_linear_attaching.hide()
+            self.online_translate_target_languages_libretranslate_linear_attaching.hide()
             self.online_translate_target_languages_linear_attaching.hide()
             self.online_translate_and_replace_the_selected_text_shortcut_linear_attaching.hide()
 
@@ -1660,6 +1731,9 @@ class ClientConfigPage(SiPage):
             self.config["client"]["online_translate_shortcut"] = (
                 self.online_translate_shortcut.line_edit.text()
             )
+            self.config["client"][
+                "online_translate_target_languages_libretranslate"
+            ] = self.online_translate_target_languages_libretranslate.value_label.text()
             self.config["client"]["online_translate_target_languages"] = (
                 self.online_translate_target_languages.value_label.text()
             )
@@ -1815,6 +1889,19 @@ class ClientConfigPage(SiPage):
                 "online_translate_shortcut",
                 clearly_type(self.config["client"]["online_translate_shortcut"]),
                 str(self.config["client"]["online_translate_shortcut"]),
+            )
+            table.add_row(
+                "online_translate_target_languages_libretranslate",
+                clearly_type(
+                    self.config["client"][
+                        "online_translate_target_languages_libretranslate"
+                    ]
+                ),
+                str(
+                    self.config["client"][
+                        "online_translate_target_languages_libretranslate"
+                    ]
+                ),
             )
             table.add_row(
                 "online_translate_target_languages",

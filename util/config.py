@@ -62,6 +62,9 @@ class ClientConfig:
         "use_online_translate_function"
     ]
     online_translate_shortcut: str = config["client"]["online_translate_shortcut"]
+    online_translate_target_languages_libretranslate: str = config["client"][
+        "online_translate_target_languages_libretranslate"
+    ]
     online_translate_target_languages: str = config["client"][
         "online_translate_target_languages"
     ]
@@ -131,6 +134,11 @@ class ClientConfig:
     opencc_converter: str = config["client"]["opencc_converter"]
 
 
+# LibreTranslate 配置
+class LibreTranslateConfig:
+    api: str = config["libretranslate"]["api"]
+
+
 # DeepLX 配置
 class DeepLXConfig:
     online_translate_port: str = config["deeplx"]["online_translate_port"]
@@ -197,6 +205,7 @@ def print_config():
         DebugConfig,
         ServerConfig,
         ClientConfig,
+        LibreTranslateConfig,
         DeepLXConfig,
         ModelPaths,
         SenseVoiceArgs,

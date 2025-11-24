@@ -1,8 +1,10 @@
 import json
+import warnings
 
 import opencc
 import websockets
 
+from util.check_libretranslate_service import check_libretranslate_service
 from util.client_check_websocket import check_websocket
 from util.client_cosmic import Cosmic, console
 from util.client_hot_sub import hot_sub
@@ -14,8 +16,11 @@ from util.config import ClientConfig as Config
 
 if not Cosmic.transcribe_subtitles:
     from util.client_translate_offline import translate_offline
-    from util.client_translate_online import translate_online
-import warnings
+
+    if check_libretranslate_service():
+        from util.client_translate_online_libretranslate import translate_online
+    else:
+        from util.client_translate_online import translate_online
 
 warnings.filterwarnings("ignore")
 
@@ -120,6 +125,7 @@ async def recv_result():
     except websockets.ConnectionClosedError:
         console.print("[red]连接断开\n")
         from loguru import logger
+
         from util.safe_logger import init_logging
 
         init_logging()
@@ -127,12 +133,14 @@ async def recv_result():
     except websockets.ConnectionClosedOK:
         console.print("[red]连接断开\n")
         from loguru import logger
+
         from util.safe_logger import init_logging
 
         init_logging()
         logger.error("连接断开，WebSocket连接正常关闭。")
     except Exception as e:
         from loguru import logger
+
         from util.safe_logger import init_logging
 
         init_logging()

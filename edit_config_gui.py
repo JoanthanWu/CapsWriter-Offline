@@ -12,6 +12,7 @@ from tomlkit import parse
 from util.edit_config_gui.about_page import AboutPage
 from util.edit_config_gui.client_config_page import ClientConfigPage
 from util.edit_config_gui.deeplx_config_page import DeeplxConfigPage
+from util.edit_config_gui.libretranslate_config_page import LibretranslateConfigPage
 from util.edit_config_gui.model_paths_config_page import ModelPathsConfigPage
 from util.edit_config_gui.paraformer_args_config_page import ParaformerArgsConfigPage
 from util.edit_config_gui.sensevoice_args_config_page import SenseVoiceArgsConfigPage
@@ -50,6 +51,12 @@ class ConfigEditor(SiliconApplication):
             ClientConfigPage(self.config, self.config_path),
             icon=SiGlobal.siui.iconpack.get("ic_fluent_person_filled"),
             hint="客户端配置",
+            side="top",
+        )
+        self.layerMain().addPage(
+            LibretranslateConfigPage(self.config, self.config_path),
+            icon=SiGlobal.siui.iconpack.get("ic_fluent_translate_filled"),
+            hint="Libretranslate 离/在线翻译配置",
             side="top",
         )
         self.layerMain().addPage(

@@ -101,6 +101,11 @@ online_translate_shortcut = "right shift"
 # 在线翻译基于 DeepLX，过于频繁的请求可能导致 IP 被封
 # 如果出现 429 错误，则表示你的 IP 被 DeepL 暂时屏蔽了，请不要在短时间内频繁请求
 
+online_translate_target_languages_libretranslate = "ja"
+# LibreTranslate 在线翻译目标语言
+#
+# https://www.iso.org/iso-639-language-code
+
 online_translate_target_languages = "JA"
 # 在线翻译目标语言
 # 常用的 EN JA RU，更多选择参考 https://www.deepl.com/docs-api/translate-text
@@ -269,6 +274,16 @@ opencc_converter = "s2t"
 # t2hk Traditional Chinese (OpenCC Standard) to Hong Kong Standard 繁体（OpenCC 标准）到香港繁体（香港小学学习字词表标准）
 # t2jp Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁体（OpenCC 标准，旧字体）到日文新字体
 # jp2t New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
+
+
+# ======================LibreTranslate 配置==================================
+[libretranslate]
+api = "http://192.168.3.248:5000/"
+# api = "https://libretranslate.com/"
+# 官方 https://libretranslate.com/ 需要API Key，https://portal.libretranslate.com/
+# 建议自行部署 https://github.com/LibreTranslate/LibreTranslate
+# Libre Translate 离/在线翻译地址
+# 如果此地址不可用（ 返回非 200 状态码），则使用 DeepLX 作为在线翻译服务
 
 
 # ======================DeepLX 配置==================================

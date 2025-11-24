@@ -6,6 +6,7 @@ keyboard==0.13.5
 clipman==3.3.3
 sounddevice==0.5.3
 websockets==15.0.1
+libretranslatepy==2.1.4
 pypinyin==0.55.0
 watchdog==6.0.0
 typer==0.20.0
