@@ -12,10 +12,13 @@ import json
 from multiprocessing import Process
 
 import websockets
+from loguru import logger
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 from util.config import ClientConfig, ModelPaths
 from util.config import ServerConfig as Config
+from util.safe_logger import init_logging
+from util.server_cosmic import console
 
 # 离线翻译
 modelName = ModelPaths.opus_mt_dir
@@ -39,21 +42,24 @@ async def translate_text(text):
 
 # 定义WebSocket处理函数
 async def offline_translate_server(websocket):
+    init_logging()
+    client_address = websocket.remote_address
+    logger.info(f"客户端连接来自: {client_address}")
+
     async for message in websocket:
+        logger.info(f"收到消息: {message}")
         data = json.loads(message)
         text_to_translate = data.get("text", "")
 
         # 调用翻译函数
         translated_text = await translate_text(text_to_translate)
+        logger.info(f"翻译结果: {translated_text}")
 
         # 将离线翻译结果发送回客户端
         await websocket.send(json.dumps({"translated_text": translated_text}))
 
 
 def run_offline_translate_service():
-    from loguru import logger
-    from util.safe_logger import init_logging
-
     init_logging()
 
     async def main():
@@ -65,8 +71,6 @@ def run_offline_translate_service():
             #     f"离线翻译服务启动在 {ClientConfig.addr}:{Config.offline_translate_port}"
             # )
             await server.serve_forever()
-
-    asyncio.run(main())
 
     try:
         asyncio.run(main())
