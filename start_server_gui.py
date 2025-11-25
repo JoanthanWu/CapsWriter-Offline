@@ -90,18 +90,10 @@ class GUI(QMainWindow):
         event.ignore()  # Ignore the close event
 
     def quit_app(self):
-        import logging
+        from loguru import logger
+        from util.safe_logger import init_logging
 
-        def setup_logging():
-            logging.basicConfig(
-                filename="log.txt",
-                level=logging.INFO,
-                format="%(asctime)s - %(levelname)s - %(message)s",
-                encoding="utf-8",
-            )
-
-        if not logging.getLogger().handlers:
-            setup_logging()
+        init_logging()
 
         # Terminate core_server.py process
         if hasattr(self, "core_server_process") and self.core_server_process:
@@ -135,11 +127,11 @@ class GUI(QMainWindow):
                     text=True,
                 )
             stdout, stderr = proc.communicate()
-            logging.info(f"Taskkill output: {stdout}")
+            logger.debug(f"Taskkill output: {stdout}")
             if stderr:
-                logging.error(f"Taskkill errors: {stderr}")
+                logger.error(f"Taskkill errors: {stderr}")
         except Exception as e:
-            logging.error(f"Error occurred while quitting the application: {e}")
+            logger.error(f"Error occurred while quitting the application: {e}")
 
     def on_tray_icon_activated(self, reason):
         # Called when the system tray icon is activated
@@ -159,6 +151,7 @@ class GUI(QMainWindow):
             stderr=subprocess.STDOUT,
             text=True,
             encoding="utf-8",
+            errors="replace",
         )
         threading.Thread(
             target=self.enqueue_output,

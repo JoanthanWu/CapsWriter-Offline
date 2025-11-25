@@ -10,6 +10,11 @@ with config_toml_path.open("r", encoding="utf-8") as f:
     config = parse(config_str)
 
 
+# 调试配置
+class DebugConfig:
+    logger_level: str = config["debug"]["logger_level"]
+
+
 # 服务端配置
 class ServerConfig:
     model: str = config["server"]["model"]
@@ -57,6 +62,9 @@ class ClientConfig:
         "use_online_translate_function"
     ]
     online_translate_shortcut: str = config["client"]["online_translate_shortcut"]
+    online_translate_target_languages_libretranslate: str = config["client"][
+        "online_translate_target_languages_libretranslate"
+    ]
     online_translate_target_languages: str = config["client"][
         "online_translate_target_languages"
     ]
@@ -126,6 +134,11 @@ class ClientConfig:
     opencc_converter: str = config["client"]["opencc_converter"]
 
 
+# LibreTranslate 配置
+class LibreTranslateConfig:
+    api: str = config["libretranslate"]["api"]
+
+
 # DeepLX 配置
 class DeepLXConfig:
     online_translate_port: str = config["deeplx"]["online_translate_port"]
@@ -189,8 +202,10 @@ def print_config():
 
     console = Console()
     config_classes = [
+        DebugConfig,
         ServerConfig,
         ClientConfig,
+        LibreTranslateConfig,
         DeepLXConfig,
         ModelPaths,
         SenseVoiceArgs,

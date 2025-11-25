@@ -34,7 +34,7 @@ def stream_close(signum, frame):
 def stream_reopen():
     if not threading.main_thread().is_alive():
         return
-    print("重启音频流")
+    console.print("重启音频流")
 
     # 关闭旧流
     Cosmic.stream.close()
@@ -52,6 +52,10 @@ def stream_reopen():
 
 def stream_open():
     # 显示录音所用的音频设备
+    from loguru import logger
+    from util.safe_logger import init_logging
+
+    init_logging()
     channels = 1
     try:
         device = sd.query_devices(kind="input")
@@ -60,12 +64,15 @@ def stream_open():
         console.print(
             f"使用默认音频设备：[italic]{device_name}，声道数：{channels}", end="\n\n"
         )
+        logger.debug(f"使用默认音频设备：{device_name}，声道数：{channels}")
     except UnicodeDecodeError:
         console.print(
             "由于编码问题，暂时无法获得麦克风设备名字", end="\n\n", style="bright_red"
         )
+        logger.error("由于编码问题，暂时无法获得麦克风设备名字")
     except sd.PortAudioError:
         console.print("没有找到麦克风设备", end="\n\n", style="bright_red")
+        logger.error("没有找到麦克风设备")
         input("按回车键退出")
         sys.exit()
 

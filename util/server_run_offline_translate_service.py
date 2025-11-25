@@ -4,7 +4,7 @@
 # websocat ws://localhost:6017/
 # {"text": "你好，世界！"}
 
-# .\runtime\python.exe .\util\client_translate_online.py
+# .\runtime\python.exe .\util\client_translate_offline.py
 
 
 import asyncio
@@ -12,10 +12,13 @@ import json
 from multiprocessing import Process
 
 import websockets
+from loguru import logger
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 from util.config import ClientConfig, ModelPaths
 from util.config import ServerConfig as Config
+from util.safe_logger import init_logging
+from util.server_cosmic import console
 
 # 离线翻译
 modelName = ModelPaths.opus_mt_dir
@@ -38,24 +41,43 @@ async def translate_text(text):
 
 
 # 定义WebSocket处理函数
-async def offline_translate_server(websocket, path):
+async def offline_translate_server(websocket):
+    init_logging()
+    client_address = websocket.remote_address
+    logger.info(f"客户端连接来自: {client_address}")
+
     async for message in websocket:
+        logger.info(f"收到消息: {message}")
         data = json.loads(message)
         text_to_translate = data.get("text", "")
 
         # 调用翻译函数
         translated_text = await translate_text(text_to_translate)
+        logger.info(f"翻译结果: {translated_text}")
 
         # 将离线翻译结果发送回客户端
         await websocket.send(json.dumps({"translated_text": translated_text}))
 
 
 def run_offline_translate_service():
-    start_server = websockets.serve(
-        offline_translate_server, ClientConfig.addr, Config.offline_translate_port
-    )
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
+    init_logging()
+
+    async def main():
+        # 使用async with来管理服务器生命周期
+        async with websockets.serve(
+            offline_translate_server, ClientConfig.addr, Config.offline_translate_port
+        ) as server:
+            # logger.info(
+            #     f"离线翻译服务启动在 {ClientConfig.addr}:{Config.offline_translate_port}"
+            # )
+            await server.serve_forever()
+
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("离线翻译服务器被用户中断")
+    except Exception as e:
+        logger.error(f"离线翻译服务器错误: {e}")
 
 
 if __name__ == "__main__":

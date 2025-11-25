@@ -6,6 +6,7 @@ from platform import system
 
 import websockets
 
+from util.check_libretranslate_service import check_libretranslate_service
 from util.config import ServerConfig as Config
 from util.empty_working_set import empty_current_working_set
 from util.server_check_model import check_model
@@ -61,13 +62,18 @@ async def main():
         translate_offline_server_process = Process(target=run_offline_translate_service)
         translate_offline_server_process.start()
 
-    # 启动在线翻译 DeepLX服务器
+    # 启动在线翻译服务器 LibreTranslate 或 DeepLX
     if Config.start_online_translate_server:
-        console.print("启动在线翻译 DeepLX 服务...")
-        from util.server_run_online_translate_service import (
-            run_online_translate_service,
-        )
-
+        if check_libretranslate_service():
+            console.print("启动在线翻译 LibreTranslate 服务...")
+            from util.server_run_online_translate_service_libretranslate import (
+                run_online_translate_service,
+            )
+        else:
+            console.print("启动在线翻译 DeepLX 服务...")
+            from util.server_run_online_translate_service import (
+                run_online_translate_service,
+            )
         run_online_translate_service()
 
     console.rule("[green3]开始服务")
@@ -100,7 +106,7 @@ def init():
         console.print(f"出错了：{e}", style="bright_red")
         console.input("...")
     except Exception as e:
-        print(e)
+        console.print(e)
     finally:
         Cosmic.queue_out.put(None)
         sys.exit(0)

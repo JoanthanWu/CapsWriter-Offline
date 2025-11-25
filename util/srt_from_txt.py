@@ -40,7 +40,7 @@ def get_scout(line, words, cursor):
     while _ <= scout_num:
         # 新建一个侦察兵
         scout = Scout()
-        scout.text = re.sub("[,.?:%，。？、\s\d]", "", line.lower())
+        scout.text = re.sub(r"[,.?:%，。？、\s\d]", "", line.lower())
         _ += 1
 
         # 找到起始点
@@ -87,6 +87,11 @@ def get_scout(line, words, cursor):
     # 如果因越界导致无法探察，说明出现严重错误
     if not scout_list:
         print("[bold red]字幕匹配出现出现严重错误，越界导致无法探察[/bold red]")
+        from loguru import logger
+        from util.safe_logger import init_logging
+
+        init_logging()
+        logger.error("字幕匹配出现出现严重错误，越界导致无法探察")
         return False
 
     # 找到得分最好的侦察员
@@ -106,6 +111,11 @@ def lines_match_words(text_lines: List[str], words: List) -> List[srt.Subtitle]:
                 'word' : 'good'
                 }
     """
+    from loguru import logger
+    from util.safe_logger import init_logging
+
+    init_logging()
+
     # 初始化 fail_count
     fail_count = 0
     # 空的字幕列表
@@ -122,11 +132,14 @@ def lines_match_words(text_lines: List[str], words: List) -> List[srt.Subtitle]:
         scout = get_scout(line, words, cursor)
         if not scout:  # 没有结果表明出错，应提前结束
             print(f"[bold red]字幕行内容不匹配: {line}[/bold red]")
+            logger.error(f"字幕行内容不匹配: {line}")
             tokens = "".join(
                 [x["word"] for x in words[max(0, cursor - 20) : cursor + 20]]
             )
             print(f"[bold red]words 列表中的单词内容: {tokens}[/bold red]")
+            logger.error(f"words 列表中的单词内容: {tokens}")
             print("[bold red]字幕匹配出现错误[/bold red]")
+            logger.error("字幕匹配出现错误")
             break
         cursor, score = scout.start, scout.score
 
@@ -136,6 +149,7 @@ def lines_match_words(text_lines: List[str], words: List) -> List[srt.Subtitle]:
         # 避免越界
         if cursor >= words_num:
             print(f"[bold red]字幕匹配越界，{cursor} >= {words_num}[/bold red]")
+            logger.error(f"字幕匹配越界，{cursor} >= {words_num}")
             break
 
         # 初始化
@@ -212,8 +226,27 @@ def get_lines(txt_file: Path) -> List[str]:
     return text_lines
 
 
+def preprocess_text_lines(text_lines, words):
+    """预处理文本行，提高匹配成功率"""
+    processed_lines = []
+
+    for line in text_lines:
+        if not line.strip():
+            continue
+
+        # 清理文本
+        clean_line = re.sub(r"[^\w\u4e00-\u9fff]", "", line.lower())
+
+        # 如果行太短，考虑与下一行合并
+        if len(clean_line) < 3 and processed_lines:
+            processed_lines[-1] = processed_lines[-1] + " " + line.strip()
+        else:
+            processed_lines.append(line.strip())
+
+    return processed_lines
+
+
 def one_task(media_file: Path):
-    # 配置要打开的文件
     txt_file = media_file.with_suffix(".txt")
     json_file = media_file.with_suffix(".json")
     srt_file = media_file.with_suffix(".srt")
@@ -221,12 +254,11 @@ def one_task(media_file: Path):
         print(f"[bold red]无法找到 {media_file}对应的txt、json文件，跳过[/bold red]")
         return None
 
-    # 获取带有时间戳的分词列表，获取分行稿件，匹配得到 srt
     words = get_words(json_file)
     text_lines = get_lines(txt_file)
-    subtitle_list = lines_match_words(text_lines, words)
+    processed_lines = preprocess_text_lines(text_lines, words)
+    subtitle_list = lines_match_words(processed_lines, words)
 
-    # 写入 srt
     with open(srt_file, "w", encoding="utf-8") as f:
         f.write(srt.compose(subtitle_list))
 
@@ -240,13 +272,7 @@ def main(files: List[Path]):
 if __name__ == "__main__":
     # main([Path(r"C:\Users\user0\Downloads\武林外传.E01-E04.DVDRip.x264.AC3-CMCT.txt")])
 
-    main(
-        [
-            Path(
-                r"C:\Users\user0\Downloads\Video\4-2 Linux计划任务管理 (014000-3343720).txt"
-            )
-        ]
-    )
+    main([Path(r"C:\Users\user0\Downloads\转录问题\1-项目简介.txt")])
 
     # merge_filename = Path(
     #     r"C:\Users\user0\Downloads\武林外传.E01-E04.DVDRip.x264.AC3-CMCT.merge.txt"

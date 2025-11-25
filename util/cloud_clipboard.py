@@ -29,6 +29,10 @@ class CloudClipboard:
         :param expire_style: 过期单位（day, week, month, year）
         :return: 分享链接
         """
+        from loguru import logger
+        from util.safe_logger import init_logging
+
+        init_logging()
         data = {
             "text": (None, text),
             "expire_value": (None, str(expire_value)),
@@ -46,16 +50,20 @@ class CloudClipboard:
                     url = self.download_url_template.format(code)
                     return url
             else:
-                print(f"上传失败: {result.get('message', '未知错误')}")
+                # print(f"上传失败: {result.get('message', '未知错误')}")
+                logger.error(f"上传失败: {result.get('message', '未知错误')}")
                 return None
 
         except requests.exceptions.RequestException as e:
-            print(f"网络错误: {e}")
+            # print(f"网络错误: {e}")
+            logger.error(f"网络错误: {e}")
             return None
         except json.JSONDecodeError as e:
-            print(f"解析响应失败: {e}")
+            # print(f"解析响应失败: {e}")
+            logger.error(f"解析响应失败: {e}")
             if "response" in locals():
-                print(f"响应内容: {response.text}")
+                # print(f"响应内容: {response.text}")
+                logger.error(f"响应内容: {response.text}")
             return None
 
     def get_data(self, url): ...

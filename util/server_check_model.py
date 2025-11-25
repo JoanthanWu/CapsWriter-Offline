@@ -35,7 +35,7 @@ def check_model():
     git clone https://huggingface.co/yiyu-earth/sherpa-onnx-paraformer-zh-2024-04-25 paraformer-offline-zh
 
     标点模型：
-    git clone https://www.modelscope.cn/iic/punc_ct-transformer_cn-en-common-vocab471067-large-onnx.git punc_ct-transformer_cn-en
+    git clone git clone https://www.modelscope.cn/csukuangfj/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12.git sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12
 
 
     翻译模型：
@@ -77,7 +77,7 @@ def check_model_gui():
     git clone https://huggingface.co/yiyu-earth/sherpa-onnx-paraformer-zh-2024-04-25 paraformer-offline-zh
 
     标点模型：
-    git clone https://www.modelscope.cn/iic/punc_ct-transformer_cn-en-common-vocab471067-large-onnx.git punc_ct-transformer_cn-en
+    git clone https://www.modelscope.cn/csukuangfj/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12.git sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12
 
 
     翻译模型：

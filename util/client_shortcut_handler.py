@@ -23,7 +23,7 @@ pool = ThreadPoolExecutor()
 pressed = False
 released = True
 event = Event()
-restore_audio_playing_needed  = False
+restore_audio_playing_needed = False
 saved_result_for_restore_audio_playing_needed = False
 double_clicked = False
 is_short_duration = False
@@ -108,7 +108,10 @@ def restore_audio_playing():
     # - [x] 改進: 20250925: 把 "cancel_task()" 和 "finish_task()" 裏面的恢復音頻音量的函數"unmute_all_sessions()"全放在這裏, 同时，采用了异步 + 延迟的方法，避免了阻塞主线程，以及避免一些"杂音"。
 
     # 恢復音频的播放
-    global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed, unmute_task
+    global \
+        restore_audio_playing_needed, \
+        saved_result_for_restore_audio_playing_needed, \
+        unmute_task
     # 处理音频暂停相关逻辑
     restore_audio_playing_needed = saved_result_for_restore_audio_playing_needed
 
@@ -117,12 +120,12 @@ def restore_audio_playing():
         if Config.hold_mode and is_short_press:
             time.sleep(0.1)
         keyboard.send("play/pause")
-        restore_audio_playing_needed  = False
+        restore_audio_playing_needed = False
 
     # 取消音频静音, 在主线程中调用（非事件循环线程）, 这行代码会立即返回，不会阻塞主线程
     unmute_task = asyncio.run_coroutine_threadsafe(
         async_unmute_after_delay(),  # 提交封装好的异步任务
-        Cosmic.loop  # 目标事件循环
+        Cosmic.loop,  # 目标事件循环
     )
 
 
@@ -147,21 +150,22 @@ def translate_needed():
 # 這個函數採用了: 把整組 pause_other_audio 相關的代碼放到 task = asyncio.run_coroutine_threadsafe(send_audio(),Cosmic.loop,) 的後面, 從而避免影響接收聲音。
 def launch_task():
     # - [x] 改進點: 20250925: time.sleep(0.6)這句代碼會阻塞整個主线程, 導致雙擊功能會有一點點的錄音延遲，不爽。
-        # ✔思路1: 把整組 pause_other_audio 相關的代碼放到 task = asyncio.run_coroutine_threadsafe(send_audio(),Cosmic.loop,) 的後面, 從而避免影響接收聲音。 為方便測試調整為10秒"time.sleep(10.6)", 測試結果: 是可行的。
-            # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
-            # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✔會恢復播放, 但是有一點副作用就是必須"10秒"後才會恢復運行後面的代碼
-                # 這個副作用是可以接受，因此現在採用此辦法
-                # - Bug: 在應用程式全部暫停播放的情況下使用錄音會導致播放的情況
-                # - 只在hold_mode的情況出現, 是 "and not Config.hold_mode" 的判斷問題
+    # ✔思路1: 把整組 pause_other_audio 相關的代碼放到 task = asyncio.run_coroutine_threadsafe(send_audio(),Cosmic.loop,) 的後面, 從而避免影響接收聲音。 為方便測試調整為10秒"time.sleep(10.6)", 測試結果: 是可行的。
+    # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
+    # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✔會恢復播放, 但是有一點副作用就是必須"10秒"後才會恢復運行後面的代碼
+    # 這個副作用是可以接受，因此現在採用此辦法
+    # - Bug: 在應用程式全部暫停播放的情況下使用錄音會導致播放的情況
+    # - 只在hold_mode的情況出現, 是 "and not Config.hold_mode" 的判斷問題
 
-        # 思路2: 採用异步async def delay_pause(), 為方便測試調整為10秒"asyncio.sleep(10.5)", 測試結果:
-            # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
-            # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✘不會恢復播放
-                # 現在不採用異步的方法, 除非有辦法能解決短時間內抬起，不會恢復播放的問題
-            # Git: 753321e008117e227d666efba188543c4200b48e
+    # 思路2: 採用异步async def delay_pause(), 為方便測試調整為10秒"asyncio.sleep(10.5)", 測試結果:
+    # 1. 如果我把按鍵抬起的時間放在10秒後: 功能正常, ✔會恢復播放
+    # 2. 如果我把按鍵抬起的時間放在10秒內: 功能正常, ✘不會恢復播放
+    # 現在不採用異步的方法, 除非有辦法能解決短時間內抬起，不會恢復播放的問題
+    # Git: 753321e008117e227d666efba188543c4200b48e
 
     # 开始任务时播放提示音
     import shutil
+
     if shutil.which("ffplay") and Config.play_start_music:
         from util.client_play_music import play_music
 
@@ -194,9 +198,28 @@ def launch_task():
     t1 = time.time()
 
     # 将开始标志放入队列
-    asyncio.run_coroutine_threadsafe(
-        Cosmic.queue_in.put({"type": "begin", "time": t1, "data": None}), Cosmic.loop
-    )
+    try:
+        asyncio.run_coroutine_threadsafe(
+            Cosmic.queue_in.put({"type": "begin", "time": t1, "data": None}),
+            Cosmic.loop,
+        )
+    except RuntimeError as e:
+        if "Event loop is closed" in str(e):
+            try:
+                Cosmic.loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(Cosmic.loop)
+                asyncio.run_coroutine_threadsafe(
+                    Cosmic.queue_in.put({"type": "begin", "time": t1, "data": None}),
+                    Cosmic.loop,
+                )
+            except Exception as e:
+                from loguru import logger
+                from util.safe_logger import init_logging
+
+                init_logging()
+                logger.error(f"Failed to create new event loop: {e}")
+        else:
+            raise
 
     if is_short_duration and unmute_task is not None:
         is_cancelled = unmute_task.cancel()
@@ -228,16 +251,18 @@ def launch_task():
     if Config.pause_other_audio and not restore_audio_playing_needed:
         # 针对双击导致停止和播放的指令过快的问题，增加了时间延迟
         if is_short_duration:
-                # 试过的时间: 0.2✘; 0.3✘; 0.4✘; 0.5✔;1✔
-                time.sleep(0.6)
-                
+            # 试过的时间: 0.2✘; 0.3✘; 0.4✘; 0.5✔;1✔
+            time.sleep(0.6)
+
         if process_name := audio_playering_app_name():
-            if process_name != "ffplay.exe" :
+            if process_name != "ffplay.exe":
                 keyboard.send("play/pause")
-                restore_audio_playing_needed  = True
+                restore_audio_playing_needed = True
 
             if not is_short_duration:
-                saved_result_for_restore_audio_playing_needed = restore_audio_playing_needed
+                saved_result_for_restore_audio_playing_needed = (
+                    restore_audio_playing_needed
+                )
 
     # 恢復原狀：修復因 "saved_result_for_restore_audio_playing_needed" 變量導致播放器誤播的狀況(在已經本身停播的情況下)。
     if process_name is None:
@@ -282,6 +307,7 @@ def finish_task():
 
     if shutil.which("ffplay") and Config.play_stop_music:
         from util.client_play_music import play_music
+
         play_music(Config.stop_music_path, Config.stop_music_volume)
 
     if Config.only_enable_microphones_when_pressed_record_shortcut:
@@ -313,22 +339,22 @@ def click_mode(e: keyboard.KeyboardEvent):
     # 2.2. 这是因为: `def manage_task(e: Event): `它是按下按键就立刻开启任务，在开启任务之后才进行判断是否`长/短`按。这就是导致有几率失败的原因
 
     # 3.改進點: `長按` = 进行大小写切换的功能, 需要按键抬起后才能切换;
-        # - [x] 改進: 20250926: 通过异步的方法实现了原版的长按功能(至少按下0.3秒,click_mode only), 在`长按`的过程中, 按键会自动重复, 就像原来的"caps lock"自己亮起的一样。 
-        # - Bug: 20250926: 通过长按录音键后恢复原有的功能之后，立刻马上进行录音会失败
-		    # - [x] 解決方法: 引入 return_allowed 变量来引导进入return结束函数
+    # - [x] 改進: 20250926: 通过异步的方法实现了原版的长按功能(至少按下0.3秒,click_mode only), 在`长按`的过程中, 按键会自动重复, 就像原来的"caps lock"自己亮起的一样。
+    # - Bug: 20250926: 通过长按录音键后恢复原有的功能之后，立刻马上进行录音会失败
+    # - [x] 解決方法: 引入 return_allowed 变量来引导进入return结束函数
 
     # 4. 为了解决在 Windows 下按键会自动重复的问题 : key_pressed 变量用于追踪按键是否已经被按下并记录时间。当按键第一次被按下时，记录时间并将 key_pressed 设为 True，防止重复记录时间。当按键释放时，将 key_pressed 重新设为 False，允许下一次按键记录新的时间。
-    
+
     # - [x] Bug6: 20250918: click_mode : "double_clicked" 改为常驻 → 导致 Config.enable_double_click_opposite_state 失效。
-            # 解决方法: client_recv_result.py → 判断变量放到 async def recv_result() 后；client_shortcut_handler.py → 移除所有 Config.enable_double_click_opposite_state。
+    # 解决方法: client_recv_result.py → 判断变量放到 async def recv_result() 后；client_shortcut_handler.py → 移除所有 Config.enable_double_click_opposite_state。
 
     # - [x] Bug4: 20250919: click_mode : "Shift + double_clicked / double_clicked" 可能导致恢复播放失败。
-            # 解决方法-Bug4: 在 "elif (double_clicked and is_short_duration)" 中移除 restore_audio_playing()。
+    # 解决方法-Bug4: 在 "elif (double_clicked and is_short_duration)" 中移除 restore_audio_playing()。
 
     # - [ ] 潜在改善点: 20250924: 假如有两个应用在运行, 其中第1个在播放，第2个在暂停, 那么我进行录音，第一个会被暂停，而第2个在录音期间依然会被播放(靜音)，不符合“暂停所有应用”的设想。
-        # 思路: 
-            # 1. 能否指定某应用暂停/播放？
-            # 2. 如何判断应用是否在播放？需将 audio_playering_app_name() 的结果存入数组逐一判断。
+    # 思路:
+    # 1. 能否指定某应用暂停/播放？
+    # 2. 如何判断应用是否在播放？需将 audio_playering_app_name() 的结果存入数组逐一判断。
 
     global \
         last_time_pressed, \
@@ -346,8 +372,8 @@ def click_mode(e: keyboard.KeyboardEvent):
 
         if restore_capslock_task is None:
             restore_capslock_task = asyncio.run_coroutine_threadsafe(
-            original_capslock_function(),  # 提交封装好的异步任务
-            Cosmic.loop  # 目标事件循环
+                original_capslock_function(),  # 提交封装好的异步任务
+                Cosmic.loop,  # 目标事件循环
             )
 
         # 計算是否屬於短時間內雙击`錄音鍵`
@@ -360,7 +386,7 @@ def click_mode(e: keyboard.KeyboardEvent):
         if restore_capslock_task is not None:
             last_time_released = time.time()
 
-        # 取消 延迟恢复原版CapsLock功能的任务
+            # 取消 延迟恢复原版CapsLock功能的任务
             restore_capslock_task_cancelled = restore_capslock_task.cancel()
             # if restore_capslock_task_cancelled:
             #     print("成功取消延迟的restore_capslock_task操作")
@@ -412,9 +438,7 @@ def click_mode(e: keyboard.KeyboardEvent):
             return
 
         # 任务在进行中, 且为`短击`, 判定爲需要輸出 `簡/繁`, 并且结束函数
-        elif (
-            double_clicked and is_short_duration
-        ):
+        elif double_clicked and is_short_duration:
             translate_needed()
             send_signal_to_hint_while_recording(
                 True,
@@ -424,7 +448,7 @@ def click_mode(e: keyboard.KeyboardEvent):
                 Config.hold_mode,
                 Config.convert_to_traditional_chinese_main,
             )
-            
+
             Cosmic.opposite_state = not Cosmic.opposite_state
             key_pressed = False
             # return
@@ -444,26 +468,25 @@ def hold_mode(e: keyboard.KeyboardEvent):
     #       1. 单次按下/弹起录音键 < Config.threshold
     #       2. 双击录音键
     #     → 播放无法恢复。
-        # - [x] 解決方法-Bug1 20250919: 双击 → 增加 saved_result_for_restore_audio_playing_needed 保存状态。
-        # - [x] 解決方法-Bug1 20250919: < threshold → 恢复命令延后执行，独立成函数。
+    # - [x] 解決方法-Bug1 20250919: 双击 → 增加 saved_result_for_restore_audio_playing_needed 保存状态。
+    # - [x] 解決方法-Bug1 20250919: < threshold → 恢复命令延后执行，独立成函数。
 
     # - [?] Bug2: 20250918: 改动后需观察是否仍有任务顺序错乱。
 
     # - [x] Bug3: 20250918: holdmode=true 时 shift+录音键(双击) 失效，输出简体中文；holdmode=false 正常。
-        # 解決方法-Bug3: 20250919: 修改 Config.enable_double_click_opposite_state=false → 可英文输出。
-        # 解決方法-Bug3: 20250919: 删除 hold_mode() 内的 enable_double_click_opposite_state → 变为中文输出，问题与该变量相关。
-        # 解決方法-Bug3: 20250924: 引入 saved_result_for_offline_translate_needed 保存状态，避免 shift 被误判抬起。
-        # - [?] 原因-Bug3: 可能与 shift/caps lock 状态牵连有关，需继续确认。
+    # 解決方法-Bug3: 20250919: 修改 Config.enable_double_click_opposite_state=false → 可英文输出。
+    # 解決方法-Bug3: 20250919: 删除 hold_mode() 内的 enable_double_click_opposite_state → 变为中文输出，问题与该变量相关。
+    # 解決方法-Bug3: 20250924: 引入 saved_result_for_offline_translate_needed 保存状态，避免 shift 被误判抬起。
+    # - [?] 原因-Bug3: 可能与 shift/caps lock 状态牵连有关，需继续确认。
 
     # - [x] 更新 20250919: 更新 "sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2025-09-09"
-        # 解決方法-更新: 20250924: 新模型无标点，需额外加载；最终的效果不如旧版，已还原。
+    # 解決方法-更新: 20250924: 新模型无标点，需额外加载；最终的效果不如旧版，已还原。
 
     # - [x] Bug5: 20250919: hold_mode 下双击录音键可能不恢复播放。
-        # 观察-Bug5: 调整 launch_task() 暂停逻辑后，仅出现过一次，需继续观察。
-        # 观察-Bug5: 20250924: 快速三次操作导致第三次动作被吞，第二次抬起时错误暂停。
-        # 解决方法-Bug5: 20250924: 在 launch_task() 中对快速第二次按下(is_short_duration)增加延迟，仅 hold_mode 应用。
+    # 观察-Bug5: 调整 launch_task() 暂停逻辑后，仅出现过一次，需继续观察。
+    # 观察-Bug5: 20250924: 快速三次操作导致第三次动作被吞，第二次抬起时错误暂停。
+    # 解决方法-Bug5: 20250924: 在 launch_task() 中对快速第二次按下(is_short_duration)增加延迟，仅 hold_mode 应用。
 
-        
     global \
         task, \
         key_pressed, \
@@ -477,14 +500,16 @@ def hold_mode(e: keyboard.KeyboardEvent):
         saved_result_for_restore_audio_playing_needed, \
         saved_result_for_offline_translate_needed, \
         saved_result_for_online_translate_needed
-    
+
     # 处理按键按下事件
     if e.event_type == "down":
         if not key_pressed:
             key_pressed = True  # 标记为已按下
             last_time_pressed = time.time()
             # 計算是否屬於短時間內按下`錄音鍵`
-            is_short_duration = (last_time_pressed - last_time_released) < Config.threshold
+            is_short_duration = (
+                last_time_pressed - last_time_released
+            ) < Config.threshold
 
             # 短時間內,按下第二次錄音鍵判定爲需要輸出 `簡/繁`
             if is_short_duration:
@@ -506,15 +531,23 @@ def hold_mode(e: keyboard.KeyboardEvent):
             # 启动录音任务
             launch_task()
             if not is_short_duration:
-                saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed
-                saved_result_for_online_translate_needed = Cosmic.online_translate_needed
+                saved_result_for_offline_translate_needed = (
+                    Cosmic.offline_translate_needed
+                )
+                saved_result_for_online_translate_needed = (
+                    Cosmic.online_translate_needed
+                )
 
     elif e.event_type == "up":
         # 仅在已按下状态时处理松开事件
         if key_pressed:
             if is_short_duration:
-                Cosmic.offline_translate_needed = saved_result_for_offline_translate_needed
-                Cosmic.online_translate_needed = saved_result_for_online_translate_needed
+                Cosmic.offline_translate_needed = (
+                    saved_result_for_offline_translate_needed
+                )
+                Cosmic.online_translate_needed = (
+                    saved_result_for_online_translate_needed
+                )
 
 # ----------- smart_history_actions_panel -----------
                 # if Config.enabled_smart_history_actions_panel:
@@ -590,7 +623,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 saved_result_for_offline_translate_needed = False
                 saved_result_for_online_translate_needed = False
 
-            # 20250918: 增加了"key_pressed" 之后这里不应该向 AHK 发送 is_short_duration=True 的信号, 否则会导致"语音输入中"的提示不会进行取消 (跟AHK代码逻辑有关)， 最后，不影响AHK的提示。 
+            # 20250918: 增加了"key_pressed" 之后这里不应该向 AHK 发送 is_short_duration=True 的信号, 否则会导致"语音输入中"的提示不会进行取消 (跟AHK代码逻辑有关)， 最后，不影响AHK的提示。
             send_signal_to_hint_while_recording(
                 False,
                 False,
@@ -604,6 +637,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
             restore_audio_playing()
             is_short_press = False
             key_pressed = False  # 标记为未按下
+
 
 # ==================== 绑定 handler ===============================
 

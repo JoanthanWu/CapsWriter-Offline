@@ -17,7 +17,11 @@ async def type_result(text):
             temp = clipman.get()
         except clipman.exceptions.ClipmanBaseException as e:
             temp = e
-            print(e)
+            from loguru import logger
+            from util.safe_logger import init_logging
+
+            init_logging()
+            logger.error(f"获取剪贴板内容时出错: {e}")
 
         # 复制结果
         clipman.set(text)

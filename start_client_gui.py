@@ -275,7 +275,11 @@ class GUI(QMainWindow):
                 case "繁":
                     self.convert_to_traditional_chinese_main_action.setText("繁體中文")
         except Exception as e:
-            print(f"读取配置文件失败: {e}")
+            from loguru import logger
+            from util.safe_logger import init_logging
+
+            init_logging()
+            logger.error(f"读取配置文件失败: {e}")
             return
 
         github_website_action = QAction("🌐 GitHub Website", self)
@@ -338,7 +342,11 @@ class GUI(QMainWindow):
                 "convert_to_traditional_chinese_main"
             ]
         except Exception as e:
-            print(f"读取配置文件失败: {e}")
+            from loguru import logger
+            from util.safe_logger import init_logging
+
+            init_logging()
+            logger.error(f"读取配置文件失败: {e}")
             return
 
         # 切换值
@@ -369,7 +377,11 @@ class GUI(QMainWindow):
                 case "繁":
                     self.convert_to_traditional_chinese_main_action.setText("简体中文")
         except Exception as e:
-            print(f"修改配置文件失败: {e}")
+            from loguru import logger
+            from util.safe_logger import init_logging
+
+            init_logging()
+            logger.error(f"修改配置文件失败: {e}")
 
     def restart_client(self):
         subprocess.Popen(
@@ -404,10 +416,13 @@ class GUI(QMainWindow):
 
     def on_monitor_toggled(self, state):
         # 检查复选框的选中状态
-        if state == 2:  # 2 表示选中状态
-            self.update_timer.start(100)
-        else:
-            self.update_timer.stop()
+        try:
+            if state == 2:  # 2 表示选中状态
+                self.update_timer.start(100)
+            else:
+                self.update_timer.stop()
+        except AttributeError:
+            pass  # 'GUI' object has no attribute 'update_timer' # 忽略该错误，因为初始化时还没有创建update_timer
 
     # def window_stay_on_top_toggled(self):
     #     # 切换窗口置顶状态
@@ -480,18 +495,10 @@ class GUI(QMainWindow):
         event.ignore()  # Ignore the close event
 
     def quit_app(self):
-        import logging
+        from loguru import logger
+        from util.safe_logger import init_logging
 
-        def setup_logging():
-            logging.basicConfig(
-                filename="log.txt",
-                level=logging.INFO,
-                format="%(asctime)s - %(levelname)s - %(message)s",
-                encoding="utf-8",
-            )
-
-        if not logging.getLogger().handlers:
-            setup_logging()
+        init_logging()
 
         # Terminate core_client.py process
         if hasattr(self, "core_client_process") and self.core_client_process:
@@ -515,11 +522,11 @@ class GUI(QMainWindow):
                 text=True,
             )
             stdout, stderr = proc.communicate()
-            logging.info(f"Taskkill output: {stdout}")
+            logger.debug(f"Taskkill output: {stdout}")
             if stderr:
-                logging.error(f"Taskkill errors: {stderr}")
+                logger.error(f"Taskkill errors: {stderr}")
         except Exception as e:
-            logging.error(f"Error occurred while quitting the application: {e}")
+            logger.error(f"Error occurred while quitting the application: {e}")
 
     def on_tray_icon_activated(self, reason):
         # Called when the system tray icon is activated
@@ -599,6 +606,7 @@ class GUI(QMainWindow):
             stderr=subprocess.STDOUT,
             text=True,
             encoding="utf-8",
+            errors="replace",
         )
         threading.Thread(
             target=self.enqueue_output,
@@ -639,7 +647,11 @@ class GUI(QMainWindow):
             ):  # 窗口非活跃状态，从右边弹出的，恢复继续停靠在右边
                 self.berthToRight(x, y, width, height, screenWidth, screenHeight)
             else:
-                print("窗口无需恢复停靠")
+                from loguru import logger
+                from util.safe_logger import init_logging
+
+                init_logging()
+                logger.debug("窗口无需恢复停靠")
                 pass
 
     def mousePressEvent(self, event):
@@ -843,20 +855,27 @@ def start_client_gui():
 
 
 def Print_Screen_Scale():
+    from loguru import logger
+    from util.safe_logger import init_logging
+
+    init_logging()
     # 获取屏幕的宽度和高度
     hDC = win32gui.GetDC(0)
     screen_width = win32print.GetDeviceCaps(hDC, win32con.DESKTOPHORZRES)
     screen_height = win32print.GetDeviceCaps(hDC, win32con.DESKTOPVERTRES)
     print(f"屏幕尺寸: {screen_width}x{screen_height}")
+    logger.debug(f"屏幕尺寸: {screen_width}x{screen_height}")
     # 获取逻辑的宽度和高度
     logical_width = win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN)
     logical_height = win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN)
     print(f"逻辑尺寸: {logical_width}x{logical_height}")
+    logger.debug(f"逻辑尺寸: {logical_width}x{logical_height}")
     # 计算缩放比例
     global scale_x, scale_y
     scale_x = screen_width / logical_width
     scale_y = screen_height / logical_height
     print(f"屏幕缩放比例: {scale_x}, {scale_y}")
+    logger.debug(f"屏幕缩放比例: {scale_x}, {scale_y}")
 
 
 def read_file_list(file_list_path: Path):
@@ -875,7 +894,11 @@ if __name__ == "__main__":
         try:
             files = read_file_list(args.file_list)
         except Exception as e:
-            print(f"Error reading file list: {e}")
+            from loguru import logger
+            from util.safe_logger import init_logging
+
+            init_logging()
+            logger.error(f"读取文件列表失败: {e}")
             sys.exit(1)
     else:
         files = args.files  # 直接传递的文件列表
@@ -889,7 +912,11 @@ if __name__ == "__main__":
         try:
             subprocess.Popen(command, cwd=str(CapsWriter_path))
         except Exception as e:
-            print(f"Error starting the process: {e}")
+            from loguru import logger
+            from util.safe_logger import init_logging
+
+            init_logging()
+            logger.error(f"启动进程失败: {e}")
     else:
         # GUI
         start_client_gui()

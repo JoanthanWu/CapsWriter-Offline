@@ -15,7 +15,7 @@ def format_text(text, punc_model):
     if Config.format_spell:
         text = adjust_space(text)  # 调空格
     if Config.format_punc and punc_model and text:
-        text = punc_model(text)[0]  # 加标点
+        text = punc_model.add_punctuation(text)  # 加标点
     if Config.format_num:
         text = chinese_to_num(text)  # 转数字
     if Config.format_spell:
@@ -44,7 +44,12 @@ def recognize(recognizer, punc_model, task: Task):
     # 识别片段
     stream = recognizer.create_stream()
     stream.accept_waveform(task.samplerate, samples)
-    recognizer.decode_stream(stream)
+    try:
+        recognizer.decode_stream(stream)
+    except Exception:  # What's the Fuck? 😵 ValueError('string too long')
+        # print(f"识别出错，任务ID：{task.task_id}，错误信息：{e}")
+        task.is_final = True  # This can fix 'string too long', I don't know why. 🤣
+        return result
 
     # 记录识别时间
     result.time_start = task.time_start

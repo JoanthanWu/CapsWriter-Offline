@@ -1,13 +1,12 @@
 import json
 import time
-import base64
-import asyncio
-import websockets
 from base64 import b64decode
 
-from util.server_cosmic import console, Cosmic
-from util.server_classes import Task, Result
+import websockets
+
 from util.my_status import Status
+from util.server_classes import Task
+from util.server_cosmic import Cosmic, console
 
 status_mic = Status("正在接收音频", spinner="point")
 
@@ -22,6 +21,8 @@ class Cache:
 
 async def message_handler(websocket, message, cache: Cache):
     """处理得到的音频流数据"""
+    from loguru import logger
+    from util.safe_logger import init_logging
 
     queue_in = Cosmic.queue_in
 
@@ -51,6 +52,10 @@ async def message_handler(websocket, message, cache: Cache):
             status_mic.start()
         if source == "file" and is_start:
             console.print("正在接收音频文件...")
+            init_logging()
+            logger.info(
+                f"正在接收音频文件..., 任务ID：{task_id}, Socket ID：{socket_id}"
+            )
 
         # 若缓冲已达到分段长度，将片段作为任务提交
         while len(cache.chunks) / 4 / 16000 >= seg_threshold:
@@ -76,6 +81,8 @@ async def message_handler(websocket, message, cache: Cache):
             status_mic.stop()
         elif source == "file":
             print(f"音频文件接收完毕，时长 {cache.frame_num / 16000 / 4:.2f}s")
+            init_logging()
+            logger.info(f"音频文件接收完毕，时长 {cache.frame_num / 16000 / 4:.2f}s")
 
         # 客户端说片段结束，将缓冲区音频识别
         task = Task(
@@ -99,7 +106,10 @@ async def message_handler(websocket, message, cache: Cache):
 
 async def ws_recv(websocket):
     global status_mic
+    from loguru import logger
+    from util.safe_logger import init_logging
 
+    init_logging()
     # 登记 socket 到字典，以 socket id 字符串为索引
     sockets = Cosmic.sockets
     sockets_id = Cosmic.sockets_id
@@ -127,16 +137,21 @@ async def ws_recv(websocket):
         console.print(
             "ConnectionClosed...",
         )
+        logger.info("ConnectionClosed...")
     except websockets.exceptions.ConnectionClosedError:
         console.print("ConnectionClosed...")
+        logger.error("ConnectionClosedError..., socket closed unexpectedly")
     except websockets.ConnectionClosed:
         console.print(
             "ConnectionClosed...",
         )
+        logger.error("ConnectionClosed..., socket closed normally")
     except websockets.InvalidState:
         console.print("InvalidState...")
+        logger.error("InvalidState..., invalid websocket state")
     except Exception as e:
         console.print("Exception:", e)
+        logger.error(f"Exception in ws_recv: {e}")
     finally:
         status_mic.stop()
         status_mic.on = False

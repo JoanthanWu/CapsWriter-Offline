@@ -8,9 +8,14 @@ import asyncio
 import clipman
 import keyboard
 
+from util.check_libretranslate_service import check_libretranslate_service
 from util.client_cosmic import console
-from util.client_translate_online import translate_online
 from util.config import ClientConfig as Config
+
+if check_libretranslate_service():
+    from util.client_translate_online_libretranslate import translate_online
+else:
+    from util.client_translate_online import translate_online
 
 
 async def on_hotkey_pressed():
@@ -30,6 +35,12 @@ async def on_hotkey_pressed():
         except clipman.exceptions.ClipmanBaseException as e:
             temp = e
             console.print(e)
+            from loguru import logger
+
+            from util.safe_logger import init_logging
+
+            init_logging()
+            logger.error(f"获取剪贴板内容时出错: {e}")
         text = temp
         # 控制台输出
         console.print(f"选中文本：{text}")
@@ -43,6 +54,12 @@ async def on_hotkey_pressed():
         keyboard.send("ctrl + v")
     except Exception as e:
         console.print(e)
+        from loguru import logger
+
+        from util.safe_logger import init_logging
+
+        init_logging()
+        logger.error(f"热键处理时出错: {e}")
 
 
 def hotkey_callback():
@@ -64,6 +81,12 @@ async def translate_and_replace_selected_text_online():
         await asyncio.Event().wait()  # 阻塞当前协程，直到被取消或热键被触发
     except Exception as e:
         console.print(e)
+        from loguru import logger
+
+        from util.safe_logger import init_logging
+
+        init_logging()
+        logger.error(f"主函数出错: {e}")
     finally:
         keyboard.remove_hotkey(
             Config.online_translate_and_replace_the_selected_text_shortcut

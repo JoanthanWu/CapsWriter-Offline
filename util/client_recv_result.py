@@ -1,8 +1,10 @@
 import json
+import warnings
 
 import opencc
 import websockets
 
+from util.check_libretranslate_service import check_libretranslate_service
 from util.client_check_websocket import check_websocket
 from util.client_cosmic import Cosmic, console
 from util.client_hot_sub import hot_sub
@@ -14,8 +16,11 @@ from util.config import ClientConfig as Config
 
 if not Cosmic.transcribe_subtitles:
     from util.client_translate_offline import translate_offline
-    from util.client_translate_online import translate_online
-import warnings
+
+    if check_libretranslate_service():
+        from util.client_translate_online_libretranslate import translate_online
+    else:
+        from util.client_translate_online import translate_online
 
 warnings.filterwarnings("ignore")
 
@@ -79,8 +84,8 @@ async def recv_result():
             text = message["text"]
             delay = message["time_complete"] - message["time_submit"]
 
-            # 如果非最终结果，继续等待
-            if not message["is_final"]:
+            # 如果非最终结果或文本为空，继续等待
+            if not message["is_final"] or not text.strip():
                 continue
 
             # 消除末尾标点
@@ -127,9 +132,12 @@ async def recv_result():
 
             if Config.save_audio:
                 # 重命名录音文件
-                file_audio = rename_audio(
-                    message["task_id"], text, message["time_start"]
-                )
+                try:
+                    file_audio = rename_audio(
+                        message["task_id"], text, message["time_start"]
+                    )
+                except Exception:
+                    file_audio = None
             else:
                 file_audio = None
 
@@ -200,10 +208,27 @@ async def recv_result():
             Cosmic.opposite_state = False
     except websockets.ConnectionClosedError:
         console.print("[red]连接断开\n")
+        from loguru import logger
+
+        from util.safe_logger import init_logging
+
+        init_logging()
+        logger.error("连接断开，WebSocket连接关闭错误。")
     except websockets.ConnectionClosedOK:
         console.print("[red]连接断开\n")
+        from loguru import logger
+
+        from util.safe_logger import init_logging
+
+        init_logging()
+        logger.error("连接断开，WebSocket连接正常关闭。")
     except Exception as e:
-        print(e)
+        from loguru import logger
+
+        from util.safe_logger import init_logging
+
+        init_logging()
+        logger.error(f"接收识别结果时出错: {e}")
     finally:
         return
 

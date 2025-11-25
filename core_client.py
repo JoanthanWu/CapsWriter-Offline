@@ -38,7 +38,7 @@ colorama.init()
 # MacOS 的权限设置
 if system() == "Darwin" and not sys.argv[1:]:
     if os.getuid() != 0:
-        print("在 MacOS 上需要以管理员启动客户端才能监听键盘活动，请 sudo 启动")
+        console.print("在 MacOS 上需要以管理员启动客户端才能监听键盘活动，请 sudo 启动")
         input("按回车退出")
         sys.exit()
     else:
@@ -72,7 +72,7 @@ async def main_mic():
         empty_current_working_set()
 
     # 接收结果
-    print(
+    console.print(
         f"连接服务端...  （服务端载入模块时长约 50 秒，请耐心等待。若好几分钟了还无响应 -> 服务端软件 start_server_gui.exe 启动了吗？ 服务端地址当前设置 {Config.addr}:{Config.speech_recognition_port} 是正确的吗？）"
     )
     while True:
@@ -83,15 +83,47 @@ async def main_file(files: List[Path]):
     show_file_tips()
 
     for file in files:
-        if file.suffix in [".txt", ".json", "srt"]:
-            adjust_srt(file)
-        else:
-            await transcribe_check(file)
-            await asyncio.gather(transcribe_send(file), transcribe_recv(file))
+        try:
+            if file.suffix in [".txt", ".json", ".srt"]:
+                adjust_srt(file)
+            else:
+                # 为每个文件重新建立连接
+                await transcribe_check(file)
+                await asyncio.gather(transcribe_send(file), transcribe_recv(file))
+                console.print(f"[bold green]已完成转录: {file.name}[/bold green]")
 
+                # 处理完成后关闭连接，为下一个文件做准备
+                if Cosmic.websocket:
+                    try:
+                        await Cosmic.websocket.close()
+                    except:
+                        pass
+                    Cosmic.websocket = None
+
+        except Exception as e:
+            console.print(f"[bold red]处理文件 {file.name} 时出错: {e}[/bold red]")
+            from loguru import logger
+            from util.safe_logger import init_logging
+
+            init_logging()
+
+            logger.error(f"处理文件 {file.name} 时出错: {e}")
+            # 确保出错时重置连接
+            if Cosmic.websocket:
+                try:
+                    await Cosmic.websocket.close()
+                except:
+                    pass
+                Cosmic.websocket = None
+            continue
+
+    # 最终清理
     if Cosmic.websocket:
-        await Cosmic.websocket.close()
-    input("\n按回车退出\n")
+        try:
+            await Cosmic.websocket.close()
+        except:
+            pass
+    input("\n所有文件处理完成，按回车退出\n")
 
 
 def init_mic():
@@ -100,17 +132,25 @@ def init_mic():
     except KeyboardInterrupt:
         console.print("再见！")
     finally:
-        print("...")
+        console.print("...")
+        sys.exit()
 
 
 def init_file(files: List[Path]):
     """
     用 CapsWriter Server 转录音视频文件，生成 srt 字幕
     """
+    from loguru import logger
+    from util.safe_logger import init_logging
+
+    init_logging()
+    logger.info(f"开始转录文件，参数：{files}")
     try:
         asyncio.run(main_file(files))
     except KeyboardInterrupt:
         console.print("再见！")
+        logger.info("用户中断，退出程序")
+    finally:
         sys.exit()
 
 

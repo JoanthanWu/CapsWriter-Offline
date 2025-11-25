@@ -1,4 +1,3 @@
-import signal
 import time
 from multiprocessing import Queue
 from platform import system
@@ -28,8 +27,6 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
     with console.status("载入模块中…", spinner="bouncingBall", spinner_style="yellow"):
         import sherpa_onnx
 
-        if Config.model == "Paraformer":
-            from funasr_onnx import CT_Transformer
         disable_jieba_debug()
 
     console.print("[green4]模块加载完成", end="\n\n")
@@ -62,10 +59,19 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
             console.print(
                 "[yellow]标点模型载入中，载入时长约 50 秒，请耐心等待...", end="\r"
             )
-            punc_model = CT_Transformer(ModelPaths.punc_model_dir, quantize=True)
+            #     punc_model = CT_Transformer(ModelPaths.punc_model_dir, quantize=True)
+            punc_model = sherpa_onnx.OfflinePunctuation(
+                sherpa_onnx.OfflinePunctuationConfig(
+                    model=sherpa_onnx.OfflinePunctuationModelConfig(
+                        ct_transformer=(
+                            ModelPaths.punc_model_dir / "model.onnx"
+                        ).as_posix()
+                    ),
+                )
+            )
             console.print("[green4]标点模型载入完成", end="\n\n")
 
-    console.print(f"模型加载耗时 {time.time() - t1 :.2f}s", end="\n\n")
+    console.print(f"模型加载耗时 {time.time() - t1:.2f}s", end="\n\n")
 
     # 清空物理内存工作集
     if system() == "Windows":
@@ -78,10 +84,18 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
         # 阻塞最多1秒，便于中断退出
         try:
             task = queue_in.get(timeout=1)
-        except:
+        except Exception:
             continue
 
         if task.socket_id not in sockets_id:  # 检查任务所属的连接是否存活
+            from loguru import logger
+            from util.safe_logger import init_logging
+
+            init_logging()
+
+            logger.info(
+                f"连接已关闭，放弃识别任务，任务ID：{task.task_id}，Socket ID：{task.socket_id}"
+            )
             continue
 
         if Config.model == "Paraformer":
