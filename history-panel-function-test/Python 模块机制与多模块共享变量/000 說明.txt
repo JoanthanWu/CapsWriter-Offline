@@ -1,0 +1,5 @@
+Obsidian 链接：
+C:\OneDrive\Jonathan--Wu_Data\001 Study\001-98 Obsidian\001-98 Study\001-98-53 Python\CapsWriter\整合Smart History Actions Panel 进 CapsWriter-Offline-GUI 遇到的难题.md
+
+解決思路來源: 
+[不同的 key](整合Smart%20History%20Actions%20Panel%20进%20CapsWriter-Offline-GUI%20遇到的难题.md#^pythonvariable20251124)

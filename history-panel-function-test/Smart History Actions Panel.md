@@ -74,14 +74,57 @@
 ## 整合Smart History Actions Panel 进 CapsWriter-Offline-GUI 遇到的难题
 1. [致命] 无法正常把文字资料填进 PySide6 相关的函数中
    1. 除了`start_client_gui.py - def start_client_gui()` 的资料可以透过 `smart_history_actions_panel.py - def add_sentence_group(new_group)` 传入 PySide6 相关的函数
+      1. 原因是`start_client_gui.py - def start_client_gui()` 和這個模塊`client_recv_result.py` 改變的變量都不是同一個, 名字是一樣，但是就是不同的變量, 爲什麼呢？
+      2. 已經嘗試多個辦法,情況依舊.
+      3. 使用id()函數來偵測變量的 ID, 有兩組 ID, 確實是不一樣.
    2. 其他的 `.py 文件` 都无法正常把文字资料填进 PySide6 相关的函数中
       1. 资料可以透过`smart_history_actions_panel.py - def add_sentence_group(new_group)` 传入, 但无法触发后面的 PySide6 相关的函数
       2. 证据来自`smart_history_actions_panel.py - def add_sentence_group(new_group)` 的 `history_received_text.log` 文件输出.
 2. [重要] `keyboard库` 无法透过`shift + 双击录音键`来正常开关 面板
    1. 目前使用只能暂时 `？` 问号\斜杠 来开关面板
-3. [重要] `keyboard库`的相关函数都无法透过面板的按钮(鼠标左键)来进行触发 (Demo 016号可以正常触发)
-   1. `keyboard.send("ctrl+v")` - 📑 **Copy**    
-   2. `keyboard.write(self.text)` - 📋 **Paste**
-   3. 其他的3个功能可以正常运用 - `📌Pin 📑Copy ⛓Review`
+3. [x] `keyboard库`的相关函数都无法透过面板的按钮(鼠标左键)来进行触发 (Demo 016号可以正常触发)
+   1. ❌`keyboard.send("ctrl+v")` - 📋 **Paste**   
+   2. ❌`keyboard.write(self.text)` - ✍️ **Type**
+   3. 其他的3个功能可以正常运用 - ✔`📌Pin 📑Copy ⛓Review`;
+      1. ↑更新: ❌但是焦点转移到面板;
+      2. ↑也就是说明 `flags |= Qt.Tool | Qt.WindowDoesNotAcceptFocus`没有生效
+   4. 情况:
+      1. 光标在Pyside6制造的✔面板(绿色的那个)里面的时候, 可以正确的触发📋Paste & ✍️Type功能, 在❌VsCode.exe就不行.
+      2. 不行的原因: 观测到的情况是使用鼠标触发📋Paste的时候, VsCode.exe的光标会消失一小会儿, 然后才会出现在原来的位置, 而且里面的内容已经进入了剪贴板, 因此推测出问题可能是不改变光标的某句代码失效了.
+      3. ✍️Type这个功能的失效也应该和上面 `3. - 4. - 2.` 的一样
+      4. 所有的`按钮功能+面板`都会有光标消失的问题, 也就是说原来 demo 的光标相关设置失效了, 为什么呢？
+   5. ✔解决方法1: 解决光标消失的问题_强制切换回原来的窗口
+   6. ✔解决方法2: 更新到 `PySide6 6.10.0` / `CapsWriter-Offline-GUI-v3.0.0_2025-11-11`，因此5個功能都能正常運行了.
 4. [次要] 按钮的widgets背景 变成实色, 在 demo 中本来是透明的.
+   1. ！解决方法: 看见`5. - 1.`
 5. [次要] 面板的文字内容和demo 中的排序不一样了，没那么整齐.
+   1. ！解决方法:start_client_gui.py - def start_client_gui() 去掉了原來的代码,用DEMO-016 `if __name__ == "__main__":` 中的代码代替, 4 & 5 的問題解決了.
+      1. ↑但焦点转移到面板的問題 以至 改变光标的位置 的問題没有解决.
+
+
+
+1. 生成配置失败，使用默认值：No module named 'toml' !!!!!這是因爲  .toml 不知道爲什麼變成空的!!!!!!!!!
+其他模块通过实例化SharedData获取同一个对象，进行读写：
+python
+运行
+# 在smart_history_actions_panel.py中
+from shared_data import SharedData
+
+data = SharedData()  # 所有地方实例化的是同一个对象
+
+def add_sentence_group(sent_group):
+    data.add_group(sent_group)  # 调用方法修改
+
+def show_widgets():
+    groups = data.get_groups()  # 调用方法读取最新数据
+    print("显示：", groups)
+python
+运行
+# 在client_recv_result.py中
+from shared_data import SharedData
+
+data = SharedData()  # 与上面的data是同一个实例
+
+def on_shortcut():
+    data.add_group("来自快捷键的新数据")  # 跨模块修改
+原理：单例模式确保SharedData在程序中只有一个实例，所有模块操作的是该实例的unpinned_groups属性，因此数据完全同步。
