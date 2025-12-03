@@ -193,6 +193,7 @@ def launch_task():
                 )
             except Exception as e:
                 from loguru import logger
+
                 from util.safe_logger import init_logging
 
                 init_logging()
@@ -227,6 +228,7 @@ def launch_task():
 
     # 录音时暂停其他音频播放 且 有音频正在播放
     global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed
+    process_name = None  # 初始化 process_name 变量，Fix UnboundLocalError
     if Config.pause_other_audio and not restore_audio_playing_needed:
         # 针对双击导致停止和播放的指令过快的问题，增加了时间延迟
         if is_short_duration:
