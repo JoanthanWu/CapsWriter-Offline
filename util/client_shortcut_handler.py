@@ -8,7 +8,7 @@ from flask import sessions
 from pycaw.pycaw import AudioUtilities
 
 from util.client_cosmic import Cosmic
-from util.client_pause_other_audio import audio_playering_app_name
+from util.client_pause_other_audio import AudioMonitor
 from util.client_send_audio import send_audio
 from util.client_send_signal_to_hint_while_recording import (
     send_signal_to_hint_while_recording,
@@ -37,6 +37,7 @@ saved_result_for_online_translate_needed = False
 unmute_task = None
 restore_capslock_task = None
 sessions = []
+monitor = AudioMonitor(exclude_processes=["ffplay.exe"])
 
 
 def shortcut_correct(e: keyboard.KeyboardEvent):
@@ -98,7 +99,7 @@ def restore_audio_playing():
         # hold_mode: 切换字母大小: 还是出现了一次恢复播放失败的情况, 保险起见专门为此情况增加了延迟
         if Config.hold_mode and is_short_press:
             time.sleep(0.1)
-        keyboard.send("play/pause")
+        monitor.restore_audio_apps()
         restore_audio_playing_needed = False
 
     # 取消音频静音, 在主线程中调用（非事件循环线程）, 这行代码会立即返回，不会阻塞主线程
@@ -235,20 +236,25 @@ def launch_task():
             # 试过的时间: 0.2✘; 0.3✘; 0.4✘; 0.5✔;1✔
             time.sleep(0.6)
 
-        if process_name := audio_playering_app_name():
-            if process_name != "ffplay.exe":
-                keyboard.send("play/pause")
-                restore_audio_playing_needed = True
-
-            if not is_short_duration:
-                saved_result_for_restore_audio_playing_needed = (
-                    restore_audio_playing_needed
-                )
-
-    # 恢復原狀：修復因 "saved_result_for_restore_audio_playing_needed" 變量導致播放器誤播的狀況(在已經本身停播的情況下)。
-    if process_name is None:
-        saved_result_for_restore_audio_playing_needed = False
-        restore_audio_playing_needed = False
+        playing_apps = monitor.get_audio_playing_apps(exclude_names=["ffplay.exe"])
+        if playing_apps:  # 只有一个程序在播放音频
+            match len(playing_apps):
+                case 1:
+                    # 只有一个程序在播放音频
+                    monitor.pause_audio_apps()
+                    restore_audio_playing_needed = True
+                    if not is_short_duration:
+                        saved_result_for_restore_audio_playing_needed = (
+                            restore_audio_playing_needed
+                        )
+                case _:
+                    # 多个程序在播放音频
+                    print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
+                    print("不支持暂停多个程序的音频播放，跳过暂停其他音频播放")
+        else:
+            # 如果没有程序在播放，清除恢复标志
+            saved_result_for_restore_audio_playing_needed = False
+            restore_audio_playing_needed = False
 
 
 def cancel_task():
