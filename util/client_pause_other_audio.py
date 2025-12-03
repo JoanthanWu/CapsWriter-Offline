@@ -8,7 +8,7 @@
 #             meter = session._ctl.QueryInterface(IAudioMeterInformation)
 #             peak_value = meter.GetPeakValue()
 #             if peak_value > 0:  # 如果峰值电平大于 0，表示正在播放音频
-#                 # print(f"Process Name: {process_name}, Peak Value: {peak_value}")
+#                 logger.info(f"Process Name: {process_name}, Peak Value: {peak_value}")
 #                 return process_name
 #     else:
 #         return None
@@ -29,7 +29,7 @@
 #             pause_other_audio()
 #         else:
 #             print("No audio is playering.")
-#         time.sleep(1)
+#         time.sleep(2)
 
 import time
 from typing import Dict, List
@@ -37,7 +37,10 @@ from typing import Dict, List
 import win32api
 import win32gui
 import win32process
+from loguru import logger
 from pycaw.pycaw import AudioUtilities, IAudioMeterInformation
+
+from util.safe_logger import init_logging
 
 
 def send_media_command_to_process(pid: int, command_name: str = "play_pause") -> int:
@@ -83,6 +86,9 @@ def send_media_command_to_process(pid: int, command_name: str = "play_pause") ->
                         target_hwnds.append(hwnd)
         except Exception as e:
             print(f"处理窗口 {hwnd} 时出错: {e}")
+            init_logging()
+
+            logger.error(f"处理窗口 {hwnd} 时出错: {e}")
         return True  # 始终返回 True 以继续枚举
 
     win32gui.EnumWindows(find_windows_callback, None)
@@ -92,10 +98,13 @@ def send_media_command_to_process(pid: int, command_name: str = "play_pause") ->
     for target_hwnd in target_hwnds:
         try:
             win32api.PostMessage(target_hwnd, WM_APPCOMMAND, 0, command_value * 0x10000)
-            # print(f"已向窗口 {target_hwnd} 发送{command_name}命令")
+            logger.info(f"已向窗口 {target_hwnd} 发送{command_name}命令")
             success_count += 1
         except Exception as e:
             print(f"向窗口 {target_hwnd} 发送{command_name}命令失败: {e}")
+            init_logging()
+
+            logger.error(f"向窗口 {target_hwnd} 发送{command_name}命令失败: {e}")
 
     return success_count
 
@@ -150,8 +159,13 @@ class AudioMonitor:
         """暂停音频程序"""
         playing_apps = self.get_audio_playing_apps(exclude_names=self.exclude_processes)
         if not playing_apps:
-            # print("未检测到任何音频播放程序")
+            logger.info("未检测到任何音频播放程序")
             return {}
+
+        # 只保留一个 playing_apps 同样有Bug
+        # keys = list(playing_apps.keys())
+        # for key in keys[1:]:
+        #     del playing_apps[key]
 
         results = {}
         for pid, process_name in playing_apps.items():
@@ -161,11 +175,11 @@ class AudioMonitor:
             if success_count > 0:
                 # 记录暂停历史
                 self.paused_history.append(pid)
-                print(
+                logger.info(
                     f"{process_name} (PID: {pid}): 已向 {success_count} 个窗口发送暂停指令"
                 )
-            # else:
-            #     print(f"{process_name} (PID: {pid}): 未找到可发送按键的窗口")
+            else:
+                logger.error(f"{process_name} (PID: {pid}): 未找到可发送按键的窗口")
 
         return results
 
@@ -175,7 +189,7 @@ class AudioMonitor:
         for pid in self.paused_history:
             # 恢复播放
             send_media_command_to_process(pid, "play")
-            print(f"已恢复音频播放程序 (PID: {pid})")
+            logger.info(f"已恢复音频播放程序 (PID: {pid})")
 
         self.clear_history()
 
@@ -185,22 +199,15 @@ class AudioMonitor:
 
 
 if __name__ == "__main__":
-
-    def pause_audio_playing():
-        monitor.pause_audio_apps()
-
-    def restore_audio_playing():
-        monitor.restore_audio_apps()
-
     monitor = AudioMonitor(exclude_processes=["ffplay.exe"])
     while True:
         process = monitor.get_audio_playing_apps()
         print(f"正在播放音频的程序: {process}")
-        time.sleep(1)
+        time.sleep(2)
         monitor.pause_audio_apps()
-        time.sleep(1)
+        time.sleep(2)
         print(f"已暂停{monitor.paused_history}")
-        time.sleep(1)
+        time.sleep(2)
         monitor.restore_audio_apps()
-        time.sleep(1)
+        time.sleep(2)
         print(f"已恢复{monitor.paused_history}")

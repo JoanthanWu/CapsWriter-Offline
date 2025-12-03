@@ -229,32 +229,32 @@ def launch_task():
 
     # 录音时暂停其他音频播放 且 有音频正在播放
     global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed
-    process_name = None  # 初始化 process_name 变量，Fix UnboundLocalError
+
     if Config.pause_other_audio and not restore_audio_playing_needed:
         # 针对双击导致停止和播放的指令过快的问题，增加了时间延迟
-        if is_short_duration:
-            # 试过的时间: 0.2✘; 0.3✘; 0.4✘; 0.5✔;1✔
-            time.sleep(0.6)
-
+        # if is_short_duration:
+        #     # 试过的时间: 0.2✘; 0.3✘; 0.4✘; 0.5✔;1✔
+        #     time.sleep(0.6)
         playing_apps = monitor.get_audio_playing_apps(exclude_names=["ffplay.exe"])
-        if playing_apps:  # 只有一个程序在播放音频
-            match len(playing_apps):
-                case 1:
-                    # 只有一个程序在播放音频
-                    monitor.pause_audio_apps()
-                    restore_audio_playing_needed = True
-                    if not is_short_duration:
-                        saved_result_for_restore_audio_playing_needed = (
-                            restore_audio_playing_needed
-                        )
-                case _:
-                    # 多个程序在播放音频
-                    print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
-                    print("不支持暂停多个程序的音频播放，跳过暂停其他音频播放")
-        else:
-            # 如果没有程序在播放，清除恢复标志
-            saved_result_for_restore_audio_playing_needed = False
-            restore_audio_playing_needed = False
+        match len(playing_apps):
+            case 0:
+                # 如果没有程序在播放，清除恢复标志
+                saved_result_for_restore_audio_playing_needed = False
+                restore_audio_playing_needed = False
+            case 1:
+                # 只有一个程序在播放音频
+                monitor.pause_audio_apps()
+                restore_audio_playing_needed = True
+                if not is_short_duration:
+                    saved_result_for_restore_audio_playing_needed = (
+                        restore_audio_playing_needed
+                    )
+            case _:
+                # 多个程序在播放音频
+                saved_result_for_restore_audio_playing_needed = False
+                restore_audio_playing_needed = False
+                print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
+                print("不支持暂停多个程序的音频播放，跳过暂停其他音频播放")
 
 
 def cancel_task():
