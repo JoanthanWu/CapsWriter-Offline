@@ -236,6 +236,21 @@ def launch_task():
         #     # 试过的时间: 0.2✘; 0.3✘; 0.4✘; 0.5✔;1✔
         #     time.sleep(0.6)
         playing_apps = monitor.get_audio_playing_apps(exclude_names=["ffplay.exe"])
+        print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
+        # 网易云音乐/QQ音乐 播放时 禁用 暂停其他音频播放
+        # 给他们发play_pause，他们无视，😒
+        # 在分支 feat/PostMessage-via-ahk 里，尝试了给他们发快捷键，仍然被无视 😭
+        # 只能指望静音其他音频播放的功能 😂
+        # 瞧瞧 foobar 和 firefox，多规矩啊，不会无视消息
+        ignore_pause_apps = ["CloudMusic.exe", "QQMusic.exe"]
+        for app_name in ignore_pause_apps:
+            if app_name in playing_apps.values():
+                print(f"{app_name} 播放时 禁用 暂停其他音频播放")
+                print("给他们发play_pause，他们无视，😒")
+                saved_result_for_restore_audio_playing_needed = False
+                restore_audio_playing_needed = False
+                return
+
         match len(playing_apps):
             case 0:
                 # 如果没有程序在播放，清除恢复标志
@@ -253,7 +268,6 @@ def launch_task():
                 # 多个程序在播放音频
                 saved_result_for_restore_audio_playing_needed = False
                 restore_audio_playing_needed = False
-                print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
                 print("不支持暂停多个程序的音频播放，跳过暂停其他音频播放")
 
 
