@@ -355,7 +355,12 @@ def click_mode(e: keyboard.KeyboardEvent):
     # - [ ] 潜在改善点: 20250924: 假如有两个应用在运行, 其中第1个在播放，第2个在暂停, 那么我进行录音，第一个会被暂停，而第2个在录音期间依然会被播放(靜音)，不符合“暂停所有应用”的设想。
     # 思路:
     # 1. 能否指定某应用暂停/播放？
+    # - [ ] 已实现，send_media_command_to_process(pid, "play_pause") 向指定进程发送播放/暂停命令。但是，国内著名播放器（ QQ 网易 ）都会忽略
+    #   在分支 feat/PostMessage-via-ahk 里，尝试了给他们发快捷键，仍然被无视 😭
+    #   只能指望静音其他音频播放的功能 😂
+    #   瞧瞧 foobar 和 firefox，多规矩啊，不会无视消息
     # 2. 如何判断应用是否在播放？需将 audio_playering_app_name() 的结果存入数组逐一判断。
+    # - [x] playing_apps = monitor.get_audio_playing_apps(exclude_names=["ffplay.exe"]) 可获取正在播放的应用，字典形式。{pid: name}
 
     global \
         last_time_pressed, \
