@@ -236,7 +236,8 @@ def launch_task():
         #     # 试过的时间: 0.2✘; 0.3✘; 0.4✘; 0.5✔;1✔
         #     time.sleep(0.6)
         playing_apps = monitor.get_audio_playing_apps(exclude_names=["ffplay.exe"])
-        print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
+        if len(playing_apps) > 0:
+            print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
         # 网易云音乐/QQ音乐 播放时 禁用 暂停其他音频播放
         # 给他们发play_pause，他们无视，😒
         # 在分支 feat/PostMessage-via-ahk 里，尝试了给他们发快捷键，仍然被无视 😭
