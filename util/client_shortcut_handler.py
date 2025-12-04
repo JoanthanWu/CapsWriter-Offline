@@ -238,16 +238,15 @@ def launch_task():
         playing_apps = monitor.get_audio_playing_apps(exclude_names=["ffplay.exe"])
         if len(playing_apps) > 0:
             print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
-        # 网易云音乐/QQ音乐 播放时 禁用 暂停其他音频播放
-        # 给他们发play_pause，他们无视，😒
-        # 在分支 feat/PostMessage-via-ahk 里，尝试了给他们发快捷键，仍然被无视 😭
+        # 网易云音乐/QQ音乐 播放时 不使用 暂停其他音频播放
+        # 播放/暂停命令 即使指定了pid 其他应用也会受到影响
+        # 例如：网易云放歌，firefox暂停视频，发送了play/pause命令，firefox居然恢复播放了。。foobar firefox同时使用却无此问题
+        # 在分支 feat/PostMessage-via-ahk 里，尝试了给 网易云音乐 QQ音乐 发快捷键，无效 😭
         # 只能指望静音其他音频播放的功能 😂
-        # 瞧瞧 foobar 和 firefox，多规矩啊，不会无视消息
         ignore_pause_apps = ["CloudMusic.exe", "QQMusic.exe"]
         for app_name in ignore_pause_apps:
             if app_name in playing_apps.values():
-                print(f"{app_name} 播放时 禁用 暂停其他音频播放")
-                print("给他们发play_pause，他们无视，😒")
+                print(f"{app_name} 播放时 不使用 暂停其他音频播放")
                 saved_result_for_restore_audio_playing_needed = False
                 restore_audio_playing_needed = False
                 return
@@ -356,8 +355,9 @@ def click_mode(e: keyboard.KeyboardEvent):
     # - [ ] 潜在改善点: 20250924: 假如有两个应用在运行, 其中第1个在播放，第2个在暂停, 那么我进行录音，第一个会被暂停，而第2个在录音期间依然会被播放(靜音)，不符合“暂停所有应用”的设想。
     # 思路:
     # 1. 能否指定某应用暂停/播放？
-    # - [ ] 已实现，send_media_command_to_process(pid, "play_pause") 向指定进程发送播放/暂停命令。但是，国内著名播放器（ QQ 网易 ）都会忽略
-    #   在分支 feat/PostMessage-via-ahk 里，尝试了给他们发快捷键，仍然被无视 😭
+    # - [ ] 已实现，send_media_command_to_process(pid, "play_pause") 向指定进程发送播放/暂停命令。但是，播放/暂停命令 是全局命令，即使指定了pid 其他应用也会受到影响。
+    #   例如：网易云放歌，firefox暂停视频，发送了play/pause命令，firefox居然恢复播放了。。foobar firefox同时使用却无此问题
+    #   在分支 feat/PostMessage-via-ahk 里，尝试了给 网易云音乐 QQ音乐 发快捷键，无效 😭
     #   只能指望静音其他音频播放的功能 😂
     #   瞧瞧 foobar 和 firefox，多规矩啊，不会无视消息
     # 2. 如何判断应用是否在播放？需将 audio_playering_app_name() 的结果存入数组逐一判断。
