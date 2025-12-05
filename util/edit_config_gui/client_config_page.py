@@ -76,6 +76,9 @@ class ClientConfigPage(SiPage):
         self.CloudMusic_global_pause_hotkey_set_default.clicked.connect(
             lambda: self.CloudMusic_global_pause_hotkey.lineEdit().setText("")
         )
+        self.PotPlayer_global_pause_hotkey_set_default.clicked.connect(
+            lambda: self.PotPlayer_global_pause_hotkey.lineEdit().setText("")
+        )
         self.hint_while_recording_at_cursor_position.toggled.connect(
             lambda: self.hint_while_recording_at_cursor_position_changed()
         )
@@ -847,6 +850,30 @@ class ClientConfigPage(SiPage):
                 self.CloudMusic_global_pause_hotkey
             )
 
+            # PotPlayer 设置的全局 播放/暂停 的快捷键
+            self.PotPlayer_global_pause_hotkey = SiLineEditWithDeletionButton(self)
+            self.PotPlayer_global_pause_hotkey.resize(256, 32)
+            self.PotPlayer_global_pause_hotkey.lineEdit().setText(
+                self.config["client"]["PotPlayer_global_pause_hotkey"]
+            )
+            self.PotPlayer_global_pause_hotkey_set_default = SetDefaultButton(self)
+            self.PotPlayer_global_pause_hotkey_linear_attaching = SiOptionCardLinear(
+                self
+            )
+            self.PotPlayer_global_pause_hotkey_linear_attaching.setTitle(
+                "PotPlayer 全局 暂停 快捷键",
+                "使用 PotPlayer 设置的全局 播放/暂停 的快捷键\n留空则 在 PotPlayer 播放时不暂停\n注意避免快捷键冲突",
+            )
+            self.PotPlayer_global_pause_hotkey_linear_attaching.load(
+                SiGlobal.siui.iconpack.get("ic_fluent_pause_regular")
+            )
+            self.PotPlayer_global_pause_hotkey_linear_attaching.addWidget(
+                self.PotPlayer_global_pause_hotkey_set_default
+            )
+            self.PotPlayer_global_pause_hotkey_linear_attaching.addWidget(
+                self.PotPlayer_global_pause_hotkey
+            )
+
             # 是否启用基于 AHK 的输入光标位置的输入状态提示功能
             self.hint_while_recording_at_edit_position_powered_by_ahk = SiSwitch(self)
             self.hint_while_recording_at_edit_position_powered_by_ahk.setChecked(
@@ -1206,6 +1233,9 @@ class ClientConfigPage(SiPage):
             )
             self.speech_recognition_container.addWidget(
                 self.CloudMusic_global_pause_hotkey_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.PotPlayer_global_pause_hotkey_linear_attaching
             )
             self.speech_recognition_container.addWidget(
                 self.hint_while_recording_at_edit_position_powered_by_ahk_linear_attaching
@@ -1844,6 +1874,9 @@ class ClientConfigPage(SiPage):
             self.config["client"]["CloudMusic_global_pause_hotkey"] = (
                 self.CloudMusic_global_pause_hotkey.line_edit.text()
             )
+            self.config["client"]["PotPlayer_global_pause_hotkey"] = (
+                self.PotPlayer_global_pause_hotkey.line_edit.text()
+            )
             self.config["client"]["arabic_year_number"] = (
                 self.arabic_year_number.isChecked()
             )
@@ -2134,6 +2167,11 @@ class ClientConfigPage(SiPage):
                 "CloudMusic_global_pause_hotkey",
                 clearly_type(self.config["client"]["CloudMusic_global_pause_hotkey"]),
                 str(self.config["client"]["CloudMusic_global_pause_hotkey"]),
+            )
+            table.add_row(
+                "PotPlayer_global_pause_hotkey",
+                clearly_type(self.config["client"]["PotPlayer_global_pause_hotkey"]),
+                str(self.config["client"]["PotPlayer_global_pause_hotkey"]),
             )
             table.add_row(
                 "arabic_year_number",
