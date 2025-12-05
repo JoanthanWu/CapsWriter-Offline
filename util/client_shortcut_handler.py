@@ -8,7 +8,7 @@ from flask import sessions
 from pycaw.pycaw import AudioUtilities
 
 from util.client_cosmic import Cosmic
-from util.client_pause_other_audio import AudioMonitor
+from util.client_pause_other_audio import AudioMonitor, handle_special_media_apps
 from util.client_send_audio import send_audio
 from util.client_send_signal_to_hint_while_recording import (
     send_signal_to_hint_while_recording,
@@ -38,6 +38,7 @@ unmute_task = None
 restore_capslock_task = None
 sessions = []
 monitor = AudioMonitor(exclude_processes=["ffplay.exe"])
+saved_special_apps = []
 
 
 def shortcut_correct(e: keyboard.KeyboardEvent):
@@ -91,7 +92,8 @@ def restore_audio_playing():
     global \
         restore_audio_playing_needed, \
         saved_result_for_restore_audio_playing_needed, \
-        unmute_task
+        unmute_task, \
+        saved_special_apps
     # 处理音频暂停相关逻辑
     restore_audio_playing_needed = saved_result_for_restore_audio_playing_needed
 
@@ -99,7 +101,16 @@ def restore_audio_playing():
         # hold_mode: 切换字母大小: 还是出现了一次恢复播放失败的情况, 保险起见专门为此情况增加了延迟
         if Config.hold_mode and is_short_press:
             time.sleep(0.1)
-        monitor.restore_audio_apps()
+        if saved_special_apps:
+            # 处理特殊应用的恢复播放
+            for app_info in saved_special_apps:
+                # 发送相同的快捷键恢复播放
+                keyboard.send(app_info["hotkey"])
+                # print(f"已恢复 {app_info['name']}（{app_info['hotkey']}）")
+            saved_special_apps = []
+        else:
+            monitor.restore_audio_apps()
+
         restore_audio_playing_needed = False
 
     # 取消音频静音, 在主线程中调用（非事件循环线程）, 这行代码会立即返回，不会阻塞主线程
@@ -228,7 +239,10 @@ def launch_task():
     )
 
     # 录音时暂停其他音频播放 且 有音频正在播放
-    global restore_audio_playing_needed, saved_result_for_restore_audio_playing_needed
+    global \
+        restore_audio_playing_needed, \
+        saved_result_for_restore_audio_playing_needed, \
+        saved_special_apps
 
     if Config.pause_other_audio and not restore_audio_playing_needed:
         # 针对双击导致停止和播放的指令过快的问题，增加了时间延迟
@@ -238,34 +252,45 @@ def launch_task():
         playing_apps = monitor.get_audio_playing_apps(exclude_names=["ffplay.exe"])
         if len(playing_apps) > 0:
             print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
-        # 网易云音乐/QQ音乐 播放时 不使用 暂停其他音频播放
-        # 只能指望静音其他音频播放的功能 😂
-        ignore_pause_apps = ["CloudMusic.exe", "QQMusic.exe"]
-        for app_name in ignore_pause_apps:
-            if app_name in playing_apps.values():
-                print(f"{app_name} 播放时 不使用 暂停其他音频播放")
-                saved_result_for_restore_audio_playing_needed = False
-                restore_audio_playing_needed = False
-                return
+        # 网易云音乐/QQ音乐 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放
+        has_processed, processed_apps = handle_special_media_apps(playing_apps)
+        if has_processed:
+            # 保存处理的应用信息，用于后续恢复或其他操作
+            print("❗特殊应用在播放音频")
+            saved_special_apps = processed_apps  # 保存到全局变量或配置中
 
-        match len(playing_apps):
-            case 0:
-                # 如果没有程序在播放，清除恢复标志
-                saved_result_for_restore_audio_playing_needed = False
-                restore_audio_playing_needed = False
-            case 1:
-                # 只有一个程序在播放音频
-                monitor.pause_audio_apps()
-                restore_audio_playing_needed = True
-                if not is_short_duration:
-                    saved_result_for_restore_audio_playing_needed = (
-                        restore_audio_playing_needed
-                    )
-            case _:
-                # 多个程序在播放音频
-                saved_result_for_restore_audio_playing_needed = False
-                restore_audio_playing_needed = False
-                print("不支持暂停多个程序的音频播放，跳过暂停其他音频播放")
+            # 记录日志
+            for app_info in processed_apps:
+                print(f"已暂停 {app_info['name']} ({app_info['exe']})")
+
+            # 继续执行原有逻辑
+            restore_audio_playing_needed = True
+            if not is_short_duration:
+                saved_result_for_restore_audio_playing_needed = (
+                    restore_audio_playing_needed
+                )
+        else:
+            # print("非特殊应用在播放音频")
+            match len(playing_apps):
+                case 0:
+                    # 如果没有程序在播放，清除恢复标志
+                    if not saved_special_apps:
+                        saved_result_for_restore_audio_playing_needed = False
+                        restore_audio_playing_needed = False
+                case 1:
+                    # 只有一个程序在播放音频
+                    monitor.pause_audio_apps()
+                    restore_audio_playing_needed = True
+                    if not is_short_duration:
+                        saved_result_for_restore_audio_playing_needed = (
+                            restore_audio_playing_needed
+                        )
+                case _:
+                    # 多个程序在播放音频
+                    if not saved_special_apps:
+                        saved_result_for_restore_audio_playing_needed = False
+                        restore_audio_playing_needed = False
+                    print("不支持暂停多个程序的音频播放，跳过暂停其他音频播放")
 
 
 def cancel_task():
@@ -352,13 +377,9 @@ def click_mode(e: keyboard.KeyboardEvent):
     # - [ ] 潜在改善点: 20250924: 假如有两个应用在运行, 其中第1个在播放，第2个在暂停, 那么我进行录音，第一个会被暂停，而第2个在录音期间依然会被播放(靜音)，不符合“暂停所有应用”的设想。
     # 思路:
     # 1. 能否指定某应用暂停/播放？
-    # - [ ] 已实现，send_media_command_to_process(pid, "play_pause") 向指定进程发送播放/暂停命令。
-    #   ❗但是，播放/暂停命令 是全局命令，即使指定了pid 其他应用也会受到影响。
-    #   指定了pid给网易云音乐 QQ音乐 发送播放/暂停命令，他们无视。更灾难的是，如果此时恰好firefox有暂停视频，那么firefox会恢复播放。
-    #   foobar firefox同时使用却无此问题
-    #   在分支 feat/PostMessage-via-ahk 里，尝试了给 网易云音乐 QQ音乐 发快捷键，无效 😭
-    #   只能指望静音其他音频播放的功能 😂
-    #   瞧瞧 foobar 和 firefox，多规矩啊，不会无视消息
+    # - [ ]
+    #   handle_special_media_apps(playing_apps) 处理 网易云音乐/QQ音乐 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放。
+    #   非网易云音乐/QQ音乐，有两个应用在播放时，只能指望静音其他音频播放的功能 😂
     # 2. 如何判断应用是否在播放？需将 audio_playering_app_name() 的结果存入数组逐一判断。
     # - [x] playing_apps = monitor.get_audio_playing_apps(exclude_names=["ffplay.exe"]) 可获取正在播放的应用，字典形式。{pid: name}
 
