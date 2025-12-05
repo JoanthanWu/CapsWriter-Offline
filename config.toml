@@ -208,6 +208,12 @@ CloudMusic_global_pause_hotkey = "ctrl + alt + f6"
 # 留空则 在网易云音乐播放时不暂停
 # 注意避免快捷键冲突
 
+PotPlayer_global_pause_hotkey = "ctrl + alt + f7"
+# 首先，启用 pause_other_audio
+# 使用 PotPlayer 设置的全局 播放/暂停 的快捷键
+# 留空则 在PotPlayer播放时不暂停
+# 注意避免快捷键冲突
+
 arabic_year_number = true
 # 将 ****年 大写汉字替换为阿拉伯数字 ****年，例如一八四八年 替换为 1848 年
 

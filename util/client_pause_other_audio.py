@@ -59,6 +59,10 @@ def handle_special_media_apps(playing_apps):
             "hotkey": Config.CloudMusic_global_pause_hotkey,
             "name": "网易云音乐",
         },
+        "PotPlayerMini64.exe": {
+            "hotkey": Config.PotPlayer_global_pause_hotkey,
+            "name": "PotPlayer",
+        },
     }
 
     # 按应用类型分组收集匹配的窗口

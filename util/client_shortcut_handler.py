@@ -254,7 +254,7 @@ def launch_task():
         playing_apps = get_audio_playing_apps()
         if len(playing_apps) > 0:
             print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
-        # 网易云音乐/QQ音乐 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放
+        # 网易云音乐/QQ音乐/PotPlayer 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放
         has_processed, processed_apps = handle_special_media_apps(playing_apps)
         if has_processed:
             # 保存处理的应用信息，用于后续恢复或其他操作
