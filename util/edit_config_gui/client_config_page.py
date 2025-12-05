@@ -70,8 +70,11 @@ class ClientConfigPage(SiPage):
         self.start_music_path_set_default.clicked.connect(
             lambda: self.start_music_path.lineEdit().setText("assets/start.mp3")
         )
-        self.stop_music_path_set_default.clicked.connect(
-            lambda: self.stop_music_path.lineEdit().setText("assets/stop.mp3")
+        self.QQMusic_global_pause_hotkey_set_default.clicked.connect(
+            lambda: self.QQMusic_global_pause_hotkey.lineEdit().setText("")
+        )
+        self.CloudMusic_global_pause_hotkey_set_default.clicked.connect(
+            lambda: self.CloudMusic_global_pause_hotkey.lineEdit().setText("")
         )
         self.hint_while_recording_at_cursor_position.toggled.connect(
             lambda: self.hint_while_recording_at_cursor_position_changed()
@@ -798,6 +801,52 @@ class ClientConfigPage(SiPage):
             )
             self.pause_other_audio_linear_attaching.addWidget(self.pause_other_audio)
 
+            # QQ 音乐 设置的全局 播放/暂停 的快捷键
+            self.QQMusic_global_pause_hotkey = SiLineEditWithDeletionButton(self)
+            self.QQMusic_global_pause_hotkey.resize(256, 32)
+            self.QQMusic_global_pause_hotkey.lineEdit().setText(
+                self.config["client"]["QQMusic_global_pause_hotkey"]
+            )
+            self.QQMusic_global_pause_hotkey_set_default = SetDefaultButton(self)
+            self.QQMusic_global_pause_hotkey_linear_attaching = SiOptionCardLinear(self)
+            self.QQMusic_global_pause_hotkey_linear_attaching.setTitle(
+                "QQ 音乐 全局 暂停 快捷键",
+                "使用 QQ音乐 设置的全局 播放/暂停 的快捷键\n留空则 在网易云音乐播放时不暂停\n注意避免快捷键冲突",
+            )
+            self.QQMusic_global_pause_hotkey_linear_attaching.load(
+                SiGlobal.siui.iconpack.get("ic_fluent_pause_regular")
+            )
+            self.QQMusic_global_pause_hotkey_linear_attaching.addWidget(
+                self.QQMusic_global_pause_hotkey_set_default
+            )
+            self.QQMusic_global_pause_hotkey_linear_attaching.addWidget(
+                self.QQMusic_global_pause_hotkey
+            )
+
+            # 网易云音乐 设置的全局 播放/暂停 的快捷键
+            self.CloudMusic_global_pause_hotkey = SiLineEditWithDeletionButton(self)
+            self.CloudMusic_global_pause_hotkey.resize(256, 32)
+            self.CloudMusic_global_pause_hotkey.lineEdit().setText(
+                self.config["client"]["CloudMusic_global_pause_hotkey"]
+            )
+            self.CloudMusic_global_pause_hotkey_set_default = SetDefaultButton(self)
+            self.CloudMusic_global_pause_hotkey_linear_attaching = SiOptionCardLinear(
+                self
+            )
+            self.CloudMusic_global_pause_hotkey_linear_attaching.setTitle(
+                "网易云音乐 全局 暂停 快捷键",
+                "使用 网易云音乐 设置的全局 播放/暂停 的快捷键\n留空则 在 网易云音乐播放时不暂停\n注意避免快捷键冲突",
+            )
+            self.CloudMusic_global_pause_hotkey_linear_attaching.load(
+                SiGlobal.siui.iconpack.get("ic_fluent_pause_regular")
+            )
+            self.CloudMusic_global_pause_hotkey_linear_attaching.addWidget(
+                self.CloudMusic_global_pause_hotkey_set_default
+            )
+            self.CloudMusic_global_pause_hotkey_linear_attaching.addWidget(
+                self.CloudMusic_global_pause_hotkey
+            )
+
             # 是否启用基于 AHK 的输入光标位置的输入状态提示功能
             self.hint_while_recording_at_edit_position_powered_by_ahk = SiSwitch(self)
             self.hint_while_recording_at_edit_position_powered_by_ahk.setChecked(
@@ -1151,6 +1200,12 @@ class ClientConfigPage(SiPage):
             )
             self.speech_recognition_container.addWidget(
                 self.pause_other_audio_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.QQMusic_global_pause_hotkey_linear_attaching
+            )
+            self.speech_recognition_container.addWidget(
+                self.CloudMusic_global_pause_hotkey_linear_attaching
             )
             self.speech_recognition_container.addWidget(
                 self.hint_while_recording_at_edit_position_powered_by_ahk_linear_attaching
@@ -1783,6 +1838,12 @@ class ClientConfigPage(SiPage):
             self.config["client"]["pause_other_audio"] = (
                 self.pause_other_audio.isChecked()
             )
+            self.config["client"]["QQMusic_global_pause_hotkey"] = (
+                self.QQMusic_global_pause_hotkey.line_edit.text()
+            )
+            self.config["client"]["CloudMusic_global_pause_hotkey"] = (
+                self.CloudMusic_global_pause_hotkey.line_edit.text()
+            )
             self.config["client"]["arabic_year_number"] = (
                 self.arabic_year_number.isChecked()
             )
@@ -2063,6 +2124,16 @@ class ClientConfigPage(SiPage):
                 "pause_other_audio",
                 clearly_type(self.config["client"]["pause_other_audio"]),
                 str(self.config["client"]["pause_other_audio"]),
+            )
+            table.add_row(
+                "QQMusic_global_pause_hotkey",
+                clearly_type(self.config["client"]["QQMusic_global_pause_hotkey"]),
+                str(self.config["client"]["QQMusic_global_pause_hotkey"]),
+            )
+            table.add_row(
+                "CloudMusic_global_pause_hotkey",
+                clearly_type(self.config["client"]["CloudMusic_global_pause_hotkey"]),
+                str(self.config["client"]["CloudMusic_global_pause_hotkey"]),
             )
             table.add_row(
                 "arabic_year_number",
