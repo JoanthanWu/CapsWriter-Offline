@@ -70,6 +70,9 @@ class ClientConfigPage(SiPage):
         self.start_music_path_set_default.clicked.connect(
             lambda: self.start_music_path.lineEdit().setText("assets/start.mp3")
         )
+        self.play_start_music.toggled.connect(lambda: self.play_start_music_changed())
+        self.play_stop_music.toggled.connect(lambda: self.play_stop_music_changed())
+        self.pause_other_audio.toggled.connect(lambda: self.pause_other_audio_changed())
         self.QQMusic_global_pause_hotkey_set_default.clicked.connect(
             lambda: self.QQMusic_global_pause_hotkey.lineEdit().setText("")
         )
@@ -1728,6 +1731,32 @@ class ClientConfigPage(SiPage):
         self.vscode_exe_path = path
         print(f"VSCode exe path selected: {self.vscode_exe_path}")
         self.validate_vscode_exe_path()
+
+    def play_start_music_changed(self):
+        if self.play_start_music.isChecked():
+            self.start_music_path_linear_attaching.show()
+            self.start_music_volume_linear_attaching.show()
+        else:
+            self.start_music_path_linear_attaching.hide()
+            self.start_music_volume_linear_attaching.hide()
+
+    def play_stop_music_changed(self):
+        if self.play_stop_music.isChecked():
+            self.stop_music_path_linear_attaching.show()
+            self.stop_music_volume_linear_attaching.show()
+        else:
+            self.stop_music_path_linear_attaching.hide()
+            self.stop_music_volume_linear_attaching.hide()
+
+    def pause_other_audio_changed(self):
+        if self.pause_other_audio.isChecked():
+            self.QQMusic_global_pause_hotkey_linear_attaching.show()
+            self.CloudMusic_global_pause_hotkey_linear_attaching.show()
+            self.PotPlayer_global_pause_hotkey_linear_attaching.show()
+        else:
+            self.QQMusic_global_pause_hotkey_linear_attaching.hide()
+            self.CloudMusic_global_pause_hotkey_linear_attaching.hide()
+            self.PotPlayer_global_pause_hotkey_linear_attaching.hide()
 
     def hint_while_recording_at_cursor_position_changed(self):
         if self.hint_while_recording_at_cursor_position.isChecked():
