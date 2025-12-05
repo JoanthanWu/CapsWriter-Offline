@@ -103,6 +103,10 @@ class ClientConfig:
     file_seg_overlap: int = config["client"]["file_seg_overlap"]
     mute_other_audio: bool = config["client"]["mute_other_audio"]
     pause_other_audio: bool = config["client"]["pause_other_audio"]
+    QQMusic_global_pause_hotkey: str = config["client"]["QQMusic_global_pause_hotkey"]
+    CloudMusic_global_pause_hotkey: str = config["client"][
+        "CloudMusic_global_pause_hotkey"
+    ]
     arabic_year_number: bool = config["client"]["arabic_year_number"]
     shrink_automatically_to_tray: bool = config["client"][
         "shrink_automatically_to_tray"

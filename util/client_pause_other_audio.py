@@ -6,10 +6,9 @@ import keyboard
 # import win32api
 # import win32gui
 # import win32process
-from loguru import logger
 from pycaw.pycaw import AudioUtilities, IAudioMeterInformation
 
-from util.safe_logger import init_logging
+from util.config import ClientConfig as Config
 
 
 def get_audio_playing_apps(exclude_names: List[str] = None) -> Dict[int, str]:
@@ -55,8 +54,11 @@ def handle_special_media_apps(playing_apps):
         处理的应用列表格式: [{"exe": "QQMusic.exe", "windows": ["窗口1", "窗口2"]}, ...]
     """
     special_apps_map = {
-        "QQMusic.exe": {"hotkey": "ctrl+alt+f5", "name": "QQ音乐"},
-        "CloudMusic.exe": {"hotkey": "ctrl+alt+f6", "name": "网易云音乐"},
+        "QQMusic.exe": {"hotkey": Config.QQMusic_global_pause_hotkey, "name": "QQ音乐"},
+        "CloudMusic.exe": {
+            "hotkey": Config.CloudMusic_global_pause_hotkey,
+            "name": "网易云音乐",
+        },
     }
 
     # 按应用类型分组收集匹配的窗口
@@ -79,22 +81,25 @@ def handle_special_media_apps(playing_apps):
 
     for exe_name, app_info in matched_apps_by_type.items():
         # 发送快捷键暂停该类型应用
-        keyboard.send(app_info["config"]["hotkey"])
-
-        # 记录处理的应用信息
-        processed_apps.append(
-            {
-                "exe": exe_name,
-                "name": app_info["config"]["name"],
-                "windows": app_info["windows"][:],  # 创建副本
-                "hotkey": app_info["config"]["hotkey"],
-            }
-        )
-
-        # 从playing_apps中删除该类型的所有窗口
-        for window_name in app_info["windows"]:
-            if window_name in playing_apps:
-                playing_apps.pop(window_name)
+        if app_info["config"]["hotkey"] == "":
+            print(
+                f"未配置 {app_info['config']['name']} 的全局暂停快捷键，不暂停音频播放"
+            )
+        else:
+            keyboard.send(app_info["config"]["hotkey"])
+            # 记录处理的应用信息
+            processed_apps.append(
+                {
+                    "exe": exe_name,
+                    "name": app_info["config"]["name"],
+                    "windows": app_info["windows"][:],  # 创建副本
+                    "hotkey": app_info["config"]["hotkey"],
+                }
+            )
+            # 从playing_apps中删除该类型的所有窗口
+            for window_name in app_info["windows"]:
+                if window_name in playing_apps:
+                    playing_apps.pop(window_name)
 
     return True, processed_apps
 
