@@ -8,7 +8,10 @@ from flask import sessions
 from pycaw.pycaw import AudioUtilities
 
 from util.client_cosmic import Cosmic
-from util.client_pause_other_audio import AudioMonitor, handle_special_media_apps
+from util.client_pause_other_audio import (
+    get_audio_playing_apps,
+    handle_special_media_apps,
+)
 from util.client_send_audio import send_audio
 from util.client_send_signal_to_hint_while_recording import (
     send_signal_to_hint_while_recording,
@@ -37,7 +40,6 @@ saved_result_for_online_translate_needed = False
 unmute_task = None
 restore_capslock_task = None
 sessions = []
-monitor = AudioMonitor(exclude_processes=["ffplay.exe"])
 saved_special_apps = []
 
 
@@ -109,7 +111,7 @@ def restore_audio_playing():
                 # print(f"已恢复 {app_info['name']}（{app_info['hotkey']}）")
             saved_special_apps = []
         else:
-            monitor.restore_audio_apps()
+            keyboard.send("play/pause")
 
         restore_audio_playing_needed = False
 
@@ -249,7 +251,7 @@ def launch_task():
         # if is_short_duration:
         #     # 试过的时间: 0.2✘; 0.3✘; 0.4✘; 0.5✔;1✔
         #     time.sleep(0.6)
-        playing_apps = monitor.get_audio_playing_apps(exclude_names=["ffplay.exe"])
+        playing_apps = get_audio_playing_apps()
         if len(playing_apps) > 0:
             print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
         # 网易云音乐/QQ音乐 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放
@@ -279,7 +281,7 @@ def launch_task():
                         restore_audio_playing_needed = False
                 case 1:
                     # 只有一个程序在播放音频
-                    monitor.pause_audio_apps()
+                    keyboard.send("play/pause")
                     restore_audio_playing_needed = True
                     if not is_short_duration:
                         saved_result_for_restore_audio_playing_needed = (
