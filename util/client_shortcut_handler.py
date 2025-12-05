@@ -380,10 +380,11 @@ def click_mode(e: keyboard.KeyboardEvent):
     # 思路:
     # 1. 能否指定某应用暂停/播放？
     # - [ ]
-    #   handle_special_media_apps(playing_apps) 处理 网易云音乐/QQ音乐 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放。
-    #   非网易云音乐/QQ音乐，有两个应用在播放时，只能指望静音其他音频播放的功能 😂
-    # 2. 如何判断应用是否在播放？需将 audio_playering_app_name() 的结果存入数组逐一判断。
-    # - [x] playing_apps = monitor.get_audio_playing_apps(exclude_names=["ffplay.exe"]) 可获取正在播放的应用，字典形式。{pid: name}
+    #   handle_special_media_apps(playing_apps) 处理 网易云音乐/QQ音乐/PotPlayer 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放。
+    #   非网易云音乐/QQ音乐/PotPlayer，仅有一个应用在播放时，使用全局媒体键 播放/暂停 ，如果后台有其他已暂停播放的应用，可能影响其他后台已暂停应用的播放 😂
+    #   非网易云音乐/QQ音乐/PotPlayer，有两个以上应用在播放时，不使用全局媒体键 播放/暂停 ，只能指望静音其他音频播放的功能 😂
+    # 2. 如何判断应用是否在播放？
+    # - [x] playing_apps = get_audio_playing_apps() 可获取正在播放的应用，字典形式。{pid: name} 默认排除 ffplay.exe ，这是用于播放提示音的，排除以避免误判。
 
     global \
         last_time_pressed, \
