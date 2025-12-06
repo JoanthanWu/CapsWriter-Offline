@@ -214,6 +214,8 @@ PotPlayer_global_pause_hotkey = "ctrl + alt + f7"
 # 留空则 在PotPlayer播放时不暂停
 # 注意避免快捷键冲突
 
+foobar2000_global_pause_hotkey = "ctrl + alt + f8"
+
 arabic_year_number = true
 # 将 ****年 大写汉字替换为阿拉伯数字 ****年，例如一八四八年 替换为 1848 年
 

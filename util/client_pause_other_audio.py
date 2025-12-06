@@ -12,7 +12,15 @@ from util.config import ClientConfig as Config
 
 
 def get_audio_playing_apps(exclude_names: List[str] = None) -> Dict[int, str]:
-    """获取所有正在播放音频的应用程序，可排除特定进程名"""
+    """
+    获取所有正在播放音频的应用程序，可排除特定进程名，默认排除 ffplay.exe
+
+    Args:
+        exclude_names: 要排除的进程名列表，默认排除 ffplay.exe
+
+    Returns:
+        Dict[int, str]: playing_apps 正在播放的应用字典 格式: {进程ID: 进程名, ...}
+    """
     if exclude_names is None:
         exclude_names = ["ffplay.exe"]
 
@@ -47,7 +55,7 @@ def handle_special_media_apps(playing_apps):
     处理特殊媒体应用的暂停逻辑，支持多个特殊应用同时播放
 
     Args:
-        playing_apps: 正在播放的应用字典 {窗口标题: 进程名}
+        playing_apps: 正在播放的应用字典 格式: {进程ID: 进程名, ...}
 
     Returns:
         tuple: (是否处理了特殊应用, 处理的特殊应用列表)
@@ -62,6 +70,10 @@ def handle_special_media_apps(playing_apps):
         "PotPlayerMini64.exe": {
             "hotkey": Config.PotPlayer_global_pause_hotkey,
             "name": "PotPlayer",
+        },
+        "foobar2000.exe": {
+            "hotkey": Config.foobar2000_global_pause_hotkey,
+            "name": "foobar2000",
         },
     }
 
@@ -88,6 +100,14 @@ def handle_special_media_apps(playing_apps):
         if app_info["config"]["hotkey"] == "":
             print(
                 f"未配置 {app_info['config']['name']} 的全局暂停快捷键，不暂停音频播放"
+            )
+            processed_apps.append(
+                {
+                    "exe": exe_name,
+                    "name": app_info["config"]["name"],
+                    "windows": app_info["windows"][:],  # 创建副本
+                    "hotkey": "",
+                }
             )
         else:
             keyboard.send(app_info["config"]["hotkey"])

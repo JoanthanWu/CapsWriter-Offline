@@ -106,9 +106,16 @@ def restore_audio_playing():
         if saved_special_apps:
             # 处理特殊应用的恢复播放
             for app_info in saved_special_apps:
-                # 发送相同的快捷键恢复播放
-                keyboard.send(app_info["hotkey"])
-                # print(f"已恢复 {app_info['name']}（{app_info['hotkey']}）")
+                if app_info["hotkey"] == "":
+                    # 不需要恢复音频播放
+                    ...
+                    # print(
+                    #     f"未配置 {app_info['name']} 的全局暂停快捷键，不需要恢复音频播放"
+                    # )
+                else:
+                    # 发送相同的快捷键恢复播放
+                    keyboard.send(app_info["hotkey"])
+                    # print(f"已恢复 {app_info['name']}（{app_info['hotkey']}）")
             saved_special_apps = []
         else:
             keyboard.send("play/pause")
@@ -254,7 +261,7 @@ def launch_task():
         playing_apps = get_audio_playing_apps()
         if len(playing_apps) > 0:
             print(f"{len(playing_apps)} 个程序正在播放音频: {playing_apps}")
-        # 网易云音乐/QQ音乐/PotPlayer 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放
+        # 网易云音乐/QQ音乐/PotPlayer/foobar2000 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放
         has_processed, processed_apps = handle_special_media_apps(playing_apps)
         if has_processed:
             # 保存处理的应用信息，用于后续恢复或其他操作
@@ -380,9 +387,9 @@ def click_mode(e: keyboard.KeyboardEvent):
     # 思路:
     # 1. 能否指定某应用暂停/播放？
     # - [ ]
-    #   handle_special_media_apps(playing_apps) 处理 网易云音乐/QQ音乐/PotPlayer 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放。
-    #   非网易云音乐/QQ音乐/PotPlayer，仅有一个应用在播放时，使用全局媒体键 播放/暂停 ，如果后台有其他已暂停播放的应用，可能影响其他后台已暂停应用的播放 😂
-    #   非网易云音乐/QQ音乐/PotPlayer，有两个以上应用在播放时，不使用全局媒体键 播放/暂停 ，只能指望静音其他音频播放的功能 😂
+    #   handle_special_media_apps(playing_apps) 处理 网易云音乐/QQ音乐/PotPlayer/foobar2000 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放。
+    #   非网易云音乐/QQ音乐/PotPlayer/foobar2000，仅有一个应用在播放时，使用全局媒体键 播放/暂停 ，如果后台有其他已暂停播放的应用，可能影响其他后台已暂停应用的播放 😂
+    #   非网易云音乐/QQ音乐/PotPlayer/foobar2000，有两个以上应用在播放时，不使用全局媒体键 播放/暂停 ，只能指望静音其他音频播放的功能 😂
     # 2. 如何判断应用是否在播放？
     # - [x] playing_apps = get_audio_playing_apps() 可获取正在播放的应用，字典形式。{pid: name} 默认排除 ffplay.exe ，这是用于播放提示音的，排除以避免误判。
 

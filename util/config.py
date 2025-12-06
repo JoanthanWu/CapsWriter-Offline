@@ -110,6 +110,9 @@ class ClientConfig:
     PotPlayer_global_pause_hotkey: str = config["client"][
         "PotPlayer_global_pause_hotkey"
     ]
+    foobar2000_global_pause_hotkey: str = config["client"][
+        "foobar2000_global_pause_hotkey"
+    ]
     arabic_year_number: bool = config["client"]["arabic_year_number"]
     shrink_automatically_to_tray: bool = config["client"][
         "shrink_automatically_to_tray"
