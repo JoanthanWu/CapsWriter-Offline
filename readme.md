@@ -32,6 +32,27 @@
 <details>
 <summary><h1">展开最近更新</h1></summary>
 
+## 通过 常用播放器内设置的 播放/暂停快捷键 控制 录音时暂停音频播放
+> QQ音乐、网易云音乐、PotPlayer、foobar2000 可通过 edit_config_gui.exe 配置 用于 播放/暂停 的快捷键
+> 如果还有其他特殊应用 请配置 config.toml [client.additional_special_apps]
+> "<进程名>" = { hotkey = "<对应程序设置的全局快捷键>", name = "<用于输出日志的对应程序名称>" }
+> 
+> 如果N个特殊应用在播放，支持全部暂停
+> 如果一个非特殊应用在播放，通过 媒体键 暂停
+> 如果N个非特殊应用在播放，不暂停
+> 如果一个特殊应用和N个非特殊应用在播放，只暂停特殊应用
+> 
+> 默认配置如下：
+> | 播放器           | 快捷键          | 备注                               |
+> | ---------------- | --------------- | ---------------------------------- |
+> | QQ音乐           | Ctrl + Alt + F5 | 需在QQ音乐中设置全局快捷键         |
+> | 网易云音乐       | Ctrl + Alt + F6 | 需在网易云音乐中设置全局快捷键     |
+> | PotPlayer        | Ctrl + Alt + F7 | 需在PotPlayer中设置全局快捷键      |
+> | foobar2000       | Ctrl + Alt + F8 | 需在foobar2000中设置全局快捷键     |
+> | VLC Media Player | Ctrl + Alt + F9 | 需在VLC中设置全局快捷键，并重启VLC |
+>
+> [常用播放器 如何配置 全局播放/暂停 快捷键？](https://github.com/H1DDENADM1N/CapsWriter-Offline/issues/128#issuecomment-3616392251)
+
 ## 新增 优先使用 LibreTranslate 在线翻译服务
 > 服务端启动时，会自动检查 config.toml 中 LibreTranslate api 地址是否可用
 > 如果可用，则优先使用 LibreTranslate 在线翻译服务；
@@ -402,6 +423,34 @@ mute_other_audio = true
 pause_other_audio = true
 # 录音时是否暂停其他音频播放
 
+QQMusic_global_pause_hotkey = "ctrl + alt + f5"
+# 首先，启用 pause_other_audio
+# 使用 QQ 音乐 设置的全局 播放/暂停 的快捷键
+# 留空则 在QQ音乐播放时不暂停
+# 注意避免快捷键冲突
+
+CloudMusic_global_pause_hotkey = "ctrl + alt + f6"
+# 首先，启用 pause_other_audio
+# 使用 网易云音乐 设置的全局 播放/暂停 的快捷键
+# 留空则 在网易云音乐播放时不暂停
+# 注意避免快捷键冲突
+
+PotPlayer_global_pause_hotkey = "ctrl + alt + f7"
+# 首先，启用 pause_other_audio
+# 使用 PotPlayer 设置的全局 播放/暂停 的快捷键
+# 留空则 在PotPlayer播放时不暂停
+# 注意避免快捷键冲突
+
+foobar2000_global_pause_hotkey = "ctrl + alt + f8"
+# 首先，启用 pause_other_audio
+# 使用 foobar2000 设置的全局 播放/暂停 的快捷键
+# 留空则 foobar2000 播放时不暂停
+# 注意避免快捷键冲突
+
+# 如果还有除了 QQ音乐、网易云音乐、PotPlayer、foobar2000
+# 以外，还有 其他特殊应用
+# 请配置 下方 附加特殊应用列表 [client.additional_special_apps]
+
 arabic_year_number = true
 # 将 ****年 大写汉字替换为阿拉伯数字 ****年，例如一八四八年 替换为 1848 年
 
@@ -480,6 +529,23 @@ opencc_converter = "s2t"
 # t2hk Traditional Chinese (OpenCC Standard) to Hong Kong Standard 繁体（OpenCC 标准）到香港繁体（香港小学学习字词表标准）
 # t2jp Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁体（OpenCC 标准，旧字体）到日文新字体
 # jp2t New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
+
+
+[client.additional_special_apps]
+"vlc.exe" = { hotkey = "ctrl + alt + f9", name = "VLC Media Player" } # VLC 设置全局快捷键后需要重启 VLC 才能生效
+# 如果还有除了 QQ音乐、网易云音乐、PotPlayer、foobar2000
+# 以外，还有 其他特殊应用
+# 也希望使用对应程序设置的全局快捷键 在录音时播放/暂停
+# 首先，启用 pause_other_audio
+# 然后，在对应程序 设置的全局 播放/暂停 的快捷键
+# 注意避免快捷键冲突
+# 
+# 附加特殊应用列表 格式：
+# "<进程名>" = { hotkey = "<对应程序设置的全局快捷键>", name = "<用于输出日志的对应程序名称>" }
+# 
+# 如果N个特殊应用在播放，支持全部暂停
+# 如果N个非特殊应用在播放，不暂停
+# 如果一个特殊应用和N个非特殊应用在播放，只暂停特殊应用
 
 
 # ======================LibreTranslate 配置==================================
