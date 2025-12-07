@@ -33,25 +33,25 @@
 <summary><h1">展开最近更新</h1></summary>
 
 ## 通过 常用播放器内设置的 播放/暂停快捷键 控制 录音时暂停音频播放
-> QQ音乐、网易云音乐、PotPlayer、foobar2000 可通过 edit_config_gui.exe 配置 用于 播放/暂停 的快捷键
-> 如果还有其他特殊应用 请配置 config.toml [client.additional_special_apps]
-> "<进程名>" = { hotkey = "<对应程序设置的全局快捷键>", name = "<用于输出日志的对应程序名称>" }
-> 
-> 如果N个特殊应用在播放，支持全部暂停
-> 如果一个非特殊应用在播放，通过 媒体键 暂停
-> 如果N个非特殊应用在播放，不暂停
-> 如果一个特殊应用和N个非特殊应用在播放，只暂停特殊应用
-> 
-> 默认配置如下：
-> | 播放器           | 快捷键          | 备注                               |
-> | ---------------- | --------------- | ---------------------------------- |
-> | QQ音乐           | Ctrl + Alt + F5 | 需在QQ音乐中设置全局快捷键         |
-> | 网易云音乐       | Ctrl + Alt + F6 | 需在网易云音乐中设置全局快捷键     |
-> | PotPlayer        | Ctrl + Alt + F7 | 需在PotPlayer中设置全局快捷键      |
-> | foobar2000       | Ctrl + Alt + F8 | 需在foobar2000中设置全局快捷键     |
-> | VLC Media Player | Ctrl + Alt + F9 | 需在VLC中设置全局快捷键，并重启VLC |
->
-> [常用播放器 如何配置 全局播放/暂停 快捷键？](https://github.com/H1DDENADM1N/CapsWriter-Offline/issues/128#issuecomment-3616392251)
+     > QQ音乐、网易云音乐、PotPlayer、foobar2000 可通过 edit_config_gui.exe 配置 用于 播放/暂停 的快捷键
+     > 如果还有其他特殊应用 请配置 config.toml [client.additional_special_apps]
+     > "<进程名>" = { hotkey = "<对应程序设置的全局快捷键>", name = "<用于输出日志的对应程序名称>" }
+     > 
+     > 如果N个特殊应用在播放，支持全部暂停
+     > 如果一个非特殊应用在播放，通过 媒体键 暂停
+     > 如果N个非特殊应用在播放，不暂停
+     > 如果一个特殊应用和N个非特殊应用在播放，只暂停特殊应用
+     > 
+     > 默认配置如下：
+     > | 播放器           | 快捷键          | 备注                               |
+     > | ---------------- | --------------- | ---------------------------------- |
+     > | QQ音乐           | Ctrl + Alt + F5 | 需在QQ音乐中设置全局快捷键         |
+     > | 网易云音乐       | Ctrl + Alt + F6 | 需在网易云音乐中设置全局快捷键     |
+     > | PotPlayer        | Ctrl + Alt + F7 | 需在PotPlayer中设置全局快捷键      |
+     > | foobar2000       | Ctrl + Alt + F8 | 需在foobar2000中设置全局快捷键     |
+     > | VLC Media Player | Ctrl + Alt + F9 | 需在VLC中设置全局快捷键，并重启VLC |
+     >
+     > [常用播放器 如何配置 全局播放/暂停 快捷键？](https://github.com/H1DDENADM1N/CapsWriter-Offline/issues/128#issuecomment-3616392251)
 
 ## 新增 优先使用 LibreTranslate 在线翻译服务
 > 服务端启动时，会自动检查 config.toml 中 LibreTranslate api 地址是否可用
