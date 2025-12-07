@@ -77,6 +77,10 @@ def handle_special_media_apps(playing_apps):
         },
     }
 
+    special_apps_map.update(Config.additional_special_apps)
+
+    # pprint(f"特殊应用列表: {special_apps_map}")
+
     # 按应用类型分组收集匹配的窗口
     matched_apps_by_type = {}
     for window_name, exe_name in list(playing_apps.items()):

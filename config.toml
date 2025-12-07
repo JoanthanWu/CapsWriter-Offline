@@ -220,6 +220,10 @@ foobar2000_global_pause_hotkey = "ctrl + alt + f8"
 # 留空则 foobar2000 播放时不暂停
 # 注意避免快捷键冲突
 
+# 如果还有除了 QQ音乐、网易云音乐、PotPlayer、foobar2000
+# 以外，还有 其他特殊应用
+# 请配置 下方 附加特殊应用列表 [client.additional_special_apps]
+
 arabic_year_number = true
 # 将 ****年 大写汉字替换为阿拉伯数字 ****年，例如一八四八年 替换为 1848 年
 
@@ -298,6 +302,23 @@ opencc_converter = "s2t"
 # t2hk Traditional Chinese (OpenCC Standard) to Hong Kong Standard 繁体（OpenCC 标准）到香港繁体（香港小学学习字词表标准）
 # t2jp Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁体（OpenCC 标准，旧字体）到日文新字体
 # jp2t New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
+
+
+[client.additional_special_apps]
+"vlc.exe" = { hotkey = "ctrl + alt + f9", name = "VLC Media Player" } # VLC 设置全局快捷键后需要重启 VLC 才能生效
+# 如果还有除了 QQ音乐、网易云音乐、PotPlayer、foobar2000
+# 以外，还有 其他特殊应用
+# 也希望使用对应程序设置的全局快捷键 在录音时播放/暂停
+# 首先，启用 pause_other_audio
+# 然后，在对应程序 设置的全局 播放/暂停 的快捷键
+# 注意避免快捷键冲突
+# 
+# 附加特殊应用列表 格式：
+# "<进程名>" = { hotkey = "<对应程序设置的全局快捷键>", name = "<用于输出日志的对应程序名称>" }
+# 
+# 如果N个特殊应用在播放，支持全部暂停
+# 如果N个非特殊应用在播放，不暂停
+# 如果一个特殊应用和N个非特殊应用在播放，只暂停特殊应用
 
 
 # ======================LibreTranslate 配置==================================
