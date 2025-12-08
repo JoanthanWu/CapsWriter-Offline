@@ -212,11 +212,101 @@
 
 # 🤓 源码运行
 
+<details>
+<summary><h1">源码运行</h1></summary>
+
+## 在 整合包 使用 嵌入式python 简单调试
 1. 运行 `.\runtime\python.exe .\core_server.py` 脚本 在终端启动服务端，会载入 SenseVoice 模型识别模型 或Paraformer 模型和标点模型（通过`config.toml` `model = 'Sensevoice' # 'Sensevoice' 或 'Paraformer'` 配置。这会占用 2GB 的内存，载入时长约 50 秒）
 2. 运行 `.\runtime\python.exe .\core_client.py` 脚本 在终端启动客户端，会载入中译英模型，打开系统默认麦克风，开始监听按键（这会占用 400MB 的内存，载入时长约 20 秒）
 3. 按住 `CapsLock` 键，录音开始，松开 `CapsLock` 键，录音结束，识别结果立马被输入（录音时长短于 0.3 秒不算）
 4. 按住 `Left Shift` 再按 `CapsLock` 进行离线翻译，方便同时需要输入中文和英文翻译的场景
 5. 按住 `Right Shift` 再按 `CapsLock` 进行在线翻译，方便同时需要输入中文和英文翻译的场景
+
+## 使用 uv 在 虚拟环境python（.venv）进阶调试（更新第三方依赖等等）
+
+###  1. 克隆项目
+
+```powershell
+git clone https://github.com/H1DDENADM1N/CapsWriter-Offline.git
+
+cd CapsWriter-Offline
+```
+
+### 2. 安装依赖
+
+#### 2.1 安装第三方依赖
+
+```powershell
+uv sync --all-groups
+```
+
+调试配置编辑器 GUI （edit_config_gui.py） 另需手动下载 `siui` （ [PySide6-SiliconUI](https://github.com/H1DDENADM1N/PySide6-SiliconUI) ）放在 `.venv/Lib/site-packages`
+
+#### 2.2 下载模型
+
+详见 [models/模型下载方式.txt](models/模型下载方式.txt) 或 [模型下载链接](#model-download)
+
+### 3. 启动服务端和客户端
+
+#### 3.1 在终端 启动服务端和客户端
+
+启动服务端
+
+```powershell
+uv run core_server.py
+```
+
+启动客户端
+
+```powershell
+uv run core_client.py
+```
+
+#### 3.2 启动服务端、客户端和配置编辑器 GUI
+
+
+启动服务端GUI
+
+```powershell
+uv run start_server_gui.py
+```
+
+启动客户端GUI
+
+```powershell
+uv run start_client_gui.py
+```
+
+启动配置编辑器GUI
+```powershell
+uv run edit_config_gui.py
+```
+
+### 4. 检测和升级依赖包
+
+#### 4.1 检测第三方依赖是否有更新
+
+```powershell
+uv run dev\check_site_packages_update.py
+```
+
+#### 4.2 升级依赖包
+
+```powershell
+uv run dev\update_site_packages.py
+```
+
+#### 4.3 更新 pyproject.toml
+
+```powershell
+.venv\Scripts\python.exe dev\update_pyproject_toml.py
+```
+
+### 5. 打包
+
+详见 [Pystand](https://github.com/H1DDENADM1N/PyStand)
+
+</details>
 
 ---
 
@@ -732,6 +822,8 @@ doNotShowHintList=:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini
 
 ---
 
+<a name="model-download"></a>
+
 # ⬇️ 模型下载链接
 
 ## 语音识别
@@ -778,13 +870,13 @@ doNotShowHintList=:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini
 
 ## [Pywin32](https://github.com/mhammond/pywin32) 打包进 Embedded Python 的方法
 
-本机 Python3.11.8 执行
+本机 Python 执行（与runtime目录嵌入式Python版本保持一致）
 
 ```
 pip install  --target .\site-packages pywin32
 ```
 
-编辑 `.\runtime\python311._pth` 增加
+编辑 `.\runtime\python3**._pth` 增加
 
 ```
 ../site-packages/win32
