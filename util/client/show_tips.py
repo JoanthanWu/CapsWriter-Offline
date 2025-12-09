@@ -2,7 +2,7 @@ import os
 
 from rich.markdown import Markdown
 
-from util.client_cosmic import console
+from util.client.cosmic import console
 from util.config import ClientConfig as Config
 
 

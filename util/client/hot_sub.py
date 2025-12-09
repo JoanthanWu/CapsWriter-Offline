@@ -1,4 +1,5 @@
-from util import hot_sub_en, hot_sub_rule, hot_sub_year, hot_sub_zh
+from util.client import hot_sub_zh
+from util.client import hot_sub_en, hot_sub_rule, hot_sub_year
 from util.config import ClientConfig as Config
 
 

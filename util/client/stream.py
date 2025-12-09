@@ -7,7 +7,7 @@ import numpy as np
 import sounddevice as sd
 from loguru import logger
 
-from util.client_cosmic import Cosmic, console
+from util.client.cosmic import Cosmic, console
 from util.config import ClientConfig as Config
 from util.safe_logger import init_logging
 

@@ -1,7 +1,7 @@
 import websockets
 from loguru import logger
 
-from util.client_cosmic import Cosmic
+from util.client.cosmic import Cosmic
 from util.config import ClientConfig as Config
 from util.safe_logger import init_logging
 

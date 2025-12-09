@@ -1,7 +1,7 @@
 # 启动在线翻译服务
 
 # 测试
-# .\runtime\python.exe .\util\client_translate_online_libretranslate.py
+# .\runtime\python.exe .\util\client\translate_online_libretranslate.py
 
 
 def run_online_translate_service():

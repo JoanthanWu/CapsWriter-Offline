@@ -7,7 +7,7 @@ import asyncio
 import keyboard
 import clipman
 from util.config import ClientConfig as Config
-from util.client_cosmic import Cosmic, console
+from util.client.cosmic import Cosmic, console
 
 
 async def on_hotkey_pressed():

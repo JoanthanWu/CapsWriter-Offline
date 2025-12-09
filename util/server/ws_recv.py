@@ -7,8 +7,8 @@ from loguru import logger
 
 from util.my_status import Status
 from util.safe_logger import init_logging
-from util.server_classes import Task
-from util.server_cosmic import Cosmic, console
+from util.server.classes import Task
+from util.server.cosmic import Cosmic, console
 
 status_mic = Status("正在接收音频", spinner="point")
 

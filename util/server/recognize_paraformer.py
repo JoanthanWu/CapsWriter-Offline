@@ -1,18 +1,21 @@
+import re
 import time
 
 import numpy as np
 
-from util.chinese_itn import chinese_to_num
+from util.server.chinese_itn import chinese_to_num
 from util.config import ServerConfig as Config
-from util.format_tools import adjust_space
-from util.server_classes import Result, Task
+from util.server.format_tools import adjust_space
+from util.server.classes import Result, Task
 
 results = {}
 
 
-def format_text(text):
+def format_text(text, punc_model):
     if Config.format_spell:
         text = adjust_space(text)  # 调空格
+    if Config.format_punc and punc_model and text:
+        text = punc_model.add_punctuation(text)  # 加标点
     if Config.format_num:
         text = chinese_to_num(text)  # 转数字
     if Config.format_spell:
@@ -20,7 +23,7 @@ def format_text(text):
     return text
 
 
-def recognize(recognizer, task: Task):
+def recognize(recognizer, punc_model, task: Task):
     # inspect({key:value for key, value in task.__dict__.items() if not key.startswith('_') and key != 'data'})
     # todo 清空遗存的任务结果
 
@@ -79,7 +82,8 @@ def recognize(recognizer, task: Task):
     result.tokens += [token for token in stream.result.tokens[m:n]]
 
     # token 合并为文本
-    text = "".join(result.tokens)
+    text = " ".join(result.tokens).replace("@@ ", "")
+    text = re.sub("([^a-zA-Z0-9]) (?![a-zA-Z0-9])", r"\1", text)
 
     result.text = text
 
@@ -87,7 +91,7 @@ def recognize(recognizer, task: Task):
         return result
 
     # 调整文本格式
-    result.text = format_text(text)
+    result.text = format_text(text, punc_model)
 
     # 若最后一个片段完成识别，从字典摘取任务
     result = results.pop(task.task_id)

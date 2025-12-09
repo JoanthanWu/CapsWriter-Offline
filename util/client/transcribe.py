@@ -11,11 +11,11 @@ from pathlib import Path
 import websockets
 from loguru import logger
 
-from util import srt_from_txt
-from util.client_check_websocket import check_websocket
-from util.client_cosmic import Cosmic, console
-from util.client_hot_sub import hot_sub
-from util.client_hot_update import observe_hot, update_hot_all
+from util.client import srt_from_txt
+from util.client.check_websocket import check_websocket
+from util.client.cosmic import Cosmic, console
+from util.client.hot_sub import hot_sub
+from util.client.hot_update import observe_hot, update_hot_all
 from util.config import ClientConfig as Config
 from util.safe_logger import init_logging
 

@@ -1,8 +1,8 @@
 import uuid
 from pathlib import Path
 
-from util import srt_from_txt
-from util.client_cosmic import console
+from util.client import srt_from_txt
+from util.client.cosmic import console
 
 
 def adjust_srt(file: Path):

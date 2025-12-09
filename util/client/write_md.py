@@ -2,7 +2,7 @@ import time
 from os import makedirs
 from pathlib import Path
 
-from util.hot_kwds import kwd_list
+from util.client.hot_kwds import kwd_list
 
 # def do_updata_kwd(kwd_text: str):
 #     """

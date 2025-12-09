@@ -1,7 +1,7 @@
 # 启动在线翻译服务
 
 # 测试
-# .\runtime\python.exe .\util\client_translate_online.py
+# .\runtime\python.exe .\util\client\translate_online.py
 
 
 import subprocess

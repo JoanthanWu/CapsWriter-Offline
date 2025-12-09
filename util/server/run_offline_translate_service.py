@@ -4,7 +4,7 @@
 # websocat ws://localhost:6017/
 # {"text": "你好，世界！"}
 
-# .\runtime\python.exe .\util\client_translate_offline.py
+# .\runtime\python.exe .\util\client\translate_offline.py
 
 
 import asyncio

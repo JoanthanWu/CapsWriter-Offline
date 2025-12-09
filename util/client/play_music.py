@@ -4,7 +4,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from util.client_cosmic import console
+from util.client.cosmic import console
 from util.safe_logger import init_logging
 
 

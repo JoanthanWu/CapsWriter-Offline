@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
 from qt_material import apply_stylesheet
 from tomlkit import dumps, parse
 
-from util.check_microphone_usage import is_microphone_in_use
+from util.client.check_microphone_usage import is_microphone_in_use
 from util.check_process import check_process
 from util.config import ClientConfig as Config
 from util.safe_logger import init_logging
@@ -328,7 +328,7 @@ class GUI(QMainWindow):
 
     def restart_client(self):
         subprocess.Popen(
-            [".\\runtime\\python.exe", ".\\util\\client_restart.py"],
+            [".\\runtime\\python.exe", ".\\util\\client\\restart.py"],
             creationflags=subprocess.CREATE_NO_WINDOW,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -342,7 +342,7 @@ class GUI(QMainWindow):
         subprocess.Popen(
             [
                 ".\\runtime\\pythonw.exe",
-                ".\\util\\cloud_clipboard_show_qrcode.py",
+                ".\\util\\client\\cloud_clipboard_show_qrcode.py",
                 text,
             ],
             creationflags=subprocess.CREATE_NO_WINDOW,
@@ -680,7 +680,7 @@ def start_client_gui():
         tooltip = Hint_While_Recording_At_Cursor_Position()
         tooltip.show()
     apply_stylesheet(
-        app, theme="dark_teal.xml", css_file="util\\client_gui_theme_custom.css"
+        app, theme="dark_teal.xml", css_file="util\\client\\gui_theme_custom.css"
     )
     global gui
     gui = GUI()

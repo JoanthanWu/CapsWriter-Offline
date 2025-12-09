@@ -9,24 +9,24 @@ from flask import sessions
 from loguru import logger
 from pycaw.pycaw import AudioUtilities
 
-from util.client_cosmic import Cosmic
-from util.client_pause_other_audio import (
+from util.client.cosmic import Cosmic
+from util.client.pause_other_audio import (
     get_audio_playing_apps,
     handle_special_media_apps,
 )
-from util.client_send_audio import send_audio
-from util.client_send_signal_to_hint_while_recording import (
+from util.client.send_audio import send_audio
+from util.client.send_signal_to_hint_while_recording import (
     send_signal_to_hint_while_recording,
 )
-from util.client_stream import stream_reopen
+from util.client.stream import stream_reopen
 from util.config import ClientConfig as Config
 from util.my_status import Status
 from util.safe_logger import init_logging
 
 if shutil.which("ffplay") and Config.play_stop_music:
-    from util.client_play_music import play_music
+    from util.client.play_music import play_music
 if shutil.which("ffplay") and Config.play_start_music:
-    from util.client_play_music import play_music
+    from util.client.play_music import play_music
 
 
 task = asyncio.Future()

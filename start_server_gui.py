@@ -21,7 +21,7 @@ from qt_material import apply_stylesheet
 from util.check_process import check_process
 from util.config import ServerConfig as Config
 from util.safe_logger import init_logging
-from util.server_check_model import check_model_gui
+from util.server.check_model import check_model_gui
 
 
 class GUI(QMainWindow):

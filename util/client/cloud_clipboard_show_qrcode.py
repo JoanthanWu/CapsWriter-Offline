@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QImage, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 
-from util.cloud_clipboard import CloudClipboard
+from util.client.cloud_clipboard import CloudClipboard
 
 
 class QRCODE(QWidget):

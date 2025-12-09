@@ -6,23 +6,23 @@ import websockets
 from loguru import logger
 
 from util.check_libretranslate_service import check_libretranslate_service
-from util.client_check_websocket import check_websocket
-from util.client_cosmic import Cosmic, console
-from util.client_hot_sub import hot_sub
-from util.client_rename_audio import rename_audio
-from util.client_strip_punc import strip_punc
-from util.client_type_result import type_result
-from util.client_write_md import write_md
+from util.client.check_websocket import check_websocket
+from util.client.cosmic import Cosmic, console
+from util.client.hot_sub import hot_sub
+from util.client.rename_audio import rename_audio
+from util.client.strip_punc import strip_punc
+from util.client.type_result import type_result
+from util.client.write_md import write_md
 from util.config import ClientConfig as Config
 from util.safe_logger import init_logging
 
 if not Cosmic.transcribe_subtitles:
-    from util.client_translate_offline import translate_offline
+    from util.client.translate_offline import translate_offline
 
     if check_libretranslate_service():
-        from util.client_translate_online_libretranslate import translate_online
+        from util.client.translate_online_libretranslate import translate_online
     else:
-        from util.client_translate_online import translate_online
+        from util.client.translate_online import translate_online
 
 warnings.filterwarnings("ignore")
 

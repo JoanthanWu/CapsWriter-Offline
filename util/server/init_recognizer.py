@@ -11,12 +11,12 @@ from util.config import ModelPaths, ParaformerArgs, SenseVoiceArgs
 from util.config import ServerConfig as Config
 from util.empty_working_set import empty_current_working_set
 from util.safe_logger import init_logging
-from util.server_cosmic import console
+from util.server.cosmic import console
 
 if Config.model == "Paraformer":
-    from util.server_recognize_paraformer import recognize
+    from util.server.recognize_paraformer import recognize
 else:
-    from util.server_recognize_sensevoice import recognize
+    from util.server.recognize_sensevoice import recognize
 
 
 def disable_jieba_debug():

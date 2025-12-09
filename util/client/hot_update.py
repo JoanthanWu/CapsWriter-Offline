@@ -8,8 +8,9 @@ from pathlib import Path
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-from util import hot_kwds, hot_sub_en, hot_sub_rule, hot_sub_zh
-from util.client_cosmic import console
+from util.client import hot_sub_zh
+from util.client.cosmic import console
+from util.client import hot_kwds, hot_sub_en, hot_sub_rule
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tomlkit import parse

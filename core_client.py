@@ -11,7 +11,7 @@ from typing import List
 import colorama
 import typer
 
-from util.client_cosmic import Cosmic, console
+from util.client.cosmic import Cosmic, console
 from util.config import ClientConfig as Config
 
 if sys.argv[1:]:
@@ -20,13 +20,13 @@ else:
     Cosmic.transcribe_subtitles = False
 from loguru import logger
 
-from util.client_adjust_srt import adjust_srt
-from util.client_hot_update import observe_hot, update_hot_all
-from util.client_recv_result import recv_result
-from util.client_shortcut_handler import bond_shortcut
-from util.client_show_tips import show_file_tips, show_mic_tips
-from util.client_stream import stream_close, stream_open
-from util.client_transcribe import transcribe_check, transcribe_recv, transcribe_send
+from util.client.adjust_srt import adjust_srt
+from util.client.hot_update import observe_hot, update_hot_all
+from util.client.recv_result import recv_result
+from util.client.shortcut_handler import bond_shortcut
+from util.client.show_tips import show_file_tips, show_mic_tips
+from util.client.stream import stream_close, stream_open
+from util.client.transcribe import transcribe_check, transcribe_recv, transcribe_send
 from util.empty_working_set import empty_current_working_set
 from util.safe_logger import init_logging
 

@@ -8,10 +8,10 @@ import websockets
 from loguru import logger
 from websockets.protocol import State
 
-from util.client_cosmic import Cosmic, console
-from util.client_create_file import create_file
-from util.client_finish_file import finish_file
-from util.client_write_file import write_file
+from util.client.cosmic import Cosmic, console
+from util.client.create_file import create_file
+from util.client.finish_file import finish_file
+from util.client.write_file import write_file
 from util.config import ClientConfig as Config
 from util.safe_logger import init_logging
 

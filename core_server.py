@@ -9,22 +9,22 @@ import websockets
 from util.check_libretranslate_service import check_libretranslate_service
 from util.config import ServerConfig as Config
 from util.empty_working_set import empty_current_working_set
-from util.server_check_model import check_model
-from util.server_cosmic import Cosmic, console
-from util.server_init_recognizer import init_recognizer
-from util.server_ws_recv import ws_recv
-from util.server_ws_send import ws_send
+from util.server.check_model import check_model
+from util.server.cosmic import Cosmic, console
+from util.server.init_recognizer import init_recognizer
+from util.server.ws_recv import ws_recv
+from util.server.ws_send import ws_send
 
 if check_libretranslate_service():
-    from util.server_run_online_translate_service_libretranslate import (
+    from util.server.run_online_translate_service_libretranslate import (
         run_online_translate_service,
     )
 else:
-    from util.server_run_online_translate_service import (
+    from util.server.run_online_translate_service import (
         run_online_translate_service,
     )
 
-from util.server_run_offline_translate_service import (
+from util.server.run_offline_translate_service import (
     run_offline_translate_service,
 )
 
