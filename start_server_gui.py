@@ -91,6 +91,7 @@ class GUI(QMainWindow):
 
     def quit_app(self):
         from loguru import logger
+
         from util.safe_logger import init_logging
 
         init_logging()
@@ -150,6 +151,7 @@ class GUI(QMainWindow):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            shell=True,
             encoding="utf-8",
             errors="replace",
         )

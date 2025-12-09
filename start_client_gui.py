@@ -226,6 +226,7 @@ class GUI(QMainWindow):
                     self.convert_to_traditional_chinese_main_action.setText("繁體中文")
         except Exception as e:
             from loguru import logger
+
             from util.safe_logger import init_logging
 
             init_logging()
@@ -293,6 +294,7 @@ class GUI(QMainWindow):
             ]
         except Exception as e:
             from loguru import logger
+
             from util.safe_logger import init_logging
 
             init_logging()
@@ -328,6 +330,7 @@ class GUI(QMainWindow):
                     self.convert_to_traditional_chinese_main_action.setText("简体中文")
         except Exception as e:
             from loguru import logger
+
             from util.safe_logger import init_logging
 
             init_logging()
@@ -340,6 +343,7 @@ class GUI(QMainWindow):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            shell=True,
             encoding="utf-8",
         )
 
@@ -355,6 +359,7 @@ class GUI(QMainWindow):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            shell=True,
             encoding="utf-8",
         )
 
@@ -446,6 +451,7 @@ class GUI(QMainWindow):
 
     def quit_app(self):
         from loguru import logger
+
         from util.safe_logger import init_logging
 
         init_logging()
@@ -499,6 +505,7 @@ class GUI(QMainWindow):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                shell=True,
             )
             threading.Thread(
                 target=self.enqueue_output,
@@ -519,6 +526,7 @@ class GUI(QMainWindow):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                shell=True,
             )
             threading.Thread(
                 target=self.enqueue_output,
@@ -539,6 +547,7 @@ class GUI(QMainWindow):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                shell=True,
             )
             threading.Thread(
                 target=self.enqueue_output,
@@ -555,6 +564,7 @@ class GUI(QMainWindow):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            shell=True,
             encoding="utf-8",
             errors="replace",
         )
@@ -598,6 +608,7 @@ class GUI(QMainWindow):
                 self.berthToRight(x, y, width, height, screenWidth, screenHeight)
             else:
                 from loguru import logger
+
                 from util.safe_logger import init_logging
 
                 init_logging()
@@ -761,6 +772,7 @@ def start_client_gui():
 
 def Print_Screen_Scale():
     from loguru import logger
+
     from util.safe_logger import init_logging
 
     init_logging()
@@ -800,6 +812,7 @@ if __name__ == "__main__":
             files = read_file_list(args.file_list)
         except Exception as e:
             from loguru import logger
+
             from util.safe_logger import init_logging
 
             init_logging()
@@ -818,6 +831,7 @@ if __name__ == "__main__":
             subprocess.Popen(command, cwd=str(CapsWriter_path))
         except Exception as e:
             from loguru import logger
+
             from util.safe_logger import init_logging
 
             init_logging()
