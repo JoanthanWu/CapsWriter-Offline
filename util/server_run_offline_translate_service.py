@@ -18,7 +18,6 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from util.config import ClientConfig, ModelPaths
 from util.config import ServerConfig as Config
 from util.safe_logger import init_logging
-from util.server_cosmic import console
 
 # 离线翻译
 modelName = ModelPaths.opus_mt_dir

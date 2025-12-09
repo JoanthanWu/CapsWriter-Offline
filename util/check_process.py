@@ -1,5 +1,9 @@
 import subprocess
 
+from loguru import logger
+
+from util.safe_logger import init_logging
+
 
 def check_process(name):
     # 使用tasklist命令查找进程
@@ -16,16 +20,10 @@ def check_process(name):
             "utf-8", errors="replace"
         )
     except FileNotFoundError:
-        from loguru import logger
-        from util.safe_logger import init_logging
-
         linit_logging()
         logger.error("未找到命令，检查是否安装在环境中。")
         return False
     except Exception as e:
-        from loguru import logger
-        from util.safe_logger import init_logging
-
         init_logging()
         logger.error(f"检查进程时出错: {e}")
         return False

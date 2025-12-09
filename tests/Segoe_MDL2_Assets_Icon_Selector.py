@@ -1,7 +1,16 @@
 import sys
+
 import clipman
-from PySide6.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, QPushButton, QScrollArea
-from PySide6.QtGui import QFont, QFontDatabase
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QApplication,
+    QGridLayout,
+    QMainWindow,
+    QPushButton,
+    QScrollArea,
+    QWidget,
+)
+
 
 class IconBrowser(QMainWindow):
     def __init__(self):
@@ -10,7 +19,7 @@ class IconBrowser(QMainWindow):
 
     def initUI(self):
         self.resize(537, 537)
-        # 加载 Segoe MDL2 Assets 字体 
+        # 加载 Segoe MDL2 Assets 字体
         # 图标列表：https://learn.microsoft.com/zh-cn/windows/apps/design/style/segoe-ui-symbol-font#icon-list
 
         # Windows 10 之后自带 Segoe MDL2 Assets，或从 https://aka.ms/SegoeFonts 下载
@@ -29,7 +38,7 @@ class IconBrowser(QMainWindow):
         # fontfamily_segoeuisl = QFontDatabase.applicationFontFamilies(font_segoeuisl)
         # fontfamily_seguisb = QFontDatabase.applicationFontFamilies(font_seguisb)
         # print(fontfamily_SegMDL2, fontfamily_segoeui, fontfamily_segoeuib, fontfamily_segoeuil, fontfamily_segoeuisl, fontfamily_seguisb)
-        
+
         # ['Segoe MDL2 Assets'] ['Segoe UI'] ['Segoe UI'] ['Segoe UI Light'] ['Segoe UI Semilight'] ['Segoe UI Semibold']
 
         # 创建一个中央滚动区域
@@ -45,8 +54,8 @@ class IconBrowser(QMainWindow):
         grid_layout = QGridLayout(content_widget)
 
         # 创建一个 QFont 对象
-        # font = QFont(fontfamily_SegMDL2) 
-        font = QFont("Segoe MDL2 Assets") # Windows 10 之后自带 Segoe MDL2 Assets
+        # font = QFont(fontfamily_SegMDL2)
+        font = QFont("Segoe MDL2 Assets")  # Windows 10 之后自带 Segoe MDL2 Assets
         font.setPointSize(40)
         # 定义每列的 Unicode 编码范围
         ranges = [
@@ -55,7 +64,7 @@ class IconBrowser(QMainWindow):
             (0xED00, 0xEF00),
             (0xF000, 0xF200),
             (0xF300, 0xF500),
-            (0xF600, 0xF800)
+            (0xF600, 0xF800),
         ]
 
         # 遍历每个 Unicode 编码范围，为每个图标创建一个按钮
@@ -65,13 +74,16 @@ class IconBrowser(QMainWindow):
                 button = QPushButton(char)
                 button.setFixedSize(80, 80)
                 button.setFont(font)
+
                 # 创建一个额外的函数，将当前循环的unicode_val传递给lambda
                 def create_callback(unicode_val):
                     return lambda: self.copy_to_clipboard(unicode_val)
+
                 button.clicked.connect(create_callback(unicode_val))
                 grid_layout.addWidget(button, unicode_val - start, col)
 
         self.setWindowTitle("Segoe MDL2 Assets Icon Selector")
+
     def copy_to_clipboard(self, unicode_val):
         # 保存剪切板
         try:
@@ -82,6 +94,8 @@ class IconBrowser(QMainWindow):
         except clipman.exceptions.ClipmanBaseException as e:
             temp = e
             print(e)
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     browser = IconBrowser()

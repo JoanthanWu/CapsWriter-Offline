@@ -7,10 +7,12 @@ import asyncio
 
 import clipman
 import keyboard
+from loguru import logger
 
 from util.client_cosmic import console
 from util.client_translate_offline import translate_offline
 from util.config import ClientConfig as Config
+from util.safe_logger import init_logging
 
 
 async def on_hotkey_pressed():
@@ -30,9 +32,6 @@ async def on_hotkey_pressed():
         except clipman.exceptions.ClipmanBaseException as e:
             temp = e
             console.print(e)
-            from loguru import logger
-            from util.safe_logger import init_logging
-
             init_logging()
             logger.error(f"获取剪贴板内容时出错: {e}")
         text = temp
@@ -48,9 +47,6 @@ async def on_hotkey_pressed():
         keyboard.send("ctrl + v")
     except Exception as e:
         console.print(e)
-        from loguru import logger
-        from util.safe_logger import init_logging
-
         init_logging()
         logger.error(f"热键处理时出错: {e}")
 
@@ -74,9 +70,6 @@ async def translate_and_replace_selected_text_offline():
         await asyncio.Event().wait()  # 阻塞当前协程，直到被取消或热键被触发
     except Exception as e:
         console.print(e)
-        from loguru import logger
-        from util.safe_logger import init_logging
-
         init_logging()
         logger.error(f"主函数出错: {e}")
     finally:

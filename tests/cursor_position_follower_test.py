@@ -1,11 +1,13 @@
 import sys
+
 import win32api
 import win32con
 import win32gui
 import win32print
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QColor, QFont, QPalette
 from PySide6.QtWidgets import QApplication, QLabel
-from PySide6.QtCore import Qt, QTimer, QPoint
-from PySide6.QtGui import QPalette, QFont, QColor
+
 
 class Cursor_Position(QLabel):
     def __init__(self):
@@ -33,9 +35,10 @@ class Cursor_Position(QLabel):
         x, y = x / scale_x, y / scale_y
         print(x, y)
         # 更新标签的位置和文本
-        self.move(x+(20/scale_x),y+(20/scale_y))
+        self.move(x + (20 / scale_x), y + (20 / scale_y))
         self.setText(f"X: {int(x)}, Y: {int(y)}")
         self.setVisible(True)
+
 
 def Print_Screen_Scale():
     # 获取屏幕的宽度和高度
@@ -53,8 +56,8 @@ def Print_Screen_Scale():
     scale_y = screen_height / logical_height
     print(f"屏幕缩放比例: {scale_x}, {scale_y}")
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     Print_Screen_Scale()
 
     app = QApplication(sys.argv)
@@ -62,9 +65,3 @@ if __name__ == "__main__":
     window.setWindowTitle("Cursor Position Follower")
     window.show()
     sys.exit(app.exec())
-
-
-
-
-
-

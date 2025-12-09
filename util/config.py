@@ -1,6 +1,9 @@
+import re
 from pathlib import Path
 from typing import Literal
 
+from rich.console import Console
+from rich.table import Table
 from tomlkit import parse
 
 # 加载TOML配置文件
@@ -201,17 +204,12 @@ def print_config():
     """测试，打印所有配置信息"""
 
     def clearly_type(obj):
-        import re
-
         result = type(obj).__name__
         match = re.search(r"'(.*?)'", result)
         if match:
             return match.group(1)
         else:
             return result
-
-    from rich.console import Console
-    from rich.table import Table
 
     console = Console()
     config_classes = [

@@ -14,6 +14,9 @@ https://github.com/vastsa/FileCodeBox/blob/master/docs/api/index.md
 import json
 
 import requests
+from loguru import logger
+
+from util.safe_logger import init_logging
 
 
 class CloudClipboard:
@@ -29,9 +32,6 @@ class CloudClipboard:
         :param expire_style: 过期单位（day, week, month, year）
         :return: 分享链接
         """
-        from loguru import logger
-        from util.safe_logger import init_logging
-
         init_logging()
         data = {
             "text": (None, text),

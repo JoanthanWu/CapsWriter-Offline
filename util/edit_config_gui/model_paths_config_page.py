@@ -1,5 +1,8 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QFont
+from rich import print
+from rich.console import Console
+from rich.table import Table
 from siui.components import (
     SiDenseVContainer,
     SiTitledWidgetGroup,
@@ -14,7 +17,9 @@ from siui.components.widgets import (
 )
 from siui.core import SiGlobal
 
-from util.value_check import ValueCheck
+from util.edit_config_gui.clearly_type import clearly_type
+from util.edit_config_gui.write_toml import write_toml
+from util.edit_config_gui.value_check import ValueCheck
 
 from .select_path import SelectPath
 
@@ -135,7 +140,6 @@ class ModelPathsConfigPage(SiPage):
                 self.model_dir_path_selector.path_input.lineEdit().setText("models")
                 self.model_dir = "models"
         is_valid, error = ValueCheck.is_dir_exist(self.model_dir)
-        from rich import print
 
         if is_valid:
             print(f"[green]{self.model_dir}[/green]")
@@ -178,7 +182,6 @@ class ModelPathsConfigPage(SiPage):
                 )
                 self.sensevoice_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx"
         is_valid, error = ValueCheck.is_file_exist(self.sensevoice_path)
-        from rich import print
 
         if is_valid:
             print(f"[green]{self.sensevoice_path}[/green]")
@@ -223,7 +226,6 @@ class ModelPathsConfigPage(SiPage):
                 )
                 self.sensevoice_tokens_path = "models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tokens.txt"
         is_valid, error = ValueCheck.is_file_exist(self.sensevoice_tokens_path)
-        from rich import print
 
         if is_valid:
             print(f"[green]{self.sensevoice_tokens_path}[/green]")
@@ -270,7 +272,6 @@ class ModelPathsConfigPage(SiPage):
                 )
                 self.paraformer_path = "models/paraformer-offline-zh/model.int8.onnx"
         is_valid, error = ValueCheck.is_file_exist(self.paraformer_path)
-        from rich import print
 
         if is_valid:
             print(f"[green]{self.paraformer_path}[/green]")
@@ -315,7 +316,6 @@ class ModelPathsConfigPage(SiPage):
                 )
                 self.paraformer_tokens_path = "models/paraformer-offline-zh/tokens.txt"
         is_valid, error = ValueCheck.is_file_exist(self.paraformer_tokens_path)
-        from rich import print
 
         if is_valid:
             print(f"[green]{self.paraformer_tokens_path}[/green]")
@@ -362,7 +362,6 @@ class ModelPathsConfigPage(SiPage):
                 )
                 self.punc_model_dir = "models/sherpa-onnx-punct-ct-transformer-zh-en-vocab272727-2024-04-12"
         is_valid, error = ValueCheck.is_dir_exist(self.punc_model_dir)
-        from rich import print
 
         if is_valid:
             print(f"[green]{self.punc_model_dir}[/green]")
@@ -407,7 +406,6 @@ class ModelPathsConfigPage(SiPage):
                 )
                 self.opus_mt_dir = "models/Helsinki-NLP--opus-mt-zh-en"
         is_valid, error = ValueCheck.is_dir_exist(self.opus_mt_dir)
-        from rich import print
 
         if is_valid:
             print(f"[green]{self.opus_mt_dir}[/green]")
@@ -617,11 +615,6 @@ class ModelPathsConfigPage(SiPage):
             self.config["model_paths"]["opus_mt_dir"] = self.opus_mt_dir
 
         def print_config():
-            from rich.console import Console
-            from rich.table import Table
-
-            from util.edit_config_gui.clearly_type import clearly_type
-
             console = Console()
             table = Table(title="保存 模型路径配置")
             table.add_column("属性名", style="cyan")
@@ -663,10 +656,6 @@ class ModelPathsConfigPage(SiPage):
                 str(self.config["model_paths"]["opus_mt_dir"]),
             )
             console.print(table)
-
-        from siui.core import SiGlobal
-
-        from util.edit_config_gui.write_toml import write_toml
 
         try:
             self.save.clicked.emit()

@@ -11,6 +11,7 @@ import win32api
 import win32con
 import win32gui
 import win32print
+from loguru import logger
 from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtGui import QAction, QFont, QIcon, QWheelEvent
 from PySide6.QtWidgets import (
@@ -34,6 +35,7 @@ from tomlkit import dumps, parse
 from util.check_microphone_usage import is_microphone_in_use
 from util.check_process import check_process
 from util.config import ClientConfig as Config
+from util.safe_logger import init_logging
 
 
 class Hint_While_Recording_At_Cursor_Position(QLabel):
@@ -225,10 +227,6 @@ class GUI(QMainWindow):
                 case "繁":
                     self.convert_to_traditional_chinese_main_action.setText("繁體中文")
         except Exception as e:
-            from loguru import logger
-
-            from util.safe_logger import init_logging
-
             init_logging()
             logger.error(f"读取配置文件失败: {e}")
             return
@@ -293,10 +291,6 @@ class GUI(QMainWindow):
                 "convert_to_traditional_chinese_main"
             ]
         except Exception as e:
-            from loguru import logger
-
-            from util.safe_logger import init_logging
-
             init_logging()
             logger.error(f"读取配置文件失败: {e}")
             return
@@ -329,10 +323,6 @@ class GUI(QMainWindow):
                 case "繁":
                     self.convert_to_traditional_chinese_main_action.setText("简体中文")
         except Exception as e:
-            from loguru import logger
-
-            from util.safe_logger import init_logging
-
             init_logging()
             logger.error(f"修改配置文件失败: {e}")
 
@@ -450,10 +440,6 @@ class GUI(QMainWindow):
         event.ignore()  # Ignore the close event
 
     def quit_app(self):
-        from loguru import logger
-
-        from util.safe_logger import init_logging
-
         init_logging()
 
         # Terminate core_client.py process
@@ -607,10 +593,6 @@ class GUI(QMainWindow):
             ):  # 窗口非活跃状态，从右边弹出的，恢复继续停靠在右边
                 self.berthToRight(x, y, width, height, screenWidth, screenHeight)
             else:
-                from loguru import logger
-
-                from util.safe_logger import init_logging
-
                 init_logging()
                 logger.debug("窗口无需恢复停靠")
                 pass
@@ -771,10 +753,6 @@ def start_client_gui():
 
 
 def Print_Screen_Scale():
-    from loguru import logger
-
-    from util.safe_logger import init_logging
-
     init_logging()
     # 获取屏幕的宽度和高度
     hDC = win32gui.GetDC(0)
@@ -811,10 +789,6 @@ if __name__ == "__main__":
         try:
             files = read_file_list(args.file_list)
         except Exception as e:
-            from loguru import logger
-
-            from util.safe_logger import init_logging
-
             init_logging()
             logger.error(f"读取文件列表失败: {e}")
             sys.exit(1)
@@ -830,10 +804,6 @@ if __name__ == "__main__":
         try:
             subprocess.Popen(command, cwd=str(CapsWriter_path))
         except Exception as e:
-            from loguru import logger
-
-            from util.safe_logger import init_logging
-
             init_logging()
             logger.error(f"启动进程失败: {e}")
     else:

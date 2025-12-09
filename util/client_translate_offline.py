@@ -2,8 +2,10 @@ import asyncio
 import json
 
 import websockets
+from loguru import logger
 
 from util.config import ClientConfig as Config
+from util.safe_logger import init_logging
 
 
 async def translate_text(
@@ -34,21 +36,9 @@ async def translate_offline(text):
         return trans_text
     except Exception as e:
         print(f"An error occurred: {e}")
-        from loguru import logger
-        from util.safe_logger import init_logging
-
         init_logging()
         logger.error(f"离线翻译时出错: {e}")
         return None
-
-
-# 运行异步函数 1
-# if __name__ == "__main__":
-#     text = "你好，世界！"
-#     trans_text = asyncio.run(translate_offline(text))
-#     print(trans_text)
-
-# 运行异步函数 2
 
 
 async def main():

@@ -14,6 +14,8 @@ from util.client_cosmic import console
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tomlkit import parse
 
+from util.config import ClientConfig as Config
+
 path_zh = Path() / "hot-zh.txt"
 path_en = Path() / "hot-en.txt"
 path_rule = Path() / "hot-rule.txt"
@@ -84,7 +86,6 @@ def update_convert_to_traditional_chinese():
             new_config = parse(config_str)
 
         # 只更新繁简体转换配置
-        from util.config import ClientConfig as Config
 
         old_value: Literal["简", "繁"] = Config.convert_to_traditional_chinese_main
         new_value: Literal["简", "繁"] = new_config["client"][

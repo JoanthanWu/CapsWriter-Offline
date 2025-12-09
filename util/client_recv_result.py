@@ -3,6 +3,7 @@ import warnings
 
 import opencc
 import websockets
+from loguru import logger
 
 from util.check_libretranslate_service import check_libretranslate_service
 from util.client_check_websocket import check_websocket
@@ -13,6 +14,7 @@ from util.client_strip_punc import strip_punc
 from util.client_type_result import type_result
 from util.client_write_md import write_md
 from util.config import ClientConfig as Config
+from util.safe_logger import init_logging
 
 if not Cosmic.transcribe_subtitles:
     from util.client_translate_offline import translate_offline
@@ -124,25 +126,13 @@ async def recv_result():
             Cosmic.opposite_state = False
     except websockets.ConnectionClosedError:
         console.print("[red]连接断开\n")
-        from loguru import logger
-
-        from util.safe_logger import init_logging
-
         init_logging()
         logger.error("连接断开，WebSocket连接关闭错误。")
     except websockets.ConnectionClosedOK:
         console.print("[red]连接断开\n")
-        from loguru import logger
-
-        from util.safe_logger import init_logging
-
         init_logging()
         logger.error("连接断开，WebSocket连接正常关闭。")
     except Exception as e:
-        from loguru import logger
-
-        from util.safe_logger import init_logging
-
         init_logging()
         logger.error(f"接收识别结果时出错: {e}")
     finally:

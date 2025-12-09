@@ -1,5 +1,7 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QFont
+from rich.console import Console
+from rich.table import Table
 from siui.components import (
     SiDenseVContainer,
     SiLineEditWithDeletionButton,
@@ -18,6 +20,9 @@ from siui.components.widgets import (
     SiSwitch,
 )
 from siui.core import SiGlobal
+
+from util.edit_config_gui.clearly_type import clearly_type
+from util.edit_config_gui.write_toml import write_toml
 
 from .set_default_button import SetDefaultButton
 
@@ -304,11 +309,6 @@ class SenseVoiceArgsConfigPage(SiPage):
             )
 
         def print_config():
-            from rich.console import Console
-            from rich.table import Table
-
-            from util.edit_config_gui.clearly_type import clearly_type
-
             console = Console()
             table = Table(title="保存 SenseVoice 语音识别模型参数配置")
             table.add_column("属性名", style="cyan")
@@ -365,10 +365,6 @@ class SenseVoiceArgsConfigPage(SiPage):
                 str(self.config["sensevoice_args"]["rule_fars"]),
             )
             console.print(table)
-
-        from siui.core import SiGlobal
-
-        from util.edit_config_gui.write_toml import write_toml
 
         try:
             get_value_from_gui()

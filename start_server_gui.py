@@ -3,6 +3,7 @@ import sys
 import threading
 from queue import Queue
 
+from loguru import logger
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
@@ -19,6 +20,7 @@ from qt_material import apply_stylesheet
 
 from util.check_process import check_process
 from util.config import ServerConfig as Config
+from util.safe_logger import init_logging
 from util.server_check_model import check_model_gui
 
 
@@ -90,10 +92,6 @@ class GUI(QMainWindow):
         event.ignore()  # Ignore the close event
 
     def quit_app(self):
-        from loguru import logger
-
-        from util.safe_logger import init_logging
-
         init_logging()
 
         # Terminate core_server.py process

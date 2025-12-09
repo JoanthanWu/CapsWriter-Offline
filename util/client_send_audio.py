@@ -5,19 +5,18 @@ import uuid
 
 import numpy as np
 import websockets
+from loguru import logger
+from websockets.protocol import State
 
 from util.client_cosmic import Cosmic, console
 from util.client_create_file import create_file
 from util.client_finish_file import finish_file
 from util.client_write_file import write_file
 from util.config import ClientConfig as Config
-from websockets.protocol import State
+from util.safe_logger import init_logging
 
 
 async def send_message(message):
-    from loguru import logger
-    from util.safe_logger import init_logging
-
     init_logging()
     # 发送数据
     if Cosmic.websocket is None or Cosmic.websocket.state in [
@@ -142,8 +141,6 @@ async def send_audio():
                 break
     except Exception as e:
         console.print(e)
-        from loguru import logger
-        from util.safe_logger import init_logging
 
         init_logging()
         logger.error(f"发送音频时出错: {e}")

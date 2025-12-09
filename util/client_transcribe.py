@@ -4,12 +4,12 @@ import json
 import re
 import sys
 import time
+import traceback
 import uuid
 from pathlib import Path
 
 import websockets
 from loguru import logger
-from util.safe_logger import init_logging
 
 from util import srt_from_txt
 from util.client_check_websocket import check_websocket
@@ -17,6 +17,7 @@ from util.client_cosmic import Cosmic, console
 from util.client_hot_sub import hot_sub
 from util.client_hot_update import observe_hot, update_hot_all
 from util.config import ClientConfig as Config
+from util.safe_logger import init_logging
 
 
 async def transcribe_check(file: Path):
@@ -171,8 +172,6 @@ async def transcribe_recv(file: Path):
     except Exception as e:
         console.print(f"[red]接收文件 {file.name} 的结果时出错: {e}[/red]")
         logger.error(f"接收文件 {file.name} 的结果时出错: {e}")
-        import traceback
-
         traceback.print_exc()
     finally:
         # 确保停止文件观察器

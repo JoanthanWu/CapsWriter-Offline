@@ -1,13 +1,15 @@
-import subprocess
-import re
-from pathlib import Path
 import argparse
+import re
+import subprocess
 from datetime import datetime
+from pathlib import Path
+
+import tomlkit
+from rich import print as rprint
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich import print as rprint
+from rich.table import Table
 
 
 def parse_args():
@@ -189,7 +191,6 @@ def format_table_output(outdated_packages, all_packages=None, show_all=False):
 
 def format_json_output(outdated_packages, all_packages=None, show_all=False):
     """格式化为 JSON 输出"""
-    import json
 
     if show_all and all_packages:
         packages = all_packages
@@ -254,17 +255,8 @@ def check_pyproject_updates():
     if not toml_path.exists():
         return None
 
-    try:
-        import tomlkit
-
-        with open(toml_path, "r", encoding="utf-8") as f:
-            doc = tomlkit.parse(f.read())
-    except ImportError:
-        rprint(
-            "[yellow]⚠️  需要安装 tomlkit 来检查 pyproject.toml: uv add tomlkit[/yellow]"
-        )
-        return None
-
+    with open(toml_path, "r", encoding="utf-8") as f:
+        doc = tomlkit.parse(f.read())
     project_deps = []
 
     # 收集 project.dependencies

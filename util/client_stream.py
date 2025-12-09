@@ -5,9 +5,11 @@ import time
 
 import numpy as np
 import sounddevice as sd
+from loguru import logger
 
 from util.client_cosmic import Cosmic, console
 from util.config import ClientConfig as Config
+from util.safe_logger import init_logging
 
 
 def record_callback(
@@ -52,9 +54,6 @@ def stream_reopen():
 
 def stream_open():
     # 显示录音所用的音频设备
-    from loguru import logger
-    from util.safe_logger import init_logging
-
     init_logging()
     channels = 1
     try:

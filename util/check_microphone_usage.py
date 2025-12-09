@@ -3,6 +3,8 @@ import time
 import winreg
 from pathlib import Path
 
+import keyboard
+
 from util.config import ClientConfig as Config
 
 
@@ -77,8 +79,6 @@ def check_by_registry():
 
 
 def assume_by_keypress():
-    import keyboard
-
     if keyboard.is_pressed(Config.speech_recognition_shortcut):
         return True
     else:

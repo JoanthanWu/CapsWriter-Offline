@@ -1,10 +1,12 @@
 import asyncio
+import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 
 import keyboard
 from flask import sessions
+from loguru import logger
 from pycaw.pycaw import AudioUtilities
 
 from util.client_cosmic import Cosmic
@@ -19,6 +21,13 @@ from util.client_send_signal_to_hint_while_recording import (
 from util.client_stream import stream_reopen
 from util.config import ClientConfig as Config
 from util.my_status import Status
+from util.safe_logger import init_logging
+
+if shutil.which("ffplay") and Config.play_stop_music:
+    from util.client_play_music import play_music
+if shutil.which("ffplay") and Config.play_start_music:
+    from util.client_play_music import play_music
+
 
 task = asyncio.Future()
 status = Status("开始录音", spinner="point")
@@ -164,11 +173,7 @@ def launch_task():
     # Git: 753321e008117e227d666efba188543c4200b48e
 
     # 开始任务时播放提示音
-    import shutil
-
     if shutil.which("ffplay") and Config.play_start_music:
-        from util.client_play_music import play_music
-
         play_music(Config.start_music_path, Config.start_music_volume)
 
     global hold_mode_first_time_cancel_task, unmute_task
@@ -213,10 +218,6 @@ def launch_task():
                     Cosmic.loop,
                 )
             except Exception as e:
-                from loguru import logger
-
-                from util.safe_logger import init_logging
-
                 init_logging()
                 logger.error(f"Failed to create new event loop: {e}")
         else:
@@ -335,11 +336,7 @@ def finish_task():
     )
 
     # 结束任务时播放提示音
-    import shutil
-
     if shutil.which("ffplay") and Config.play_stop_music:
-        from util.client_play_music import play_music
-
         play_music(Config.stop_music_path, Config.stop_music_volume)
 
     if Config.only_enable_microphones_when_pressed_record_shortcut:

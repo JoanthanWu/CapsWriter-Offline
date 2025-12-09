@@ -1,10 +1,11 @@
+import httpx
+
+from util.config import LibreTranslateConfig
+
+
 @staticmethod
 def check_libretranslate_service():
     """检查LibreTranslate服务是否可用"""
-    import httpx
-
-    from util.config import LibreTranslateConfig
-
     try:
         # 简单测试服务连通性
         response = httpx.get(LibreTranslateConfig.api, timeout=10)

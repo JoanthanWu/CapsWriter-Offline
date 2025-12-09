@@ -3,8 +3,10 @@ import platform
 
 import clipman
 import keyboard
+from loguru import logger
 
 from util.config import ClientConfig as Config
+from util.safe_logger import init_logging
 
 
 async def type_result(text):
@@ -17,9 +19,6 @@ async def type_result(text):
             temp = clipman.get()
         except clipman.exceptions.ClipmanBaseException as e:
             temp = e
-            from loguru import logger
-            from util.safe_logger import init_logging
-
             init_logging()
             logger.error(f"获取剪贴板内容时出错: {e}")
 

@@ -1,5 +1,8 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QFont
+from rich import print
+from rich.console import Console
+from rich.table import Table
 from siui.components import (
     SiDenseVContainer,
     SiLineEditWithDeletionButton,
@@ -21,7 +24,9 @@ from siui.components.widgets import (
 )
 from siui.core import SiGlobal
 
-from util.value_check import ValueCheck
+from util.edit_config_gui.clearly_type import clearly_type
+from util.edit_config_gui.write_toml import write_toml
+from util.edit_config_gui.value_check import ValueCheck
 
 from .select_path import SelectPath
 from .set_default_button import SetDefaultButton
@@ -185,7 +190,6 @@ class ClientConfigPage(SiPage):
     def validate_addr(self):
         ip: str = self.addr.lineEdit().text()
         is_valid, error = ValueCheck.is_local_listenable_ip(ip)
-        from rich import print
 
         if is_valid:
             print(f"[green]{ip}[/green]")
@@ -214,7 +218,6 @@ class ClientConfigPage(SiPage):
                 self.vscode_exe_path_selector.path_input.lineEdit().setText("")
                 self.vscode_exe_path = ""
         is_valid, error = ValueCheck.is_file_exist(self.vscode_exe_path, ".exe")
-        from rich import print
 
         if is_valid:
             print(f"[green]{self.vscode_exe_path}[/green]")
@@ -237,7 +240,6 @@ class ClientConfigPage(SiPage):
     def validate_speech_recognition_shortcut(self):
         shortcut: str = self.speech_recognition_shortcut.lineEdit().text()
         is_valid, error = ValueCheck.is_hotkey(shortcut)
-        from rich import print
 
         if is_valid:
             print(f"[green]{shortcut}[/green]")
@@ -260,7 +262,6 @@ class ClientConfigPage(SiPage):
     def validate_start_music_path(self):
         path: str = self.start_music_path.lineEdit().text()
         is_valid, error = ValueCheck.is_file_exist(path, ".mp3")
-        from rich import print
 
         if is_valid:
             print(f"[green]{path}[/green]")
@@ -283,7 +284,6 @@ class ClientConfigPage(SiPage):
     def validate_stop_music_path(self):
         path: str = self.stop_music_path.lineEdit().text()
         is_valid, error = ValueCheck.is_file_exist(path, ".mp3")
-        from rich import print
 
         if is_valid:
             print(f"[green]{path}[/green]")
@@ -306,7 +306,6 @@ class ClientConfigPage(SiPage):
     def validate_offline_translate_shortcut(self):
         shortcut: str = self.offline_translate_shortcut.lineEdit().text()
         is_valid, error = ValueCheck.is_hotkey(shortcut)
-        from rich import print
 
         if is_valid:
             print(f"[green]{shortcut}[/green]")
@@ -329,7 +328,6 @@ class ClientConfigPage(SiPage):
     def validate_offline_translate_and_replace_the_selected_text_shortcut(self):
         shortcut: str = self.offline_translate_and_replace_the_selected_text_shortcut.lineEdit().text()
         is_valid, error = ValueCheck.is_hotkey(shortcut)
-        from rich import print
 
         if is_valid:
             print(f"[green]{shortcut}[/green]")
@@ -354,7 +352,6 @@ class ClientConfigPage(SiPage):
     def validate_online_translate_shortcut(self):
         shortcut: str = self.online_translate_shortcut.lineEdit().text()
         is_valid, error = ValueCheck.is_hotkey(shortcut)
-        from rich import print
 
         if is_valid:
             print(f"[green]{shortcut}[/green]")
@@ -377,7 +374,6 @@ class ClientConfigPage(SiPage):
     def validate_online_translate_and_replace_the_selected_text_shortcut(self):
         shortcut: str = self.online_translate_and_replace_the_selected_text_shortcut.lineEdit().text()
         is_valid, error = ValueCheck.is_hotkey(shortcut)
-        from rich import print
 
         if is_valid:
             print(f"[green]{shortcut}[/green]")
@@ -404,7 +400,6 @@ class ClientConfigPage(SiPage):
             self.search_selected_text_with_everything_shortcut.lineEdit().text()
         )
         is_valid, error = ValueCheck.is_hotkey(shortcut)
-        from rich import print
 
         if is_valid:
             print(f"[green]{shortcut}[/green]")
@@ -1985,11 +1980,6 @@ class ClientConfigPage(SiPage):
             )
 
         def print_config():
-            from rich.console import Console
-            from rich.table import Table
-
-            from util.edit_config_gui.clearly_type import clearly_type
-
             console = Console()
             table = Table(title="保存 Paraformer 语音识别模型参数配置")
             table.add_column("属性名", style="cyan")
@@ -2345,10 +2335,6 @@ class ClientConfigPage(SiPage):
                 str(self.config["client"]["convert_to_traditional_chinese_main"]),
             )
             console.print(table)
-
-        from siui.core import SiGlobal
-
-        from util.edit_config_gui.write_toml import write_toml
 
         try:
             self.save.clicked.emit()

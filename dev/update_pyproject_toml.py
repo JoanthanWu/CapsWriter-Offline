@@ -1,27 +1,15 @@
-import argparse  # 添加 argparse 以支持模式选择
+import argparse
 import re
 import subprocess
 from pathlib import Path
 
-# 尝试导入 tomlkit 和 rich
-try:
-    import tomlkit
-    from tomlkit import items
-except ImportError:
-    print("❌ 此脚本需要 'tomlkit' 库。")
-    print("请运行以下命令安装: uv add tomlkit")
-    exit(1)
-
-try:
-    from rich import print as rprint
-    from rich.console import Console
-    from rich.panel import Panel
-    from rich.progress import Progress, SpinnerColumn, TextColumn
-    from rich.table import Table
-except ImportError:
-    print("❌ 此脚本需要 'rich' 库来美化输出。")
-    print("请运行以下命令安装: uv add rich")
-    exit(1)
+import tomlkit
+from rich import print as rprint
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
+from tomlkit import items
 
 
 def parse_args():

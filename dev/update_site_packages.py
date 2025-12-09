@@ -2,28 +2,21 @@ import argparse
 import json
 import re
 import subprocess
-import sys
 from datetime import datetime
 from pathlib import Path
 
-# 尝试导入 rich，如果失败则提示用户安装
-try:
-    from rich import print as rprint
-    from rich.console import Console
-    from rich.panel import Panel
-    from rich.progress import (
-        BarColumn,
-        Progress,
-        SpinnerColumn,
-        TaskProgressColumn,
-        TextColumn,
-    )
-    from rich.prompt import Confirm, Prompt
-    from rich.table import Table
-except ImportError:
-    print("❌ 此脚本需要 'rich' 库来美化输出。")
-    print("请运行以下命令安装: uv add rich")
-    sys.exit(1)
+import tomlkit
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+)
+from rich.prompt import Confirm, Prompt
+from rich.table import Table
 
 
 def parse_args():
@@ -114,16 +107,8 @@ def get_project_dependencies(console):
     if not toml_path.exists():
         return project_deps
 
-    try:
-        import tomlkit
-
-        with open(toml_path, "r", encoding="utf-8") as f:
-            doc = tomlkit.parse(f.read())
-    except ImportError:
-        console.print(
-            "[yellow]⚠️  需要安装 tomlkit 来检查项目依赖: uv add tomlkit[/yellow]"
-        )
-        return project_deps
+    with open(toml_path, "r", encoding="utf-8") as f:
+        doc = tomlkit.parse(f.read())
 
     if "project" in doc and "dependencies" in doc["project"]:
         for dep in doc["project"]["dependencies"]:

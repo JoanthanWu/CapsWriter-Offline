@@ -20,7 +20,10 @@ from pathlib import Path
 from typing import List
 
 import srt
+from loguru import logger
 from rich import print
+
+from util.safe_logger import init_logging
 
 
 class Scout:
@@ -87,8 +90,6 @@ def get_scout(line, words, cursor):
     # 如果因越界导致无法探察，说明出现严重错误
     if not scout_list:
         print("[bold red]字幕匹配出现出现严重错误，越界导致无法探察[/bold red]")
-        from loguru import logger
-        from util.safe_logger import init_logging
 
         init_logging()
         logger.error("字幕匹配出现出现严重错误，越界导致无法探察")
@@ -111,8 +112,6 @@ def lines_match_words(text_lines: List[str], words: List) -> List[srt.Subtitle]:
                 'word' : 'good'
                 }
     """
-    from loguru import logger
-    from util.safe_logger import init_logging
 
     init_logging()
 

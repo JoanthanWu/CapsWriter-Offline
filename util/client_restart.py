@@ -1,12 +1,12 @@
 import subprocess
 
+from loguru import logger
+
 from util.check_process import check_process
+from util.safe_logger import init_logging
 
 
 def stop_exe(exe_name: str):
-    from loguru import logger
-    from util.safe_logger import init_logging
-
     init_logging()
 
     try:
@@ -28,9 +28,6 @@ def stop_exe(exe_name: str):
 
 
 def start_exe(exe_name: str):
-    from loguru import logger
-    from util.safe_logger import init_logging
-
     init_logging()
     # print(f"Starting {exe_name}")
     proc = subprocess.Popen(

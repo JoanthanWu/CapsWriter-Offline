@@ -3,8 +3,10 @@ import time
 from base64 import b64decode
 
 import websockets
+from loguru import logger
 
 from util.my_status import Status
+from util.safe_logger import init_logging
 from util.server_classes import Task
 from util.server_cosmic import Cosmic, console
 
@@ -21,8 +23,6 @@ class Cache:
 
 async def message_handler(websocket, message, cache: Cache):
     """处理得到的音频流数据"""
-    from loguru import logger
-    from util.safe_logger import init_logging
 
     queue_in = Cosmic.queue_in
 
@@ -106,8 +106,6 @@ async def message_handler(websocket, message, cache: Cache):
 
 async def ws_recv(websocket):
     global status_mic
-    from loguru import logger
-    from util.safe_logger import init_logging
 
     init_logging()
     # 登记 socket 到字典，以 socket id 字符串为索引

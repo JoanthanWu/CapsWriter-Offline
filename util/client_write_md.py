@@ -46,7 +46,7 @@ def write_md(text: str, time_start: float, file_audio: Path):
 
     # 列表内的元素是元组，元组内包含了：关键词、md路径
     md_list = [
-        (kwd, folder_path / f'{kwd + "-" if kwd else ""}{time_day}.md')
+        (kwd, folder_path / f"{kwd + '-' if kwd else ''}{time_day}.md")
         for kwd in kwd_list
         if text.startswith(kwd)
     ]

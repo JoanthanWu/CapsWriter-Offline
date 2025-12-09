@@ -1,7 +1,9 @@
 import websockets
+from loguru import logger
 
 from util.client_cosmic import Cosmic
 from util.config import ClientConfig as Config
+from util.safe_logger import init_logging
 
 
 class Handler:
@@ -17,9 +19,6 @@ class Handler:
         elif isinstance(e, Exception):
             return True
         else:
-            from loguru import logger
-            from util.safe_logger import init_logging
-
             init_logging()
             logger.error(f"检查WebSocket连接时出错: {e}")
 

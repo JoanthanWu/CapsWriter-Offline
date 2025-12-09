@@ -3,8 +3,9 @@ import sys
 import threading
 from pathlib import Path
 
-from util.config import DebugConfig as Config
 from loguru import logger
+
+from util.config import DebugConfig as Config
 
 
 def delete_specific_logs_concise(log_dir: Path):

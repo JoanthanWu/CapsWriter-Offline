@@ -18,6 +18,8 @@ if sys.argv[1:]:
     Cosmic.transcribe_subtitles = True
 else:
     Cosmic.transcribe_subtitles = False
+from loguru import logger
+
 from util.client_adjust_srt import adjust_srt
 from util.client_hot_update import observe_hot, update_hot_all
 from util.client_recv_result import recv_result
@@ -26,6 +28,7 @@ from util.client_show_tips import show_file_tips, show_mic_tips
 from util.client_stream import stream_close, stream_open
 from util.client_transcribe import transcribe_check, transcribe_recv, transcribe_send
 from util.empty_working_set import empty_current_working_set
+from util.safe_logger import init_logging
 
 # 确保根目录位置正确，用相对路径加载模型
 BASE_DIR = os.getcwd()
@@ -102,8 +105,6 @@ async def main_file(files: List[Path]):
 
         except Exception as e:
             console.print(f"[bold red]处理文件 {file.name} 时出错: {e}[/bold red]")
-            from loguru import logger
-            from util.safe_logger import init_logging
 
             init_logging()
 
@@ -140,8 +141,6 @@ def init_file(files: List[Path]):
     """
     用 CapsWriter Server 转录音视频文件，生成 srt 字幕
     """
-    from loguru import logger
-    from util.safe_logger import init_logging
 
     init_logging()
     logger.info(f"开始转录文件，参数：{files}")

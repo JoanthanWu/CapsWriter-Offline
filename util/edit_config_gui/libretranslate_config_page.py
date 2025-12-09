@@ -1,5 +1,7 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QFont
+from rich.console import Console
+from rich.table import Table
 from siui.components import (
     SiDenseVContainer,
     SiLineEditWithDeletionButton,
@@ -16,7 +18,9 @@ from siui.components.widgets import (
 )
 from siui.core import SiGlobal
 
-from util.value_check import ValueCheck
+from util.edit_config_gui.clearly_type import clearly_type
+from util.edit_config_gui.write_toml import write_toml
+from util.edit_config_gui.value_check import ValueCheck
 
 from .set_default_button import SetDefaultButton
 
@@ -154,11 +158,6 @@ class LibretranslateConfigPage(SiPage):
             self.config["libretranslate"]["api"] = self.libretranslate_api
 
         def print_config():
-            from rich.console import Console
-            from rich.table import Table
-
-            from util.edit_config_gui.clearly_type import clearly_type
-
             console = Console()
             table = Table(title="保存 LibreTranslate 参数配置")
             table.add_column("属性名", style="cyan")
@@ -170,10 +169,6 @@ class LibretranslateConfigPage(SiPage):
                 str(self.config["libretranslate"]["api"]),
             )
             console.print(table)
-
-        from siui.core import SiGlobal
-
-        from util.edit_config_gui.write_toml import write_toml
 
         try:
             self.save.clicked.emit()

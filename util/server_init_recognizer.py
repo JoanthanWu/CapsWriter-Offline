@@ -1,10 +1,16 @@
+import logging
 import time
 from multiprocessing import Queue
 from platform import system
 
+import jieba
+import sherpa_onnx
+from loguru import logger
+
 from util.config import ModelPaths, ParaformerArgs, SenseVoiceArgs
 from util.config import ServerConfig as Config
 from util.empty_working_set import empty_current_working_set
+from util.safe_logger import init_logging
 from util.server_cosmic import console
 
 if Config.model == "Paraformer":
@@ -15,18 +21,12 @@ else:
 
 def disable_jieba_debug():
     # 关闭 jieba 的 debug
-    import logging
-
-    import jieba
-
     jieba.setLogLevel(logging.INFO)
 
 
 def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
     # 导入模块
     with console.status("载入模块中…", spinner="bouncingBall", spinner_style="yellow"):
-        import sherpa_onnx
-
         disable_jieba_debug()
 
     console.print("[green4]模块加载完成", end="\n\n")
@@ -88,9 +88,6 @@ def init_recognizer(queue_in: Queue, queue_out: Queue, sockets_id):
             continue
 
         if task.socket_id not in sockets_id:  # 检查任务所属的连接是否存活
-            from loguru import logger
-            from util.safe_logger import init_logging
-
             init_logging()
 
             logger.info(

@@ -1,6 +1,9 @@
 import json
 
+from loguru import logger
+
 from util.asyncio_to_thread import to_thread
+from util.safe_logger import init_logging
 from util.server_classes import Result
 from util.server_cosmic import Cosmic, console
 
@@ -52,8 +55,6 @@ async def ws_send():
 
         except Exception as e:
             print(e)
-            from loguru import logger
-            from util.safe_logger import init_logging
 
             init_logging()
             logger.error(f"发送识别结果时出错: {e}")

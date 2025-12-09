@@ -1,5 +1,8 @@
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QFont
+from rich import print
+from rich.console import Console
+from rich.table import Table
 from siui.components import (
     SiDenseVContainer,
     SiLineEditWithDeletionButton,
@@ -20,7 +23,9 @@ from siui.components.widgets import (
 )
 from siui.core import SiGlobal
 
-from util.value_check import ValueCheck
+from util.edit_config_gui.clearly_type import clearly_type
+from util.edit_config_gui.write_toml import write_toml
+from util.edit_config_gui.value_check import ValueCheck
 
 from .set_default_button import SetDefaultButton
 
@@ -57,7 +62,6 @@ class ServerConfigPage(SiPage):
     def validate_addr(self):
         ip: str = self.addr.lineEdit().text()
         is_valid, error = ValueCheck.is_local_listenable_ip(ip)
-        from rich import print
 
         if is_valid:
             print(f"[green]{ip}[/green]")
@@ -80,7 +84,6 @@ class ServerConfigPage(SiPage):
     def validate_speech_recognition_port(self):
         port: str = str(self.speech_recognition_port.value())
         is_valid, error = ValueCheck.is_local_listenable_port(port)
-        from rich import print
 
         if is_valid:
             print(f"[green]{port}[/green]")
@@ -103,7 +106,6 @@ class ServerConfigPage(SiPage):
     def validate_offline_translate_port(self):
         port: str = str(self.offline_translate_port.value())
         is_valid, error = ValueCheck.is_local_listenable_port(port)
-        from rich import print
 
         if is_valid:
             print(f"[green]{port}[/green]")
@@ -466,11 +468,6 @@ class ServerConfigPage(SiPage):
             ] = self.in_the_meantime_start_the_client_and_run_as_admin.isChecked()
 
         def print_config():
-            from rich.console import Console
-            from rich.table import Table
-
-            from util.edit_config_gui.clearly_type import clearly_type
-
             console = Console()
             table = Table(title="保存 Paraformer 语音识别模型参数配置")
             table.add_column("属性名", style="cyan")
@@ -550,10 +547,6 @@ class ServerConfigPage(SiPage):
                 ),
             )
             console.print(table)
-
-        from siui.core import SiGlobal
-
-        from util.edit_config_gui.write_toml import write_toml
 
         try:
             get_value_from_gui()
