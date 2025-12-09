@@ -111,11 +111,6 @@ class ClientConfigPage(SiPage):
         self.audio_name_len_set_default.clicked.connect(
             lambda: self.audio_name_len.setValue(20)
         )
-        self.offline_translate_and_replace_the_selected_text_shortcut_set_default.clicked.connect(
-            lambda: self.offline_translate_and_replace_the_selected_text_shortcut.lineEdit().setText(
-                "ctrl + alt + p"
-            )
-        )
         self.use_online_translate_function.toggled.connect(
             lambda: self.use_online_translate_function_changed()
         )
@@ -151,12 +146,6 @@ class ClientConfigPage(SiPage):
             self.validate_offline_translate_shortcut
         )
         self.save.clicked.connect(self.validate_offline_translate_shortcut)
-        self.offline_translate_and_replace_the_selected_text_shortcut.lineEdit().editingFinished.connect(
-            self.validate_offline_translate_and_replace_the_selected_text_shortcut
-        )
-        self.save.clicked.connect(
-            self.validate_offline_translate_and_replace_the_selected_text_shortcut
-        )
         self.online_translate_shortcut.lineEdit().editingFinished.connect(
             self.validate_online_translate_shortcut
         )
@@ -293,30 +282,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
                     title="离线翻译快捷键格式错误",
                     text=f"{shortcut} - {error}\n已修改为默认值：“left shift”",
-                    msg_type=3,
-                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
-                    fold_after=5000,
-                )
-            except ValueError:
-                pass
-
-    def validate_offline_translate_and_replace_the_selected_text_shortcut(self):
-        shortcut: str = self.offline_translate_and_replace_the_selected_text_shortcut.lineEdit().text()
-        is_valid, error = ValueCheck.is_hotkey(shortcut)
-
-        if is_valid:
-            print(f"[green]{shortcut}[/green]")
-        else:
-            print(f"[red]{shortcut} - {error if error else '无效'}[/red]")
-
-        if error:
-            self.offline_translate_and_replace_the_selected_text_shortcut.lineEdit().setText(
-                "ctrl + alt + p"
-            )
-            try:
-                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
-                    title="离线翻译并替换选中文本快捷键格式错误",
-                    text=f"{shortcut} - {error}\n已修改为默认值：“ctrl + alt + p”",
                     msg_type=3,
                     icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
                     fold_after=5000,
@@ -1357,39 +1322,6 @@ class ClientConfigPage(SiPage):
             self.offline_translate_shortcut_linear_attaching.addWidget(
                 self.offline_translate_shortcut
             )
-            # 控制离线翻译将光标选中的中文翻译并替换为英文的快捷键
-            # 如果未选中任何文字，会将剪贴板的文字翻译为英文并粘贴
-            self.offline_translate_and_replace_the_selected_text_shortcut = (
-                SiLineEditWithDeletionButton(self)
-            )
-            self.offline_translate_and_replace_the_selected_text_shortcut.resize(
-                256, 32
-            )
-            self.offline_translate_and_replace_the_selected_text_shortcut.lineEdit().setText(
-                self.config["client"][
-                    "offline_translate_and_replace_the_selected_text_shortcut"
-                ]
-            )
-            self.offline_translate_and_replace_the_selected_text_shortcut_set_default = SetDefaultButton(
-                self
-            )
-            self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching = SiOptionCardLinear(
-                self
-            )
-            self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching.setTitle(
-                "将光标选中的中文翻译并替换为英文的快捷键",
-                '默认值："ctrl + alt + p"\n未选中任何文字时\n将剪贴板的文字翻译为英文并粘贴',
-            )
-            self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching.load(
-                SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
-            )
-            self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching.addWidget(
-                self.offline_translate_and_replace_the_selected_text_shortcut_set_default
-            )
-            self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching.addWidget(
-                self.offline_translate_and_replace_the_selected_text_shortcut
-            )
-
             # 设置项
             self.offline_translate_container = SiDenseVContainer(self)
             self.offline_translate_container.setFixedWidth(700)
@@ -1403,9 +1335,6 @@ class ClientConfigPage(SiPage):
             )
             self.offline_translate_container.addWidget(
                 self.offline_translate_shortcut_linear_attaching
-            )
-            self.offline_translate_container.addWidget(
-                self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching
             )
             group.addWidget(self.offline_translate_container)
 
@@ -1649,11 +1578,9 @@ class ClientConfigPage(SiPage):
         if self.use_offline_translate_function.isChecked():
             self.offline_translate_port_linear_attaching.show()
             self.offline_translate_shortcut_linear_attaching.show()
-            self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching.show()
         else:
             self.offline_translate_port_linear_attaching.hide()
             self.offline_translate_shortcut_linear_attaching.hide()
-            self.offline_translate_and_replace_the_selected_text_shortcut_linear_attaching.hide()
 
     def use_online_translate_function_changed(self):
         if self.use_online_translate_function.isChecked():
@@ -1683,9 +1610,6 @@ class ClientConfigPage(SiPage):
             self.config["client"]["offline_translate_shortcut"] = (
                 self.offline_translate_shortcut.line_edit.text()
             )
-            self.config["client"][
-                "offline_translate_and_replace_the_selected_text_shortcut"
-            ] = self.offline_translate_and_replace_the_selected_text_shortcut.line_edit.text()
             self.config["client"]["use_online_translate_function"] = (
                 self.use_online_translate_function.isChecked()
             )
@@ -1819,19 +1743,6 @@ class ClientConfigPage(SiPage):
                 "offline_translate_shortcut",
                 clearly_type(self.config["client"]["offline_translate_shortcut"]),
                 str(self.config["client"]["offline_translate_shortcut"]),
-            )
-            table.add_row(
-                "offline_translate_and_replace_the_selected_text_shortcut",
-                clearly_type(
-                    self.config["client"][
-                        "offline_translate_and_replace_the_selected_text_shortcut"
-                    ]
-                ),
-                str(
-                    self.config["client"][
-                        "offline_translate_and_replace_the_selected_text_shortcut"
-                    ]
-                ),
             )
             table.add_row(
                 "use_online_translate_function",

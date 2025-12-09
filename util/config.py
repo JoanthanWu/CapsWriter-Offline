@@ -58,9 +58,6 @@ class ClientConfig:
         "use_offline_translate_function"
     ]
     offline_translate_shortcut: str = config["client"]["offline_translate_shortcut"]
-    offline_translate_and_replace_the_selected_text_shortcut: str = config["client"][
-        "offline_translate_and_replace_the_selected_text_shortcut"
-    ]
     use_online_translate_function: bool = config["client"][
         "use_online_translate_function"
     ]

@@ -89,10 +89,6 @@ use_offline_translate_function = true
 offline_translate_shortcut = "left shift"
 # 控制离线翻译的快捷键，默认是 "left shift"，按住 Left Shift 再按 CapsLock 进行离线翻译
 
-offline_translate_and_replace_the_selected_text_shortcut = "ctrl + alt + p"
-# 控制离线翻译将光标选中的中文翻译并替换为英文的快捷键
-# 如果未选中任何文字，会将剪贴板的文字翻译为英文并粘贴
-
 use_online_translate_function = true
 # 是否启用在线翻译功能
 

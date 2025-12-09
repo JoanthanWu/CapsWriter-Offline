@@ -481,29 +481,6 @@ class GUI(QMainWindow):
 
     def start_script(self):
         # Start core_client.py and redirect output to the client queue
-        if Config.use_offline_translate_function:
-            self.translate_and_replace_selected_text_offline_process = subprocess.Popen(
-                [
-                    ".\\runtime\\pythonw_CapsWriter_Client.exe",
-                    ".\\util\\client_translate_and_replace_selected_text_offline.py",
-                ],
-                creationflags=subprocess.CREATE_NO_WINDOW,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                shell=True,
-                encoding="utf-8",
-                errors="replace",
-            )
-            threading.Thread(
-                target=self.enqueue_output,
-                args=(
-                    self.translate_and_replace_selected_text_offline_process.stdout,
-                    self.output_queue_client,
-                ),
-                daemon=True,
-            ).start()
-
         self.core_client_process = subprocess.Popen(
             [".\\runtime\\pythonw_CapsWriter_Client.exe", "core_client.py"],
             creationflags=subprocess.CREATE_NO_WINDOW,
