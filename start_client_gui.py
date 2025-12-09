@@ -504,29 +504,6 @@ class GUI(QMainWindow):
                 daemon=True,
             ).start()
 
-        if Config.use_online_translate_function:
-            self.translate_and_replace_selected_text_online_process = subprocess.Popen(
-                [
-                    ".\\runtime\\pythonw_CapsWriter_Client.exe",
-                    ".\\util\\client_translate_and_replace_selected_text_online.py",
-                ],
-                creationflags=subprocess.CREATE_NO_WINDOW,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                shell=True,
-                encoding="utf-8",
-                errors="replace",
-            )
-            threading.Thread(
-                target=self.enqueue_output,
-                args=(
-                    self.translate_and_replace_selected_text_online_process.stdout,
-                    self.output_queue_client,
-                ),
-                daemon=True,
-            ).start()
-
         self.core_client_process = subprocess.Popen(
             [".\\runtime\\pythonw_CapsWriter_Client.exe", "core_client.py"],
             creationflags=subprocess.CREATE_NO_WINDOW,

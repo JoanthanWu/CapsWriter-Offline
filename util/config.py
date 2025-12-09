@@ -71,9 +71,6 @@ class ClientConfig:
     online_translate_target_languages: str = config["client"][
         "online_translate_target_languages"
     ]
-    online_translate_and_replace_the_selected_text_shortcut: str = config["client"][
-        "online_translate_and_replace_the_selected_text_shortcut"
-    ]
     hold_mode: bool = config["client"]["hold_mode"]
     suppress: bool = config["client"]["suppress"]
     restore_key: bool = config["client"]["restore_key"]

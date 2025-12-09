@@ -155,9 +155,8 @@
 19. 一键启动功能：默认服务端 `start_server_gui.exe` 启动后，自动 **🛡️ 以管理员权限** 启动客户端 `start_client_gui_admin.exe`，通过 `config.toml` 中 `in_the_meantime_start_the_client_and_run_as_admin` 和 `In_the_meantime_start_the_client_as_admin` 配置
 20. 将文本上传至云剪切板，方便向 ios 设备分享。基于 https://share.lanol.cn (https://github.com/vastsa/FileCodeBox)，一个无依赖即用即走的剪切板。
 21. 将光标选中了中文离线翻译功能：按下 `Ctrl` + `Alt` + `P` ，可以将光标选中了中文离线翻译为英文，并自动覆盖替换原文。通过 `config.toml` 中 `offline_translate_and_replace_the_selected_text_shortcut` 配置
-22. 按下键盘上的 `Ctrl` + `Alt` + `[` ，可以将光标选中的 `任意语言` 在线翻译为 `在线翻译目标语言` ，并自动覆盖替换原文。通过 `config.toml` 中 `online_translate_and_replace_the_selected_text_shortcut` 和 `online_translate_target_languages` 配置
-23. 默认启用双击`录音键`临时转换 `简/繁` 体中文输出的功能，通过 `config.toml` 中 `enable_double_click_opposite_state` 配置
-24. 默认使用简体中文作为主要输出，快速双击输出繁体中文。设置 `config.toml` 中 `convert_to_traditional_chinese_main = '繁'` 可以默认使用繁体中文，双击输出简体中文
+22. 默认启用双击`录音键`临时转换 `简/繁` 体中文输出的功能，通过 `config.toml` 中 `enable_double_click_opposite_state` 配置
+23. 默认使用简体中文作为主要输出，快速双击输出繁体中文。设置 `config.toml` 中 `convert_to_traditional_chinese_main = '繁'` 可以默认使用繁体中文，双击输出简体中文
 
 # 🪳 无力解决的 Bug
 
@@ -422,11 +421,6 @@ online_translate_target_languages_libretranslate = "ja"
 online_translate_target_languages = "JA"
 # 在线翻译目标语言
 # 常用的 EN JA RU，更多选择参考 https://www.deepl.com/docs-api/translate-text
-
-online_translate_and_replace_the_selected_text_shortcut = "ctrl + alt + ["
-# 控制在线翻译将光标选中的中文翻译并替换为在线翻译目标语言的快捷键
-# 如果未选中任何文字，会将剪贴板的文字翻译为目标语言并粘贴
-
 
 hold_mode = true
 # 长按模式，按下录音，松开停止，像对讲机一样用
