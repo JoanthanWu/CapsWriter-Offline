@@ -4,6 +4,7 @@
  * @link https://github.com/Tebayaki/AutoHotkeyScripts/blob/main/lib/GetCaretPosEx/GetCaretPosEx.ahk
  */
 
+#Include app-list.ahk
 
 GetCaretPosEx(&left?, &top?, &right?, &bottom?) {
     exe_name := ""
@@ -18,8 +19,6 @@ GetCaretPosEx(&left?, &top?, &right?, &bottom?) {
 
     hwnd := getHwnd()
 
-    ; 包含 app-list.ahk 文件
-    #Include "app-list.ahk"
 
     ; 从 app-list.ahk 中获取模式列表
     /**

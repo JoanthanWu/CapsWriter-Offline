@@ -37,8 +37,8 @@ class ConfigEditor(SiliconApplication):
         )
         self.layerMain().setTitle("配置编辑器")
         self.setWindowTitle("配置编辑器")
-        self.setWindowIcon(QIcon("assets/config-icon.ico"))
-        self.layerMain().app_icon.load("assets/config-icon.ico")
+        self.setWindowIcon(QIcon("assets/icon/config-icon.ico"))
+        self.layerMain().app_icon.load("assets/icon/config-icon.ico")
 
         # 添加页面
         self.layerMain().addPage(

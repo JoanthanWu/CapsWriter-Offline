@@ -1,8 +1,8 @@
-# 😘 CapsWriter-Offline 图形界面包分支 （ 仅 <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows 10+](https://www.microsoft.com/zh-cn/windows) </span> ）
+# 😘 CapsWriter-Offline 图形界面包分支 （ 仅 <img src="./assets/readme/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows 10+](https://www.microsoft.com/zh-cn/windows) </span> ）
 
-![alt text](assets/main.png)
+![alt text](assets/readme/main.png)
 
-# <img src="./assets/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows](https://www.microsoft.com/zh-cn/windows)</span> 端离线语音输入简/繁体、中译英、字幕转录；在线多译多、云剪贴板等等 （选用SenseVoice模型时 支持中粤英日韩多语种）
+# <img src="./assets/readme/windows-logo.png" width="25" height="25"> <span style="color: #4ABAFF;">[Windows](https://www.microsoft.com/zh-cn/windows)</span> 端离线语音输入简/繁体、中译英、字幕转录；在线多译多、云剪贴板等等 （选用SenseVoice模型时 支持中粤英日韩多语种）
 
 > [!IMPORTANT]
 > 新增图形化配置界面 `edit_config_gui.exe`，可方便修改配置，但仍支持手动修改 `config.toml` 文件
@@ -33,25 +33,25 @@
 <summary><h1">展开最近更新</h1></summary>
 
 ## 通过 常用播放器内设置的 播放/暂停快捷键 控制 录音时暂停音频播放
-     > QQ音乐、网易云音乐、PotPlayer、foobar2000 可通过 edit_config_gui.exe 配置 用于 播放/暂停 的快捷键
-     > 如果还有其他特殊应用 请配置 config.toml [client.additional_special_apps]
-     > "<进程名>" = { hotkey = "<对应程序设置的全局快捷键>", name = "<用于输出日志的对应程序名称>" }
-     > 
-     > 如果N个特殊应用在播放，支持全部暂停
-     > 如果一个非特殊应用在播放，通过 媒体键 暂停
-     > 如果N个非特殊应用在播放，不暂停
-     > 如果一个特殊应用和N个非特殊应用在播放，只暂停特殊应用
-     > 
-     > 默认配置如下：
-     > | 播放器           | 快捷键          | 备注                               |
-     > | ---------------- | --------------- | ---------------------------------- |
-     > | QQ音乐           | Ctrl + Alt + F5 | 需在QQ音乐中设置全局快捷键         |
-     > | 网易云音乐       | Ctrl + Alt + F6 | 需在网易云音乐中设置全局快捷键     |
-     > | PotPlayer        | Ctrl + Alt + F7 | 需在PotPlayer中设置全局快捷键      |
-     > | foobar2000       | Ctrl + Alt + F8 | 需在foobar2000中设置全局快捷键     |
-     > | VLC Media Player | Ctrl + Alt + F9 | 需在VLC中设置全局快捷键，并重启VLC |
-     >
-     > [常用播放器 如何配置 全局播放/暂停 快捷键？](https://github.com/H1DDENADM1N/CapsWriter-Offline/issues/128#issuecomment-3616392251)
+> QQ音乐、网易云音乐、PotPlayer、foobar2000 可通过 edit_config_gui.exe 配置 用于 播放/暂停 的快捷键
+> 如果还有其他特殊应用 请配置 config.toml [client.additional_special_apps]
+> "<进程名>" = { hotkey = "<对应程序设置的全局快捷键>", name = "<用于输出日志的对应程序名称>" }
+> 
+> 如果N个特殊应用在播放，支持全部暂停
+> 如果一个非特殊应用在播放，通过 媒体键 暂停
+> 如果N个非特殊应用在播放，不暂停
+> 如果一个特殊应用和N个非特殊应用在播放，只暂停特殊应用
+> 
+> 默认配置如下：
+> | 播放器           | 快捷键          | 备注                               |
+> | ---------------- | --------------- | ---------------------------------- |
+> | QQ音乐           | Ctrl + Alt + F5 | 需在QQ音乐中设置全局快捷键         |
+> | 网易云音乐       | Ctrl + Alt + F6 | 需在网易云音乐中设置全局快捷键     |
+> | PotPlayer        | Ctrl + Alt + F7 | 需在PotPlayer中设置全局快捷键      |
+> | foobar2000       | Ctrl + Alt + F8 | 需在foobar2000中设置全局快捷键     |
+> | VLC Media Player | Ctrl + Alt + F9 | 需在VLC中设置全局快捷键，并重启VLC |
+>
+> [常用播放器 如何配置 全局播放/暂停 快捷键？](https://github.com/H1DDENADM1N/CapsWriter-Offline/issues/128#issuecomment-3616392251)
 
 ## 新增 优先使用 LibreTranslate 在线翻译服务
 > 服务端启动时，会自动检查 config.toml 中 LibreTranslate api 地址是否可用
@@ -88,23 +88,23 @@
 ## 双击`录音键`临时转换 `简/繁` 体中文输出，可在 `config.toml` 设置 `简/繁` 中文作为主要输出 (@JoanthanWu)
 
 ## 更美观的“语音输入中”提示，可在 `hint_while_recording.ini` 设置文本内容、颜色、排除列表等 (@JoanthanWu)
-> ![alt text](assets/PixPin_2024-11-27_10-44-39.png)
-> ![alt text](assets/PixPin_2024-11-27_10-44-46.png)
+> ![alt text](assets/readme/PixPin_2024-11-27_10-44-39.png)
+> ![alt text](assets/readme/PixPin_2024-11-27_10-44-46.png)
 
 
 ## 按下键盘上的 `Ctrl` + `Alt` + `P` ，可以将光标选中的 `中文` 离线翻译为 `英文` ，并自动覆盖替换原文
 
 ## 按下键盘上的 `Ctrl` + `Alt` + `[` ，可以将光标选中的 `任意语言` 在线翻译为 `在线翻译目标语言` （ `config.toml` `online_translate_target_languages` ），并自动覆盖替换原文
 
-> ![alt text](assets/将光标选中了中文翻译并替换.gif)
+> ![alt text](assets/readme/将光标选中了中文翻译并替换.gif)
 
 ## 按下键盘上的 `Ctrl` + `Alt` + `F` ，可以使用 everything 搜索光标选中的文字
 
-> ![alt text](<assets/使用 everything 搜索光标选中的文字.gif>)
+> ![alt text](<assets/readme/使用 everything 搜索光标选中的文字.gif>)
 
 ## 跟随鼠标光标位置的新版输入状态提示功能可在 `config.toml` 设置禁用
 
-> ![alt text](assets/跟随鼠标光标位置的新版输入状态提示功能.gif)
+> ![alt text](assets/readme/跟随鼠标光标位置的新版输入状态提示功能.gif)
 
 ## 新版客户端界面：
 
@@ -114,13 +114,13 @@
 > - 窗口贴边自动隐藏
 > - 无任务栏图标
 >
-> ![alt text](assets/新版客户端图形界面.gif)
+> ![alt text](assets/readme/新版客户端图形界面.gif)
 >
 > > 标题栏
 > >
 > > - 📌：置顶窗口，将它显示在其他窗口之上 / 不置顶
 > > - 云贴：按下客户端主界面的 `云贴` 按钮，即可将客户端文本框中的内容发布到[云剪贴板](https://share.lanol.cn)（一个无依赖即用即走的剪切板） ，并生成获取链接和二维码。
-> >   ![alt text](assets/云贴.png)
+> >   ![alt text](assets/readme/云贴.png)
 > > - 清空：清空文本框中的全部内容
 >
 > > 操作栏
@@ -130,7 +130,7 @@
 
 ## 新版客户端托盘图标右键菜单：
 
-> ![alt text](assets/客户端托盘图标右键菜单.png)
+> ![alt text](assets/readme/客户端托盘图标右键菜单.png)
 
 </details>
 
@@ -173,7 +173,7 @@
 - 123 盘：https://www.123pan.com/s/qBxUVv-H4Zq3.html 提取码:h8vb
 - GitHub Release: [Releases · H1DDENADM1N/CapsWriter-Offline](https://github.com/H1DDENADM1N/CapsWriter-Offline/releases)
 
-![files](assets/files.png)
+![files](assets/readme/files.png)
 
 # ❗ 注意事项
 
@@ -792,7 +792,7 @@ doNotShowHintList=:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini
 2. 例如 `hot-en.txt` 有热词「ChatGPT」，则所有识别结果中的「chat gpt」都会被替换成「ChatGPT」
 3. 例如 `hot-rule.txt` 有热词「毫安时 = mAh」，则所有识别结果中的「毫安时」都会被替换成「mAh」
 
-![image-20230531221314983](assets/image-20230531221314983.png)
+![image-20230531221314983](assets/readme/image-20230531221314983.png)
 
 # 🔧 功能：日记、关键词
 
@@ -807,7 +807,7 @@ doNotShowHintList=:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini
 2. 例如我在 `keywords.txt` 中定义了关键词「健康」，用于随时记录自己的身体状况，吃完饭后我可以按住 `CapsLock` 说「健康今天中午吃了大米炒饭」，由于识别结果以「健康」关键词开头，这条识别记录就会被保存到 `2023/06/05-健康.md` 中
 3. 例如我在 `keywords.txt` 中定义了关键词「重要」，用于随时记录突然的灵感，有想法时我就可以按住 `CapsLock` 说「重要，xx 问题可以用 xxxx 方法解决」，由于识别结果以「重要」关键词开头，这条识别记录就会被保存到 `2023/06/05-重要.md` 中
 
-![image-20230604144824341](assets/image-20230604144824341.png)
+![image-20230604144824341](assets/readme/image-20230604144824341.png)
 
 # 🔧 功能：转录文件
 
@@ -860,7 +860,7 @@ doNotShowHintList=:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini
 
 如果你愿意，可以打赏的方式支持原版[CapsWriter-Offline](https://github.com/HaujetZhao/CapsWriter-Offline)作者一下：
 
-> ![sponsor](assets/sponsor.jpg)
+> ![sponsor](assets/readme/sponsor.jpg)
 
 ## 🪙 打赏图形界面版 [CapsWriter-Offline](https://github.com/H1DDENADM1N/CapsWriter-Offline)
 

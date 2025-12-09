@@ -77,7 +77,7 @@ class GUI(QMainWindow):
     def init_ui(self):
         self.resize(425, 425)
         self.setWindowTitle("CapsWriter-Offline-Client")
-        self.setWindowIcon(QIcon("assets/client-icon.ico"))
+        self.setWindowIcon(QIcon("assets/icon/client-icon.ico"))
         self.setWindowOpacity(0.9)
         self.setWindowFlags(
             self.windowFlags()
@@ -197,7 +197,7 @@ class GUI(QMainWindow):
 
     def create_systray_icon(self):
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon("assets/client-icon.ico"))
+        self.tray_icon.setIcon(QIcon("assets/icon/client-icon.ico"))
         edit_hot_en_action = QAction("Edit hot-en.txt", self)
         edit_hot_rule_action = QAction("Edit hot-rule.txt", self)
         edit_hot_zh_action = QAction("Edit hot-zh.txt", self)

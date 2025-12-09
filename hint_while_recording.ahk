@@ -11,11 +11,11 @@
 
 #Requires AutoHotkey v2.0
 #SingleInstance Force
-#Include BTTv2.ahk
-#Include GetCaretPosEx.ahk
+#Include util/ahk/BTTv2.ahk
+#Include util/ahk/GetCaretPosEx.ahk
 InstallKeybdHook
 InstallMouseHook
-TraySetIcon(A_ScriptDir "\assets\hint_while_recording.ico", 1)
+TraySetIcon(A_ScriptDir "\assets\icon\hint_while_recording.ico", 1)
 CoordMode("ToolTip", "Screen")
 
 IniFile := A_ScriptDir "\hint_while_recording.ini"
@@ -91,7 +91,7 @@ MsgMonitor(wParam, lParam, msg, hwnd) {
     online_translate_needed := (wParam & 8) != 0
     hold_mode := (wParam & 16) != 0
     convert_to_traditional_chinese_main := (wParam & 32) != 0
-    
+
     ; ToolTip "is_microphone_in_use= " is_microphone_in_use "`nis_short_duration= " is_short_duration "`n使用的次数: " 调用次数 "`noffline_translate_needed= " offline_translate_needed "`nonline_translate_needed= " online_translate_needed "`nhold_mode= " hold_mode "`n调用次数A= " 调用次数A "`n调用次数B= " 调用次数B "`n调用次数C= " 调用次数C "`nbttRemoveLoopIndex= " bttRemoveLoopIndex, 0, 1080, 9
     ; 调用次数 += 1
 
@@ -263,7 +263,7 @@ TipShow(Txt, x, y) {
                 else
                     ToolTip(cnTxt, x, y)
             }
-        } 
+        }
         else {
             if is_short_duration
                 ToolTip(enTxtB, x, y)

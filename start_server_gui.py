@@ -32,7 +32,7 @@ class GUI(QMainWindow):
     def init_ui(self):
         self.resize(425, 425)
         self.setWindowTitle("CapsWriter-Offline-Server")
-        self.setWindowIcon(QIcon("assets/server-icon.ico"))
+        self.setWindowIcon(QIcon("assets/icon/server-icon.ico"))
         self.create_text_box()
         self.create_clear_button()  # Create clear button
         self.create_systray_icon()
@@ -71,7 +71,7 @@ class GUI(QMainWindow):
 
     def create_systray_icon(self):
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon("assets/server-icon.ico"))
+        self.tray_icon.setIcon(QIcon("assets/icon/server-icon.ico"))
         show_action = QAction("🪟 Show", self)
         quit_action = QAction("❌ Quit", self)
 
