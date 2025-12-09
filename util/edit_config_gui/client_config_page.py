@@ -25,8 +25,8 @@ from siui.components.widgets import (
 from siui.core import SiGlobal
 
 from util.edit_config_gui.clearly_type import clearly_type
-from util.edit_config_gui.write_toml import write_toml
 from util.edit_config_gui.value_check import ValueCheck
+from util.edit_config_gui.write_toml import write_toml
 
 from .select_path import SelectPath
 from .set_default_button import SetDefaultButton
@@ -135,14 +135,6 @@ class ClientConfigPage(SiPage):
                 "ctrl + alt + ["
             )
         )
-        self.use_search_selected_text_with_everything_function.toggled.connect(
-            lambda: self.use_search_selected_text_with_everything_function_changed()
-        )
-        self.search_selected_text_with_everything_shortcut_set_default.clicked.connect(
-            lambda: self.search_selected_text_with_everything_shortcut.lineEdit().setText(
-                "ctrl + alt + f"
-            )
-        )
         self.save.longPressed.connect(self.save_config)
         # 数据校验绑定
         self.addr.lineEdit().editingFinished.connect(self.validate_addr)
@@ -179,12 +171,6 @@ class ClientConfigPage(SiPage):
         )
         self.save.clicked.connect(
             self.validate_online_translate_and_replace_the_selected_text_shortcut
-        )
-        self.search_selected_text_with_everything_shortcut.lineEdit().editingFinished.connect(
-            self.validate_search_selected_text_with_everything_shortcut
-        )
-        self.save.clicked.connect(
-            self.validate_search_selected_text_with_everything_shortcut
         )
 
     def validate_addr(self):
@@ -388,32 +374,6 @@ class ClientConfigPage(SiPage):
                 SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
                     title="在线翻译并替换选中文本快捷键格式错误",
                     text=f"{shortcut} - {error}\n已修改为默认值：“ctrl + alt + [”",
-                    msg_type=3,
-                    icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
-                    fold_after=5000,
-                )
-            except ValueError:
-                pass
-
-    def validate_search_selected_text_with_everything_shortcut(self):
-        shortcut: str = (
-            self.search_selected_text_with_everything_shortcut.lineEdit().text()
-        )
-        is_valid, error = ValueCheck.is_hotkey(shortcut)
-
-        if is_valid:
-            print(f"[green]{shortcut}[/green]")
-        else:
-            print(f"[red]{shortcut} - {error if error else '无效'}[/red]")
-
-        if error:
-            self.search_selected_text_with_everything_shortcut.lineEdit().setText(
-                "ctrl + alt + f"
-            )
-            try:
-                SiGlobal.siui.windows["MAIN_WINDOW"].LayerRightMessageSidebar().send(
-                    title="搜索选中文本与 Everything 快捷键格式错误",
-                    text=f"{shortcut} - {error}\n已修改为默认值：“ctrl + alt + f”",
                     msg_type=3,
                     icon=SiGlobal.siui.iconpack.get("ic_fluent_warning_regular"),
                     fold_after=5000,
@@ -1683,69 +1643,6 @@ class ClientConfigPage(SiPage):
             )
             group.addWidget(self.online_translate_container)
 
-        with self.titled_widgets_group as group:
-            group.addTitle("使用 Everything 搜索选中文字")
-
-            # 是否启用使用 Everything 搜索选中文字的功能
-            self.use_search_selected_text_with_everything_function = SiSwitch(self)
-            self.use_search_selected_text_with_everything_function.setChecked(
-                self.config["client"][
-                    "use_search_selected_text_with_everything_function"
-                ]
-            )
-            self.use_search_selected_text_with_everything_function_linear_attaching = (
-                SiOptionCardLinear(self)
-            )
-            self.use_search_selected_text_with_everything_function_linear_attaching.setTitle(
-                "调用 Everything 搜索选中的文字"
-            )
-            self.use_search_selected_text_with_everything_function_linear_attaching.load(
-                SiGlobal.siui.iconpack.get("ic_fluent_search_filled")
-            )
-            self.use_search_selected_text_with_everything_function_linear_attaching.addWidget(
-                self.use_search_selected_text_with_everything_function
-            )
-
-            # 控制使用 Everything 搜索选中文字的快捷键，默认是 "ctrl + alt + f"
-            self.search_selected_text_with_everything_shortcut = (
-                SiLineEditWithDeletionButton(self)
-            )
-            self.search_selected_text_with_everything_shortcut.resize(256, 32)
-            self.search_selected_text_with_everything_shortcut.lineEdit().setText(
-                self.config["client"]["search_selected_text_with_everything_shortcut"]
-            )
-            self.search_selected_text_with_everything_shortcut_set_default = (
-                SetDefaultButton(self)
-            )
-            self.search_selected_text_with_everything_shortcut_linear_attaching = (
-                SiOptionCardLinear(self)
-            )
-            self.search_selected_text_with_everything_shortcut_linear_attaching.setTitle(
-                "使用 Everything 搜索选中文字的快捷键", '默认值："ctrl + alt + f"'
-            )
-            self.search_selected_text_with_everything_shortcut_linear_attaching.load(
-                SiGlobal.siui.iconpack.get("ic_fluent_keyboard_regular")
-            )
-            self.search_selected_text_with_everything_shortcut_linear_attaching.addWidget(
-                self.search_selected_text_with_everything_shortcut_set_default
-            )
-            self.search_selected_text_with_everything_shortcut_linear_attaching.addWidget(
-                self.search_selected_text_with_everything_shortcut
-            )
-
-            # 设置项
-            self.search__with_everything_container = SiDenseVContainer(self)
-            self.search__with_everything_container.setFixedWidth(700)
-            self.search__with_everything_container.setAdjustWidgetsSize(True)
-            self.search__with_everything_container.addWidget(
-                self.use_search_selected_text_with_everything_function_linear_attaching
-            )
-            self.use_search_selected_text_with_everything_function_changed()
-            self.search__with_everything_container.addWidget(
-                self.search_selected_text_with_everything_shortcut_linear_attaching
-            )
-            group.addWidget(self.search__with_everything_container)
-
         # 添加页脚的空白以增加美观性
         self.titled_widgets_group.addPlaceholder(64)
 
@@ -1817,12 +1714,6 @@ class ClientConfigPage(SiPage):
             self.audio_name_len_linear_attaching.hide()
             self.reduce_audio_files_linear_attaching.hide()
 
-    def use_search_selected_text_with_everything_function_changed(self):
-        if self.use_search_selected_text_with_everything_function.isChecked():
-            self.search_selected_text_with_everything_shortcut_linear_attaching.show()
-        else:
-            self.search_selected_text_with_everything_shortcut_linear_attaching.hide()
-
     def use_offline_translate_function_changed(self):
         if self.use_offline_translate_function.isChecked():
             self.offline_translate_port_linear_attaching.show()
@@ -1881,18 +1772,6 @@ class ClientConfigPage(SiPage):
             self.config["client"][
                 "online_translate_and_replace_the_selected_text_shortcut"
             ] = self.online_translate_and_replace_the_selected_text_shortcut.line_edit.text()
-            self.config["client"][
-                "use_search_selected_text_with_everything_function"
-            ] = self.use_search_selected_text_with_everything_function.isChecked()
-            self.config["client"]["search_selected_text_with_everything_shortcut"] = (
-                self.search_selected_text_with_everything_shortcut.line_edit.text()
-            )
-            self.config["client"][
-                "use_search_selected_text_with_everything_function"
-            ] = self.use_search_selected_text_with_everything_function.isChecked()
-            self.config["client"]["search_selected_text_with_everything_shortcut"] = (
-                self.search_selected_text_with_everything_shortcut.line_edit.text()
-            )
             self.config["client"]["hold_mode"] = self.hold_mode.isChecked()
             self.config["client"]["suppress"] = self.suppress.isChecked()
             self.config["client"]["restore_key"] = self.restore_key.isChecked()
@@ -2068,32 +1947,6 @@ class ClientConfigPage(SiPage):
                 str(
                     self.config["client"][
                         "online_translate_and_replace_the_selected_text_shortcut"
-                    ]
-                ),
-            )
-            table.add_row(
-                "use_search_selected_text_with_everything_function",
-                clearly_type(
-                    self.config["client"][
-                        "use_search_selected_text_with_everything_function"
-                    ]
-                ),
-                str(
-                    self.config["client"][
-                        "use_search_selected_text_with_everything_function"
-                    ]
-                ),
-            )
-            table.add_row(
-                "search_selected_text_with_everything_shortcut",
-                clearly_type(
-                    self.config["client"][
-                        "search_selected_text_with_everything_shortcut"
-                    ]
-                ),
-                str(
-                    self.config["client"][
-                        "search_selected_text_with_everything_shortcut"
                     ]
                 ),
             )

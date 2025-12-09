@@ -7,7 +7,7 @@
 > [!IMPORTANT]
 > 新增图形化配置界面 `edit_config_gui.exe`，可方便修改配置，但仍支持手动修改 `config.toml` 文件
 
-## 😎 十个功能：
+## 😎 九个功能：
 
 1. 按下键盘上的大写锁定键 `CapsLock` ，录音开始，当松开大写锁定键时，就会识别你的录音，并将识别结果立刻输入
 2. 按下键盘上的 `Left Shift` 再按 `CapsLock` 可以将识别结果离线翻译为英文，并将识别结果立刻输入
@@ -16,9 +16,8 @@
 5. 按下客户端主界面的 `云贴` 按钮，即可将客户端文本框中内容发布到[云剪贴板](https://share.lanol.cn) ，并生成获取链接和二维码
 6. 按下键盘上的 `Ctrl` + `Alt` + `P` ，可以将光标选中的 `中文` [离线翻译](https://huggingface.co/Helsinki-NLP/opus-mt-zh-en)为 `英文` ，并自动覆盖替换原文
 7. 按下键盘上的 `Ctrl` + `Alt` + `[` ，可以将光标选中的 `任意语言` 在线翻译（[LibreTranslate](https://github.com/LibreTranslate/LibreTranslate) / [DeepLX](https://github.com/OwO-Network/DeepLX)）为 `在线翻译目标语言` ，并自动覆盖替换原文
-8. 按下键盘上的 `Ctrl` + `Alt` + `F` ，可以使用 everything 搜索光标选中的文字
-9. 快速双击 `CapsLock` ，可语音输入繁体。长按 `CapsLock` 实现按键原有功能切换大写锁定。
-10. 可通过 `edit_config_gui.exe` 图形化配置界面安全地修改客户端/服务端配置，也可手动修改 `config.toml` 文件
+8. 快速双击 `CapsLock` ，可语音输入繁体。长按 `CapsLock` 实现按键原有功能切换大写锁定。
+9.  可通过 `edit_config_gui.exe` 图形化配置界面安全地修改客户端/服务端配置，也可手动修改 `config.toml` 文件
 
 - [✨ 特性](#-特性)
 - [⬇️ 下载地址](#-下载地址)
@@ -98,9 +97,6 @@
 
 > ![alt text](assets/readme/将光标选中了中文翻译并替换.gif)
 
-## 按下键盘上的 `Ctrl` + `Alt` + `F` ，可以使用 everything 搜索光标选中的文字
-
-> ![alt text](<assets/readme/使用 everything 搜索光标选中的文字.gif>)
 
 ## 跟随鼠标光标位置的新版输入状态提示功能可在 `config.toml` 设置禁用
 
@@ -431,15 +427,6 @@ online_translate_and_replace_the_selected_text_shortcut = "ctrl + alt + ["
 # 控制在线翻译将光标选中的中文翻译并替换为在线翻译目标语言的快捷键
 # 如果未选中任何文字，会将剪贴板的文字翻译为目标语言并粘贴
 
-use_search_selected_text_with_everything_function = true
-# 是否启用使用 Everything 搜索选中文字的功能
-
-search_selected_text_with_everything_shortcut = "ctrl + alt + f"
-# 调用 Everything 搜索光标选中的字符
-# 使用前需先安装 Everything，https://www.voidtools.com/zh-cn/downloads/
-
-everything_exe_path = "C:\\Program Files\\Everything\\Everything.exe"
-# 设置 Everything 可执行文件位置
 
 hold_mode = true
 # 长按模式，按下录音，松开停止，像对讲机一样用

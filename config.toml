@@ -114,16 +114,6 @@ online_translate_and_replace_the_selected_text_shortcut = "ctrl + alt + ["
 # 控制在线翻译将光标选中的中文翻译并替换为在线翻译目标语言的快捷键
 # 如果未选中任何文字，会将剪贴板的文字翻译为目标语言并粘贴
 
-use_search_selected_text_with_everything_function = true
-# 是否启用使用 Everything 搜索选中文字的功能
-
-search_selected_text_with_everything_shortcut = "ctrl + alt + f"
-# 调用 Everything 搜索光标选中的字符
-# 使用前需先安装 Everything，https://www.voidtools.com/zh-cn/downloads/
-
-everything_exe_path = "C:\\Program Files\\Everything\\Everything.exe"
-# 设置 Everything 可执行文件位置
-
 hold_mode = true
 # 长按模式，按下录音，松开停止，像对讲机一样用
 # 改为 False，则关闭长按模式，也就是单击模式
