@@ -492,6 +492,8 @@ class GUI(QMainWindow):
                 stderr=subprocess.STDOUT,
                 text=True,
                 shell=True,
+                encoding="utf-8",
+                errors="replace",
             )
             threading.Thread(
                 target=self.enqueue_output,
@@ -513,6 +515,8 @@ class GUI(QMainWindow):
                 stderr=subprocess.STDOUT,
                 text=True,
                 shell=True,
+                encoding="utf-8",
+                errors="replace",
             )
             threading.Thread(
                 target=self.enqueue_output,
@@ -534,6 +538,8 @@ class GUI(QMainWindow):
                 stderr=subprocess.STDOUT,
                 text=True,
                 shell=True,
+                encoding="utf-8",
+                errors="replace",
             )
             threading.Thread(
                 target=self.enqueue_output,
