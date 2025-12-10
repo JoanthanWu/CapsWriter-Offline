@@ -278,15 +278,13 @@ uv run dev\check_site_packages_update.py
 
 #### 4.2 升级依赖包
 
-```powershell
-uv run dev\update_site_packages.py
-```
+非项目依赖，运行 `uv pip install <包名> == <最新版本>` 测试新版是否兼容
+
+项目依赖，运行 `uv add [--group <组名>] [--optional dev] <包名> >= <最新版本>` 测试新版是否兼容
 
 #### 4.3 更新 pyproject.toml
 
-```powershell
-.venv\Scripts\python.exe dev\update_pyproject_toml.py
-```
+修改 `pyproject.toml[/cyan]` 并运行 `uv sync --all-groups --all-extras`
 
 ### 5. 打包
 
