@@ -284,7 +284,7 @@ uv run dev\check_site_packages_update.py
 
 #### 4.3 更新 pyproject.toml
 
-修改 `pyproject.toml[/cyan]` 并运行 `uv sync --all-groups --all-extras`
+修改 `pyproject.toml` 并运行 `uv sync --all-groups --all-extras`
 
 ### 5. 打包
 
