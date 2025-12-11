@@ -9,10 +9,7 @@ from PySide6.QtGui import QPainter, QColor, QBrush, QFontMetrics, QPen, QTextLay
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QSize
 import tomllib
 
-import panelVal
-with open("history_r.log", "a", encoding="utf-8") as f:
-    f.write(f"in smart_history_actions_panel: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
-unpinned_groups = panelVal.unpinned_groups
+
 # 配置文件路径
 CONFIG_FILE = "history_panel_config.toml"
 
@@ -192,7 +189,7 @@ reviewed_lines = set()
 PINNED_FILE = "history_pinned_groups.json"
 MAX_TEXT_GROUPS = panel_config["global"]["max_text_groups"]
 pinned_groups = []
-# unpinned_groups = []
+unpinned_groups = []
 active_widgets = []
 global_timer = None
 mouse_hover_count = 0
@@ -270,23 +267,10 @@ def group_equal(group1, group2):
 
 def add_sentence_group(new_group):
     global unpinned_groups
-
-# --------------------------------------------------------测试数据
-    # 測試輸出：寫入文件
-    with open("history_received_text.log", "a", encoding="utf-8") as f:
-        f.write(f"[add_sentence_group 接收到] {new_group}\n")
-# 测试数据 ---------------------------------------------------
-
     for key in ['simplified', 'traditional', 'english']:
         text = new_group.get(key, '').strip()
         if text and text in reviewed_lines:
             print(f"审查拦截：'{text}'")
-
-# --------------------------------------------------------测试数据
-            with open("history_received_text.log", "a", encoding="utf-8") as f:
-                f.write(f"[add_sentence_group拦截之后 接收到] {new_group}\n")
-# 测试数据 ---------------------------------------------------
-
             return
 
     for pg in pinned_groups:
@@ -472,7 +456,6 @@ class TextLineWidget(QWidget):
         # self.buttons_container.setStyleSheet("")
         self.buttons_container.hide()
 
-
         # 按钮布局
         btn_layout = QHBoxLayout(self.buttons_container)
         btn_layout.setSpacing(0)
@@ -533,7 +516,7 @@ class TextLineWidget(QWidget):
             separator.setFixedWidth(18)
             sep_color = to_css_rgba(panel_config['unpinned']['border_colors'][0])
             separator.setStyleSheet(f"border: 3px solid {sep_color}; background-color: transparent;")
-            btn_layout.addWidget(separator, alignment=Qt.AlignCenter)
+            btn_layout.addWidget(separator)
 
             # 第5个按钮（review）
             name, btn = button_list[4]
@@ -819,10 +802,6 @@ class RoundedWidget(QWidget):
 
 
 def show_widgets():
-    from panelVal import unpinned_groups as unpinned_groups
-    with open("history_r.log", "a", encoding="utf-8") as f:
-        f.write(f"in show_widgets: id(unpinned_groups) = {id(unpinned_groups)})\n")
-
     global active_widgets, mouse_hover_count
     base_x = panel_config["widget"]["initial_x"]
     base_y = panel_config["widget"]["initial_y"]
@@ -874,28 +853,21 @@ def show_widgets():
 
 # 模拟新增组
 counter = 1
-# 新增prefix参数，用于接收前缀文字
-def simulate_new_group(prefix):
+
+
+def simulate_new_group():
     global counter
     new_group = {
-        # 拼接前缀：f"{prefix} " + 原有内容（注意加空格分隔）
-        'simplified': f"{prefix} 简体示例：你们好吗？山上的小朋友",
-        'traditional': f"{prefix} 繁體示例：你們好嗎？山上的小朋友",
-        'english': f"{prefix} Example {counter}：How are you? The kids on the hill."
+        'simplified': f"简体示例：你们好吗？山上的小朋友",
+        'traditional': f"繁體示例：你們好嗎？山上的小朋友",
+        'english': f"Example {counter}：How are you? The kids on the hill."
     }
     add_sentence_group(new_group)
     print(f"新增组 {counter}")
     counter += 1
-    if active_widgets:
-        close_all_widgets()
-        show_widgets()
-    # if active_widgets and self.widget is not None:  # 确保窗口已创建
-        # # 1. 隐藏窗口
-        # self.widget.hide()
-        # # 2. 刷新窗口数据（调用面板的refresh_data方法）
-        # self.widget.refresh_data()
-        # # 3. 重新显示窗口（此时显示的是最新数据）
-        # self.widget.show()
+    # if active_widgets:
+    #     close_all_widgets()
+    #     show_widgets()
 
 
 # 键盘监听线程（按z键显示/隐藏窗口）
@@ -906,9 +878,7 @@ class KeyboardThread(QThread):
         def handler(e):
             if e.event_type == "down":
                 self.trigger.emit()
-                with open("history_r.log", "a", encoding="utf-8") as f:
-                    f.write(
-                        f"in KeyboardThread : id(unpinned_groups) = {id(unpinned_groups)})\n")
+
         keyboard.hook_key("/", handler, suppress=True)
         keyboard.wait()
 
