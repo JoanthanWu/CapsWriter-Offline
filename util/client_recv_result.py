@@ -66,7 +66,6 @@ async def recv_result():
     try:
         while True:
             # 接收消息
-            print(f"AAA 1 [Cosmic.offline_translate_needed] = {Cosmic.offline_translate_needed}")
             message = await Cosmic.websocket.recv()
             message = json.loads(message)
             text = message["text"]
@@ -91,7 +90,6 @@ async def recv_result():
             converter = opencc.OpenCC(Config.opencc_converter)
             traditional_text = converter.convert(text)
             convert_to_traditional_chinese_done = True
-            print(f"BBB 1 [Cosmic.offline_translate_needed] = {Cosmic.offline_translate_needed}")
             # 离线翻译
             offline_translate_done = False
             if Cosmic.offline_translate_needed and not Cosmic.transcribe_subtitles:
@@ -100,9 +98,7 @@ async def recv_result():
 
 # ----------- smart_history_actions_panel -----------
                 # if Config.enabled_smart_history_actions_panel:
-                console.print(f"    英文的翻譯現在開始：[green]{offline_translated_text}")
                 update_buffer('english', offline_translated_text)
-                console.print(f"    英文的翻譯完成：[green]{offline_translated_text}")
 # ----------- smart_history_actions_panel -----------
 
                 Cosmic.offline_translate_needed = False
@@ -115,9 +111,7 @@ async def recv_result():
 
 # ----------- smart_history_actions_panel -----------
                 # if Config.enabled_smart_history_actions_panel:
-                console.print(f"    英文的翻譯現在開始：[green]{online_translated_text}")
                 update_buffer('english', online_translated_text)
-                console.print(f"    英文的翻譯完成：[green]{online_translated_text}")
 # ----------- smart_history_actions_panel -----------
 
                 Cosmic.online_translate_needed = False
@@ -192,9 +186,7 @@ async def recv_result():
 
 # ----------- smart_history_actions_panel -----------
             # if Config.enabled_smart_history_actions_panel:
-            print(f"from-client_recv_result.py A: {buffer_group}")
             flush_buffer()
-            print(f"from-client_recv_result.py B: {buffer_group}")
 # ----------- smart_history_actions_panel -----------
 
             Cosmic.opposite_state = False

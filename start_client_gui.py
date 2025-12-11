@@ -45,11 +45,11 @@ load_pinned = util.smart_history_actions_panel.load_pinned
 KeyboardThread = util.smart_history_actions_panel.KeyboardThread
 show_widgets = util.smart_history_actions_panel.show_widgets
 add_sentence_group = util.smart_history_actions_panel.add_sentence_group
-
+'''
 import panelVal
 with open("history_r.log", "a", encoding="utf-8") as f:
     f.write(f"in start_client_gui: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
-
+'''
 class MyController(QObject):
     # 定义信号（保持不变）
     show_widgets_signal = Signal()
@@ -650,9 +650,11 @@ class GUI(QMainWindow):
                     list_a_str = line_stripped.replace("###LIST_A###", "")
                     self.List_A = json.loads(list_a_str)
                     # 仅调试/记录，不影响GUI显示
+                    '''
                     print(f"【程序内部提取】List_A：{self.List_A}")
                     with open("history_yes.log", "a", encoding="utf-8") as f:
                         f.write(f"in enqueue_output: self.List_A = {self.List_A}\n")
+                    '''
                     add_sentence_group(self.List_A)
                 except json.JSONDecodeError:
                     print(f"【警告】List_A解析失败：{line_stripped}")
@@ -853,46 +855,10 @@ def start_client_gui():
     load_reviewed_lines()
     load_pinned()
 
-    # --------------------------------------------------------测试数据
-    test_groups = [
-        {
-            'traditional': "from-start_client_gui.py 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 ",
-        },
-        {
-            'simplified': "from-start_client_gui.py 这是一个只有简体的例子",
-            'traditional': "",
-            'english': ""
-        },
-        {
-            'traditional': "from-start_client_gui.py 這是一個只有繁體的例子",
-        },
-        {
-            'english': "from-start_client_gui.py This is an English only example."
-        }
-    ]
-    for group in test_groups:
-        add_sentence_group(group)
-
-    # timer = QTimer()
-    # timer.timeout.connect(lambda: simulate_new_group("from-start_client_gui.py(Auto) "))
-    # timer.start(3000)
-    # 测试数据 ---------------------------------------------------
-
-    # 連接槽函數
-    # controller.show_widgets_signal.connect(show_widgets)
-
-    with open("history_r.log", "a", encoding="utf-8") as f:
-        f.write(f"in start_client_gui_IN : id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
-
-    # 启动键盘监听线程
     kb_thread = KeyboardThread()
-    # 关键：键盘触发时，发射控制器的信号（连接到toggle_panel）
     kb_thread.trigger.connect(controller.show_widgets_signal.emit)
     kb_thread.start()
 
-    # print("呼叫面板")
-    # controller.show_widgets_signal.emit()
-    # print("呼叫面板完成")
     # ----------- smart_history_actions_panel -----------
 
     sys.exit(app.exec())
@@ -929,9 +895,11 @@ def read_file_list(file_list_path: Path):
 
 
 if __name__ == "__main__":
+    '''
     print ("start_client_gui.py is running")
     with open("history_abc.log", "a", encoding="utf-8") as f:
         f.write(f"in start_client_start_client_gui.py : AAA\n")
+        '''
     parser = argparse.ArgumentParser(description="处理文件")
     parser.add_argument("files", nargs="*", type=Path, help="要处理的文件")
     parser.add_argument("--file-list", type=Path, help="包含文件列表的文本文件")

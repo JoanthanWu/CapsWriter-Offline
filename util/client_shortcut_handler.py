@@ -388,10 +388,6 @@ def click_mode(e: keyboard.KeyboardEvent):
         last_time_released = time.time()
         is_b_time = True if time.time() - b_time < Config.threshold else False
         is_short_press = (True if time.time() - last_time_pressed < Config.threshold else False )
-        print(f"000 : history_actions_panel_launched = {history_actions_panel_launched}")
-        print(f"001 : is_short_duration = {is_short_duration}")
-        print(f"002 : double_clicked = {double_clicked}")
-        print(f"003: Cosmic.offline_translate_needed ={Cosmic.offline_translate_needed}")
         if restore_capslock_task is not None:
             # 取消 延迟恢复原版CapsLock功能的任务
             restore_capslock_task_cancelled = restore_capslock_task.cancel()
@@ -408,7 +404,6 @@ def click_mode(e: keyboard.KeyboardEvent):
         # ----------- smart_history_actions_panel -----------
         # if Config.enabled_smart_history_actions_panel:
         if (saved_result_for_offline_translate_needed or saved_result_for_online_translate_needed) and is_short_duration and history_actions_panel_launched:
-            print("D")
             if double_clicked:
                 cancel_task()
             # 如果 `shifts + 双击录音键` 就会唤起界面, 結束錄音, 然后还原状态
@@ -429,25 +424,18 @@ def click_mode(e: keyboard.KeyboardEvent):
             saved_result_for_offline_translate_needed = False
             saved_result_for_online_translate_needed = False
             restore_audio_playing()
-            print("結束戰鬥了")
             return
         # ----------- smart_history_actions_panel -----------
-
-
-        print(f"004: Cosmic.offline_translate_needed ={Cosmic.offline_translate_needed}")
         # 如果大于`Config.threshold`的值, 判定为`長按`, 就取消本栈启动的任务(`cancel_task()`)
         if (Config.restore_key and return_allowed) or (is_b_time):
             # 判定为`長按`，发送原來的按键功能
             # keyboard.send(Config.speech_recognition_shortcut)
-            print("E")
             is_short_duration = False
             key_pressed = False
             return
 
         # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀态
         elif not double_clicked and not is_short_duration:
-            print("A")
-            print(f"A 0: Cosmic.offline_translate_needed ={Cosmic.offline_translate_needed}")
             translate_needed()
             saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed
             saved_result_for_online_translate_needed = Cosmic.online_translate_needed
@@ -463,27 +451,21 @@ def click_mode(e: keyboard.KeyboardEvent):
             if Cosmic.online_translate_needed or Cosmic.offline_translate_needed:
                 history_actions_panel_launched = True
             double_clicked = True
-            print(f"A 1: saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed ={Cosmic.offline_translate_needed}")
             # saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed
             # saved_result_for_online_translate_needed = Cosmic.online_translate_needed
-            print(f"A 2: saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed ={Cosmic.offline_translate_needed}")
             # 這會導致無法英文翻譯
             # if is_short_duration:
             #     Cosmic.offline_translate_needed = False
             #     Cosmic.online_translate_needed = False
-            print(f"A 3: Cosmic.offline_translate_needed ={Cosmic.offline_translate_needed}")
             key_pressed = False
             return
 
         # 任务在进行中, 且不判定为`短击`, 就结束和完成任务
         elif double_clicked and not is_short_duration:
-            print("B")
-            print(f"B 0: Cosmic.offline_translate_needed ={Cosmic.offline_translate_needed}")
             Cosmic.offline_translate_needed = saved_result_for_offline_translate_needed
             Cosmic.online_translate_needed = saved_result_for_online_translate_needed
             finish_task()
             b_time = time.time()
-            print(f"B 1: Cosmic.offline_translate_needed ={Cosmic.offline_translate_needed}")
             send_signal_to_hint_while_recording(
                 False,
                 is_short_duration,
@@ -504,7 +486,6 @@ def click_mode(e: keyboard.KeyboardEvent):
 
         # 任务在进行中, 且为`短击`, 判定爲需要輸出 `簡/繁`, 并且结束函数
         elif double_clicked and is_short_duration:
-            print("C")
             translate_needed()
             send_signal_to_hint_while_recording(
                 True,
@@ -520,9 +501,8 @@ def click_mode(e: keyboard.KeyboardEvent):
             # double_clicked = False
             key_pressed = False
             # return
-            print(f'翻譯')
 
-        print(f'世界的尽头!')
+        # print(f'世界的尽头!')
 
 
 # ======================长按模式==================================

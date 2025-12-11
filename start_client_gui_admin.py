@@ -22,22 +22,7 @@
 https://github.com/H1DDENADM1N/PyStand/commit/8be144dfa1ef2d145a96b95d8d162498a6f785b0)
 
 """
-from multiprocessing import Process, Manager
-import sys
-import panelVal
-unpinned_groups=panelVal.unpinned_groups
-with open("history_r.log", "a", encoding="utf-8") as f:
-    f.write(f"in start_client_gui_admin: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
-unpinned_groups = panelVal.unpinned_groups
-with open("history_r.log", "a", encoding="utf-8") as f:
-    f.write(f"in start_client_gui_admin.py 1 : id(smart_history_actions_panel.unpinned_groups) = id(start_client_gui.unpinned_groups))\n")
 from start_client_gui import start_client_gui
-with open("history_r.log", "a", encoding="utf-8") as f:
-    f.write(f"in start_client_gui_admin.py 2 : id(til.smart_history_actions_panel.unpinned_groups) = id(util.smart_history_actions_panel.unpinned_groups))\n")
 
 if __name__ == "__main__":
-
-    print ("start_client_gui_admin.py is running")
-    with open("history_abc.log", "a", encoding="utf-8") as f:
-        f.write(f"in start_client_gui_admin: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
     start_client_gui()
