@@ -468,8 +468,10 @@ class TextLineWidget(QWidget):
 
         # 按钮容器（背景透明）
         self.buttons_container = QWidget(self)
-        self.buttons_container.setStyleSheet("")
+        self.buttons_container.setAttribute(Qt.WA_TranslucentBackground)
+        # self.buttons_container.setStyleSheet("")
         self.buttons_container.hide()
+
 
         # 按钮布局
         btn_layout = QHBoxLayout(self.buttons_container)
@@ -531,7 +533,7 @@ class TextLineWidget(QWidget):
             separator.setFixedWidth(18)
             sep_color = to_css_rgba(panel_config['unpinned']['border_colors'][0])
             separator.setStyleSheet(f"border: 3px solid {sep_color}; background-color: transparent;")
-            btn_layout.addWidget(separator)
+            btn_layout.addWidget(separator, alignment=Qt.AlignCenter)
 
             # 第5个按钮（review）
             name, btn = button_list[4]

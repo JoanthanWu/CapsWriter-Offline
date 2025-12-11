@@ -306,7 +306,7 @@ class GUI(QMainWindow):
         quit_action.triggered.connect(self.quit_app)
 
         self.tray_icon.activated.connect(self.on_tray_icon_activated)
-
+        global tray_menu
         tray_menu = QMenu()
         edit_menu = QMenu("📝 Edit Hot Rules", tray_menu)
         view_menu = QMenu("👁️ View", tray_menu)
@@ -840,11 +840,12 @@ def start_client_gui():
     if Config.hint_while_recording_at_cursor_position:
         tooltip = Hint_While_Recording_At_Cursor_Position()
         tooltip.show()
-    apply_stylesheet(
-        app, theme="dark_teal.xml", css_file="util\\client_gui_theme_custom.css"
-    )
     global gui
     gui = GUI()
+
+    apply_stylesheet(gui, theme="dark_teal.xml", css_file="util\\client_gui_theme_custom.css")
+    apply_stylesheet(tray_menu, theme="dark_teal.xml", css_file="util\\client_gui_theme_custom.css")
+
     if not Config.shrink_automatically_to_tray:
         gui.show()
 
@@ -860,7 +861,6 @@ def start_client_gui():
     kb_thread.start()
 
     # ----------- smart_history_actions_panel -----------
-
     sys.exit(app.exec())
 
 

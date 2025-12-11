@@ -427,7 +427,7 @@ def click_mode(e: keyboard.KeyboardEvent):
             return
         # ----------- smart_history_actions_panel -----------
         # 如果大于`Config.threshold`的值, 判定为`長按`, 就取消本栈启动的任务(`cancel_task()`)
-        if (Config.restore_key and return_allowed) or (is_b_time):
+        if (Config.restore_key and return_allowed) or is_b_time:
             # 判定为`長按`，发送原來的按键功能
             # keyboard.send(Config.speech_recognition_shortcut)
             is_short_duration = False
