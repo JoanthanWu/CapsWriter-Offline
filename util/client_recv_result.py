@@ -27,7 +27,12 @@ warnings.filterwarnings("ignore")
 
 # ----------- smart_history_actions_panel -----------
 # if Config.enabled_smart_history_actions_panel:
-from util.smart_history_actions_panel import add_sentence_group
+from . import smart_history_actions_panel
+add_sentence_group = smart_history_actions_panel.add_sentence_group
+# from util.smart_history_actions_panel import smart_history_actions_panel
+# add_sentence_group = smart_history_actions_panel.add_sentence_group
+with open("history_r.log", "a", encoding="utf-8") as f:
+    f.write(f"in client_recv_result: id(smart_history_actions_panel.unpinned_groups) = {id(smart_history_actions_panel.unpinned_groups)})\n")
 
 buffer_group = {}
 def update_buffer(key, value):
@@ -78,6 +83,13 @@ async def recv_result():
 
     try:
         while True:
+
+            # ----------- smart_history_actions_panel -----------
+            with open("history_r.log", "a", encoding="utf-8") as f:
+                f.write(
+                    f"in recv_result_IN_text : id(smart_history_actions_panel.unpinned_groups) = {id(smart_history_actions_panel.unpinned_groups)})\n")
+            # ----------- smart_history_actions_panel -----------
+
             # 接收消息
             message = await Cosmic.websocket.recv()
             message = json.loads(message)

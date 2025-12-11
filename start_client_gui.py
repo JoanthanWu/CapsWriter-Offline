@@ -38,21 +38,14 @@ from util.config import ClientConfig as Config
 
 # ----------- smart_history_actions_panel -----------
 # if Config.enabled_smart_history_actions_panel:
-from util.smart_history_actions_panel import (
-    load_reviewed_lines,
-    load_pinned,
-    KeyboardThread,
-    show_widgets,
-    add_sentence_group,
-    simulate_new_group,
-    to_qcolor,
-    to_css_rgba,
-    load_config,
-    merge_configs,
-    MultiLineElidedLabel,
-    TextLineWidget,
-    TextLineWidget
-)
+import util.smart_history_actions_panel
+with open("history_r.log", "a", encoding="utf-8") as f:
+    f.write(f"in start_client_gui: id(util.smart_history_actions_panel.unpinned_groups) = {id(util.smart_history_actions_panel.unpinned_groups)})\n")
+load_reviewed_lines = util.smart_history_actions_panel.load_reviewed_lines
+load_pinned = util.smart_history_actions_panel.load_pinned
+KeyboardThread = util.smart_history_actions_panel.KeyboardThread
+show_widgets = util.smart_history_actions_panel.show_widgets
+add_sentence_group = util.smart_history_actions_panel.add_sentence_group
 
 
 class MyController(QObject):
@@ -839,6 +832,10 @@ def start_client_gui():
 
     # 連接槽函數
     # controller.show_widgets_signal.connect(show_widgets)
+
+    with open("history_r.log", "a", encoding="utf-8") as f:
+        f.write(
+            f"in start_client_gui_IN : id(util.smart_history_actions_panel.unpinned_groups) = {id(util.smart_history_actions_panel.unpinned_groups)})\n")
 
     # 启动键盘监听线程
     kb_thread = KeyboardThread()

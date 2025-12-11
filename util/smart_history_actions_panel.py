@@ -9,6 +9,8 @@ from PySide6.QtGui import QPainter, QColor, QBrush, QFontMetrics, QPen, QTextLay
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QSize
 import tomllib
 
+with open("history_r.log", "a", encoding="utf-8") as f:
+    f.write(f"in smart_history_actions_panel_importing: id(unpinned_groups) = id(unpinned_groups))\n")
 
 # 配置文件路径
 CONFIG_FILE = "history_panel_config.toml"
@@ -897,7 +899,9 @@ class KeyboardThread(QThread):
         def handler(e):
             if e.event_type == "down":
                 self.trigger.emit()
-
+                with open("history_r.log", "a", encoding="utf-8") as f:
+                    f.write(
+                        f"in KeyboardThread : id(unpinned_groups) = {id(unpinned_groups)})\n")
         keyboard.hook_key("/", handler, suppress=True)
         keyboard.wait()
 

@@ -23,8 +23,11 @@ https://github.com/H1DDENADM1N/PyStand/commit/8be144dfa1ef2d145a96b95d8d162498a6
 
 """
 
-
+with open("history_r.log", "a", encoding="utf-8") as f:
+    f.write(f"in start_client_gui_admin.py 1 : id(smart_history_actions_panel.unpinned_groups) = id(start_client_gui.unpinned_groups))\n")
 from start_client_gui import start_client_gui
+with open("history_r.log", "a", encoding="utf-8") as f:
+    f.write(f"in start_client_gui_admin.py 2 : id(til.smart_history_actions_panel.unpinned_groups) = id(util.smart_history_actions_panel.unpinned_groups))\n")
 
 if __name__ == "__main__":
     start_client_gui()
