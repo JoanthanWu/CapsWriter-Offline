@@ -8,7 +8,6 @@ from pathlib import Path
 from platform import system
 from typing import List
 
-import colorama
 import typer
 
 from util.client.cosmic import Cosmic, console
@@ -34,9 +33,6 @@ from util.safe_logger import init_logging
 BASE_DIR = os.getcwd()
 os.chdir(BASE_DIR)
 # BASE_DIR = os.path.dirname(__file__); os.chdir(BASE_DIR)
-
-# 确保终端能使用 ANSI 控制字符
-colorama.init()
 
 # MacOS 的权限设置
 if system() == "Darwin" and not sys.argv[1:]:

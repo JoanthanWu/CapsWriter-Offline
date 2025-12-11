@@ -167,7 +167,13 @@ def 热词替换(句子):
 
 
 if __name__ == "__main__":
-    print("\x9b42m-------------开始---------------\x9b0m")
+    from rich.console import Console
+    from rich.theme import Theme
+
+    my_theme = Theme({"markdown.code": "cyan", "markdown.item.number": "yellow"})
+    console = Console(highlight=False, soft_wrap=False, theme=my_theme)
+
+    console.print("[green]-------------开始---------------[/]")
 
     热词文本 = """
         撒贝宁
@@ -182,4 +188,4 @@ if __name__ == "__main__":
     res = 热词替换("在乐清在")
     t4 = time()
 
-    print(f"{res=}    {t4-t3=}")
+    console.print(f"{res=}    {t4-t3=}")

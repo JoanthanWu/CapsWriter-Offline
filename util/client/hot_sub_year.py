@@ -40,10 +40,16 @@ def 热词替换(句子: str):
 
 
 if __name__ == "__main__":
-    print("\x9b42m-------------开始---------------\x9b0m")
+    from rich.console import Console
+    from rich.theme import Theme
+
+    my_theme = Theme({"markdown.code": "cyan", "markdown.item.number": "yellow"})
+    console = Console(highlight=False, soft_wrap=False, theme=my_theme)
+
+    console.print("[green]-------------开始---------------[/]")
 
     text = "一八四八年是法国二月革命的一年，二零二一年是疫情开始的一年。"
 
     res = 热词替换(text)
 
-    print(f"{res}")
+    console.print(f"{res}")
