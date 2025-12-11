@@ -9,9 +9,10 @@ from PySide6.QtGui import QPainter, QColor, QBrush, QFontMetrics, QPen, QTextLay
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QSize
 import tomllib
 
+import panelVal
 with open("history_r.log", "a", encoding="utf-8") as f:
-    f.write(f"in smart_history_actions_panel_importing: id(unpinned_groups) = id(unpinned_groups))\n")
-
+    f.write(f"in smart_history_actions_panel: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
+unpinned_groups = panelVal.unpinned_groups
 # 配置文件路径
 CONFIG_FILE = "history_panel_config.toml"
 
@@ -191,7 +192,7 @@ reviewed_lines = set()
 PINNED_FILE = "history_pinned_groups.json"
 MAX_TEXT_GROUPS = panel_config["global"]["max_text_groups"]
 pinned_groups = []
-unpinned_groups = []
+# unpinned_groups = []
 active_widgets = []
 global_timer = None
 mouse_hover_count = 0
@@ -816,6 +817,10 @@ class RoundedWidget(QWidget):
 
 
 def show_widgets():
+    from panelVal import unpinned_groups as unpinned_groups
+    with open("history_r.log", "a", encoding="utf-8") as f:
+        f.write(f"in show_widgets: id(unpinned_groups) = {id(unpinned_groups)})\n")
+
     global active_widgets, mouse_hover_count
     base_x = panel_config["widget"]["initial_x"]
     base_y = panel_config["widget"]["initial_y"]

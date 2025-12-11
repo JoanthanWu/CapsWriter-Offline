@@ -1,5 +1,5 @@
 # coding: utf-8
-
+# core_client.py
 import asyncio
 import os
 import signal
@@ -29,9 +29,9 @@ from util.empty_working_set import empty_current_working_set
 
 # ----------- smart_history_actions_panel -----------
 # if Config.enabled_smart_history_actions_panel:
-import util.smart_history_actions_panel
-with open("history_r.log", "a", encoding="utf-8") as f:
-    f.write(f"in core_client: id(util.smart_history_actions_panel.unpinned_groups) = {id(util.smart_history_actions_panel.unpinned_groups)})\n")
+# import panelVal
+# with open("history_r.log", "a", encoding="utf-8") as f:
+#     f.write(f"in core_client: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
 # ----------- smart_history_actions_panel -----------
 
 # 确保根目录位置正确，用相对路径加载模型

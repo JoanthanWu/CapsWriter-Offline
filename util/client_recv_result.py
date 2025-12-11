@@ -26,13 +26,16 @@ warnings.filterwarnings("ignore")
 
 
 # ----------- smart_history_actions_panel -----------
+import sys
 # if Config.enabled_smart_history_actions_panel:
-from . import smart_history_actions_panel
-add_sentence_group = smart_history_actions_panel.add_sentence_group
+# from . import smart_history_actions_panel
+# add_sentence_group = smart_history_actions_panel.add_sentence_group
 # from util.smart_history_actions_panel import smart_history_actions_panel
 # add_sentence_group = smart_history_actions_panel.add_sentence_group
-with open("history_r.log", "a", encoding="utf-8") as f:
-    f.write(f"in client_recv_result: id(smart_history_actions_panel.unpinned_groups) = {id(smart_history_actions_panel.unpinned_groups)})\n")
+
+# import panelVal
+# with open("history_r.log", "a", encoding="utf-8") as f:
+    # f.write(f"in client_recv_result: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
 
 buffer_group = {}
 def update_buffer(key, value):
@@ -45,8 +48,13 @@ def flush_buffer():
     global buffer_group
     if buffer_group:
         sent_group = buffer_group.copy()   # 建立副本
-        add_sentence_group(sent_group)     # 傳副本進去
-        buffer_group = {}                  # 清空暫存
+        # add_sentence_group(sent_group)     # 傳副本進去
+        # 核心：加标记 + 序列化 + 发送到stdout（管道）
+        send_data = f"###LIST_A###{json.dumps(sent_group, ensure_ascii=False)}\n"
+        # ensure_ascii=False：保留中文，避免序列化后中文变成\u编码
+        #console.print(f"{send_data}")
+        sys.stdout.write(send_data)
+        buffer_group.clear()                  # 清空暫存
 # ----------- smart_history_actions_panel -----------
 
 
@@ -55,42 +63,10 @@ async def recv_result():
         return
     console.print("[green]连接成功\n")
 
-    # --------------------------------------------------------测试数据
-    update_buffer('simplified', "from-client_recv_result.py update_buffer 这是简体AAA")
-    update_buffer('traditional', "from-client_recv_result.py update_buffer 繁體中文測試")
-    update_buffer('english', "from-client_recv_result.py update_buffer This is EnglishAAA")
-    flush_buffer()
-    # 测试数据z
-    test_groups = [
-        {
-            'traditional': "from-client_recv_result.py 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 ",
-        },
-        {
-            'simplified': "from-client_recv_result.py 这是一个只有简体的例子CCC",
-            'traditional': "",
-            'english': ""
-        },
-        {
-            'traditional': "from-client_recv_result.py 這是一個只有繁體的例子",
-        },
-        {
-            'english': "from-client_recv_result.py This is an English only exampleA."
-        }
-    ]
-    for group in test_groups:
-        add_sentence_group(group)
-    # 测试数据 ---------------------------------------------------
-
     try:
         while True:
-
-            # ----------- smart_history_actions_panel -----------
-            with open("history_r.log", "a", encoding="utf-8") as f:
-                f.write(
-                    f"in recv_result_IN_text : id(smart_history_actions_panel.unpinned_groups) = {id(smart_history_actions_panel.unpinned_groups)})\n")
-            # ----------- smart_history_actions_panel -----------
-
             # 接收消息
+            print(f"AAA 1 [Cosmic.offline_translate_needed] = {Cosmic.offline_translate_needed}")
             message = await Cosmic.websocket.recv()
             message = json.loads(message)
             text = message["text"]
@@ -115,7 +91,7 @@ async def recv_result():
             converter = opencc.OpenCC(Config.opencc_converter)
             traditional_text = converter.convert(text)
             convert_to_traditional_chinese_done = True
-
+            print(f"BBB 1 [Cosmic.offline_translate_needed] = {Cosmic.offline_translate_needed}")
             # 离线翻译
             offline_translate_done = False
             if Cosmic.offline_translate_needed and not Cosmic.transcribe_subtitles:
@@ -124,7 +100,9 @@ async def recv_result():
 
 # ----------- smart_history_actions_panel -----------
                 # if Config.enabled_smart_history_actions_panel:
+                console.print(f"    英文的翻譯現在開始：[green]{offline_translated_text}")
                 update_buffer('english', offline_translated_text)
+                console.print(f"    英文的翻譯完成：[green]{offline_translated_text}")
 # ----------- smart_history_actions_panel -----------
 
                 Cosmic.offline_translate_needed = False
@@ -137,7 +115,9 @@ async def recv_result():
 
 # ----------- smart_history_actions_panel -----------
                 # if Config.enabled_smart_history_actions_panel:
+                console.print(f"    英文的翻譯現在開始：[green]{online_translated_text}")
                 update_buffer('english', online_translated_text)
+                console.print(f"    英文的翻譯完成：[green]{online_translated_text}")
 # ----------- smart_history_actions_panel -----------
 
                 Cosmic.online_translate_needed = False
@@ -211,10 +191,10 @@ async def recv_result():
 
 
 # ----------- smart_history_actions_panel -----------
-                # if Config.enabled_smart_history_actions_panel:
-                print(f"from-client_recv_result.py A: {buffer_group}")
-                flush_buffer()
-                print(f"from-client_recv_result.py B: {buffer_group}")
+            # if Config.enabled_smart_history_actions_panel:
+            print(f"from-client_recv_result.py A: {buffer_group}")
+            flush_buffer()
+            print(f"from-client_recv_result.py B: {buffer_group}")
 # ----------- smart_history_actions_panel -----------
 
             Cosmic.opposite_state = False

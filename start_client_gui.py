@@ -1,3 +1,4 @@
+# start_client_gui.py
 import argparse
 import os
 import subprocess
@@ -35,47 +36,54 @@ from util.check_microphone_usage import is_microphone_in_use
 from util.check_process import check_process
 from util.config import ClientConfig as Config
 
-
-# ----------- smart_history_actions_panel -----------
 # if Config.enabled_smart_history_actions_panel:
+# ----------- smart_history_actions_panel -----------
+import json
 import util.smart_history_actions_panel
-with open("history_r.log", "a", encoding="utf-8") as f:
-    f.write(f"in start_client_gui: id(util.smart_history_actions_panel.unpinned_groups) = {id(util.smart_history_actions_panel.unpinned_groups)})\n")
 load_reviewed_lines = util.smart_history_actions_panel.load_reviewed_lines
 load_pinned = util.smart_history_actions_panel.load_pinned
 KeyboardThread = util.smart_history_actions_panel.KeyboardThread
 show_widgets = util.smart_history_actions_panel.show_widgets
 add_sentence_group = util.smart_history_actions_panel.add_sentence_group
 
+import panelVal
+with open("history_r.log", "a", encoding="utf-8") as f:
+    f.write(f"in start_client_gui: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
 
 class MyController(QObject):
-    # 定义信号
+    # 定义信号（保持不变）
     show_widgets_signal = Signal()
 
     def __init__(self):
         super().__init__()
+        # 1. 加锁：保护is_visible和widget的操作
+        self.lock = threading.Lock()
+        # 2. 信号绑定（保持不变）
         self.show_widgets_signal.connect(self._on_show_widgets)
-        self.widget = None  # 保存窗口对象引用（避免重复创建）
-        self.is_visible = False  # 新增：跟踪窗口可见性（初始隐藏）
+        # 3. 窗口引用+状态（保持不变）
+        self.widget = None
+        self.is_visible = False
 
     def _on_show_widgets(self):
-        # 1. 如果窗口未创建，先创建（只创建一次）
-        if self.widget is None:
-            self.widget = show_widgets()  # 假设show_widgets()返回窗口实例
+        # 加锁：避免并发修改is_visible
+        with self.lock:
+            # 1. 窗口未创建 → 安全创建（确保在UI主线程）
+            if self.widget is None:
+                self.widget = show_widgets()  # 必须返回Qt窗口实例（如QWidget/QMainWindow）
+                # 关键：给窗口设置父对象，避免垃圾回收
+                self.widget.setParent(None)  # 无父窗口则设为None，有主窗口则传主窗口实例
 
-        # 2. 根据当前状态切换显示/隐藏
-        if self.is_visible:
-            # 当前显示 → 隐藏
-            self.widget.hide()
-        else:
-            # 当前隐藏 → 显示
-            self.widget.show()
+            # 2. 安全切换显示/隐藏（UI主线程执行，无风险）
+            if self.is_visible:
+                self.widget.hide()
+            else:
+                self.widget.show()
+                self.widget.raise_()  # 可选：窗口置顶
+                # self.widget.activateWindow()  # 可选：激活窗口
 
-        # 3. 反转状态（显示→隐藏，隐藏→显示）
-        self.is_visible = not self.is_visible
+            # 3. 反转状态（锁内操作，避免并发）
+            self.is_visible = not self.is_visible
 
-
-controller = MyController()
 # ----------- smart_history_actions_panel -----------
 
 
@@ -612,10 +620,48 @@ class GUI(QMainWindow):
         self.update_timer.timeout.connect(self.update_text_box)
         self.update_timer.start(100)
 
+    '''    
     def enqueue_output(self, out, queue):
+            for line in iter(out.readline, ""):
+                line = line.strip()
+                queue.put(line)
+    '''
+
+    # ----------- smart_history_actions_panel -----------
+    # if Config.enabled_smart_history_actions_panel:
+    def enqueue_output(self, out, queue):
+        """读取 PIPE 输出：过滤 List_A 标记行，保留原有queue逻辑（GUI显示核心）"""
         for line in iter(out.readline, ""):
-            line = line.strip()
-            queue.put(line)
+            line_stripped = line.strip()
+            # if not line_stripped:  # 跳过空行，避免无效数据
+            #      continue
+
+            # ----------- 识别子进程的「显示界面」指令 -----------
+            if line_stripped.startswith("###SHOW_GUI###"):
+                # 发射信号，切换到UI主线程显示界面（关键！不能直接调用self.show_gui()）
+                controller.show_widgets_signal.emit()
+                continue
+
+            # ----------- 识别List_A标记 -----------
+            # 处理List_A标记行：只提取，不放入queue（不显示到GUI）
+            if line_stripped.startswith("###LIST_A###"):
+                try:
+                    # 提取List_A内容（去掉标记+反序列化）
+                    list_a_str = line_stripped.replace("###LIST_A###", "")
+                    self.List_A = json.loads(list_a_str)
+                    # 仅调试/记录，不影响GUI显示
+                    print(f"【程序内部提取】List_A：{self.List_A}")
+                    with open("history_yes.log", "a", encoding="utf-8") as f:
+                        f.write(f"in enqueue_output: self.List_A = {self.List_A}\n")
+                    add_sentence_group(self.List_A)
+                except json.JSONDecodeError:
+                    print(f"【警告】List_A解析失败：{line_stripped}")
+                continue  # 跳过，不放入queue
+
+            # ----------- 原有：普通内容放入队列供console显示 -----------
+            queue.put(line_stripped)
+    # ----------- smart_history_actions_panel -----------
+
 
     def update_text_box(self):
         # Update client text box
@@ -802,6 +848,8 @@ def start_client_gui():
 
     # ----------- smart_history_actions_panel -----------
     # if Config.enabled_smart_history_actions_panel:
+    global controller
+    controller = MyController()
     load_reviewed_lines()
     load_pinned()
 
@@ -834,8 +882,7 @@ def start_client_gui():
     # controller.show_widgets_signal.connect(show_widgets)
 
     with open("history_r.log", "a", encoding="utf-8") as f:
-        f.write(
-            f"in start_client_gui_IN : id(util.smart_history_actions_panel.unpinned_groups) = {id(util.smart_history_actions_panel.unpinned_groups)})\n")
+        f.write(f"in start_client_gui_IN : id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
 
     # 启动键盘监听线程
     kb_thread = KeyboardThread()
@@ -882,6 +929,9 @@ def read_file_list(file_list_path: Path):
 
 
 if __name__ == "__main__":
+    print ("start_client_gui.py is running")
+    with open("history_abc.log", "a", encoding="utf-8") as f:
+        f.write(f"in start_client_start_client_gui.py : AAA\n")
     parser = argparse.ArgumentParser(description="处理文件")
     parser.add_argument("files", nargs="*", type=Path, help="要处理的文件")
     parser.add_argument("--file-list", type=Path, help="包含文件列表的文本文件")
