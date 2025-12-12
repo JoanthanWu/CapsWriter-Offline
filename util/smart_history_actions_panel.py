@@ -527,8 +527,13 @@ class TextLineWidget(QWidget):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        label_pos = self.content_label.pos()
-        self.buttons_container.move(label_pos.x(), label_pos.y())
+        # 按钮容器定位到当前行的右侧（窗口右侧）
+        btn_width = self.buttons_container.sizeHint().width()
+        # 右侧间距 5px，按钮容器贴窗口右边缘
+        x = self.width() - btn_width - 5
+        # 垂直居中对齐文本
+        y = (self.height() - self.buttons_container.sizeHint().height()) // 2
+        self.buttons_container.move(x, y)
         self.buttons_container.setFixedSize(self.buttons_container.sizeHint())
 
     def enterEvent(self, event):
