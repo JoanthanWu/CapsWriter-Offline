@@ -4,7 +4,7 @@ import json
 import os
 import keyboard
 from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton,
-                               QHBoxLayout, QVBoxLayout, QFrame)
+                               QHBoxLayout, QVBoxLayout, QFrame, QInputDialog)
 from PySide6.QtGui import QPainter, QColor, QBrush, QFontMetrics, QPen, QTextLayout, QFont
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QSize
 import tomllib
@@ -98,6 +98,7 @@ DEFAULT_CONFIG = {
         "show_copy": True,
         "show_paste": True,
         "show_type": True,
+        "show_edit": True,
         "show_review": True
     },
     # 全局行为配置
@@ -474,12 +475,14 @@ class TextLineWidget(QWidget):
         btn_layout.setContentsMargins(0, 0, 0, 0)
 
         # 按钮顺序：pin → copy → paste → type → 横线 → review
-        button_order = ["pin", "copy", "paste", "type", "review"]
+        button_order = ["pin", "edit", "copy", "paste", "type", "review"]
         self.buttons = {}
         for name in button_order:
             if panel_config["button"][f"show_{name}"]:
                 if name == "pin":
                     self.buttons[name] = QPushButton("📌")
+                elif name == "edit":  # 新增编辑按钮
+                    self.buttons[name] = QPushButton("✏️")
                 elif name == "copy":
                     self.buttons[name] = QPushButton("📑")
                 elif name == "paste":
@@ -502,6 +505,8 @@ class TextLineWidget(QWidget):
         # 绑定事件
         if "pin" in self.buttons:
             self.buttons["pin"].clicked.connect(self.pin_group)
+        if "edit" in self.buttons:
+            self.buttons["edit"].clicked.connect(self.edit_label_text)
         if "copy" in self.buttons:
             self.buttons["copy"].clicked.connect(self.copy_only)
         if "paste" in self.buttons:
@@ -511,17 +516,17 @@ class TextLineWidget(QWidget):
         if "review" in self.buttons:
             self.buttons["review"].clicked.connect(self.toggle_review)
 
-        # 添加按钮到布局（前4个→横线→第5个）
+        # 添加按钮到布局（前5个→横线→第6个）
         btn_w, btn_h = panel_config["button"]["size"]
         button_list = list(self.buttons.items())
 
-        # 前4个按钮
-        for i, (name, btn) in enumerate(button_list[:4]):
+        # 前5个按钮
+        for i, (name, btn) in enumerate(button_list[:5]):
             btn.setFixedSize(btn_w, btn_h)
             btn_layout.addWidget(btn)
 
-        # 横线（仅当有第5个按钮）
-        if len(button_list) >= 5:
+        # 横线（仅当有第6个按钮）
+        if len(button_list) >= 6:
             separator = QFrame()
             separator.setFrameShape(QFrame.HLine)
             separator.setFrameShadow(QFrame.Sunken)
@@ -530,8 +535,8 @@ class TextLineWidget(QWidget):
             separator.setStyleSheet(f"border: 3px solid {sep_color}; background-color: transparent;")
             btn_layout.addWidget(separator)
 
-            # 第5个按钮（review）
-            name, btn = button_list[4]
+            # 第6个按钮（review）
+            name, btn = button_list[5]
             btn.setFixedSize(btn_w, btn_h)
             btn_layout.addWidget(btn)
 
@@ -591,6 +596,62 @@ class TextLineWidget(QWidget):
             self.buttons["pin"].style().unpolish(self.buttons["pin"])
             self.buttons["pin"].style().polish(self.buttons["pin"])
         reset_global_timer()
+
+    # ========== 新增：编辑Label文字的方法 ==========
+    def edit_label_text(self):
+        # 保存编辑前的原始文字（用于匹配全局数据的key）
+        old_text = self.text.strip()
+        # 弹出多行输入框，默认显示当前文字
+        new_text, ok = QInputDialog.getMultiLineText(
+            self,
+            "编辑文字",
+            "修改当前行的文字：",
+            self.text
+        )
+
+        if not ok:  # 点击取消，直接返回
+            return
+
+        new_text = new_text.strip()
+        if not new_text:  # 输入为空，提示并返回
+            # QMessageBox.warning(self, "提示", "编辑的文字不能为空！")
+            return
+
+        # 1. 更新当前控件的文字（界面立即生效）
+        self.text = new_text
+        self.content_label.setText(new_text)  # 触发多行省略逻辑
+
+        # 2. 同步更新父控件的 sentence_group（当前组数据）
+        if self.parent_widget and hasattr(self.parent_widget, 'sentence_group'):
+            # 找到当前行对应的 key（simplified/traditional/english）
+            target_key = None
+            for line_config in panel_config["text_lines"]:
+                key = line_config["key"]
+                # 用旧文字匹配对应key（关键！避免新文字和旧数据不匹配）
+                if self.parent_widget.sentence_group.get(key, "").strip() == old_text:
+                    target_key = key
+                    break
+
+            if target_key:
+                # 更新当前组的对应key值
+                self.parent_widget.sentence_group[target_key] = new_text
+
+                # 3. 同步更新全局数据源（pinned_groups/unpinned_groups）
+                global pinned_groups, unpinned_groups
+                # 更新固定组
+                for i, group in enumerate(pinned_groups):
+                    if group_equal(group, self.parent_widget.sentence_group):
+                        pinned_groups[i][target_key] = new_text
+                        save_pinned()  # 保存到文件，持久化
+                        break
+                # 更新非固定组
+                for i, group in enumerate(unpinned_groups):
+                    if group_equal(group, self.parent_widget.sentence_group):
+                        unpinned_groups[i][target_key] = new_text
+                        break
+
+        print(f"文字已更新：{new_text[:20]}...")
+        reset_global_timer()  # 重置自动关闭定时器
 
     def toggle_review(self):
         line = self.text.strip()
@@ -674,6 +735,10 @@ class RoundedWidget(QWidget):
                 border-bottom-left-radius: {panel_config['button']['border_radius']}px;
                 border-right: none;
             }}
+            QPushButton#btn_edit {{
+                border-radius: 0;
+                border-right: none;
+            }}
             QPushButton#btn_copy {{
                 border-radius: 0;
                 border-right: none;
@@ -726,6 +791,7 @@ class RoundedWidget(QWidget):
             }}
 
             /* 其他按钮（copy/paste/type）使用通用 hover 色 */
+            QPushButton#btn_edit:hover,
             QPushButton#btn_copy:hover,
             QPushButton#btn_paste:hover,
             QPushButton#btn_type:hover {{

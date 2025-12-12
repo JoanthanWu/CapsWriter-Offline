@@ -50,9 +50,9 @@
 			- 优化事件响应，避免高频触发鼠标进入 / 离开事件（enterEvent/leaveEvent）在多窗口场景下可能高频触发，尤其_delayed_leave_check的定时器若设置过短，会增加线程调度开销。优化方案：延长延迟检查时间（如从 50ms 增至 100ms），并在事件处理中增加判断（如当前窗口是否真的需要处理），减少无效调度。
 	7. - [ ] ☆ 精简内存占用，清理无效数据
 			- 精简内存占用，清理无效数据审查过的文本（reviewed_lines）会被拦截，但unpinned_groups中可能仍保留对应数据，占用内存。优化方案：每次加载审查记录后，过滤unpinned_groups和pinned_groups中已审查的文本组，及时清理无效数据。
-11. - [ ] 編輯功能(QTextEdit)
+11. - [x] 編輯功能(QInputDialog, QTextEdit)
 12. - [x] 所有按鈕改爲右側
-13. - [x] 鼠標所選中的label也應該隨着被改變, 讓人可以識別現在是在哪一個label？
+13. - [x] 鼠標所在的label隨着改變顏色, 讓人可以識別現在是在哪一個label？
 14. - [ ] 增加自由選擇是否加入句子種類的選項 `繁/簡/譯`
 
 ## `history-panel-function-test` 目录结构
