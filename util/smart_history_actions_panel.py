@@ -4,8 +4,8 @@ import json
 import os
 import keyboard
 from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QPushButton,
-                               QHBoxLayout, QVBoxLayout, QFrame, QInputDialog)
-from PySide6.QtGui import QPainter, QColor, QBrush, QFontMetrics, QPen, QTextLayout, QFont
+                               QHBoxLayout, QVBoxLayout, QFrame, QTextEdit, QDialog)
+from PySide6.QtGui import QPainter, QColor, QBrush, QFontMetrics, QPen, QTextLayout, QFont, QGuiApplication
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QSize
 import tomllib
 
@@ -382,6 +382,182 @@ class MultiLineElidedLabel(QLabel):
         super().setText("\n".join(lines))
 
 
+class EditTextDialog(QDialog):
+    def __init__(self, init_text, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("编辑文字")
+        self.init_text = init_text
+        self.result_text = ""
+
+        # 沿用原有配置的样式参数
+        self.border_radius = panel_config["widget"]["border_radius"]
+        self.bg_color = to_qcolor(panel_config["unpinned"]["bg_colors"][0])
+        self.border_color = to_qcolor(panel_config["unpinned"]["border_colors"][0])
+        # 编辑框字体大小比Label大1px（抵消QTextEdit的紧凑渲染）
+        self.font_family = panel_config["content"]["font_family"]
+        self.font_size = panel_config["content"]["font_size"] + 3  # 从9→10px，视觉匹配
+        self.line_spacing = panel_config["content"]["line_spacing"] + 2  # 增加行高
+
+        # 设置窗口属性（无边框+置顶，和原有窗口一致）
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Dialog)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+        # 主布局
+        main_layout = QVBoxLayout(self)
+        pad = panel_config["widget"]["padding"]
+        main_layout.setContentsMargins(pad[0] + 1, pad[1] + 1, pad[2] + 1, pad[3] + 1)
+        main_layout.setSpacing(panel_config["widget"]["spacing"])
+
+        # 文本编辑框（核心：优化字体/行高 + 自定义滚动条）
+        self.text_edit = QTextEdit()
+        self.text_edit.setText(init_text)
+
+        # ========== 关键：新增滚动条样式 + 优化文字显示 ==========
+        scroll_bar_style = f"""
+            /* 垂直滚动条整体样式 */
+            QScrollBar:vertical {{
+                background-color: {to_css_rgba(panel_config["unpinned"]["bg_colors"][1])};
+                width: 8px;
+                margin: 0px 0px 0px 0px;
+                border-radius: 4px;
+            }}
+            /* 滚动条滑块 */
+            QScrollBar::handle:vertical {{
+                background-color: {to_css_rgba(panel_config["button"]["hover_color"])};
+                border-radius: 4px;
+                min-height: 20px;
+            }}
+            /* 滑块hover状态 */
+            QScrollBar::handle:vertical:hover {{
+                background-color: {to_css_rgba(panel_config["button"]["normal_color"])};
+            }}
+            /* 滚动条上下箭头（隐藏，简化样式） */
+            QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical {{
+                height: 0px;
+                width: 0px;
+            }}
+            /* 滚动条上下空白区域 */
+            QScrollBar::sub-page:vertical, QScrollBar::add-page:vertical {{
+                background-color: {to_css_rgba(panel_config["unpinned"]["bg_colors"][0])};
+                border-radius: 4px;
+            }}
+            /* 水平滚动条（隐藏，只保留垂直） */
+            QScrollBar:horizontal {{
+                height: 0px;
+            }}
+        """
+
+        # 合并文字样式和滚动条样式
+        self.text_edit.setStyleSheet(f"""
+            QTextEdit {{
+                font-family: {self.font_family};
+                font-size: {self.font_size}px;
+                line-height: {self.line_spacing}px;
+                letter-spacing: 0.5px;
+                color: {to_css_rgba(panel_config["content"]["color"])};
+                background-color: {to_css_rgba(panel_config["unpinned"]["bg_colors"][1])};
+                border: {panel_config["widget"]["border_width"] - 2}px solid {to_css_rgba(panel_config["unpinned"]["border_colors"][1])};
+                border-radius: {self.border_radius - 2}px;
+                padding: 2px;
+            }}
+            QTextEdit:focus {{
+                border-color: {to_css_rgba(panel_config["button"]["hover_color"])};
+                outline: none;
+            }}
+            {scroll_bar_style}  /* 嵌入滚动条样式 */
+        """)
+
+        # 额外：强制设置字体（确保和Label完全一致）
+        edit_font = QFont(self.font_family, self.font_size)
+        edit_font.setBold(panel_config["content"]["font_bold"])
+        edit_font.setItalic(panel_config["content"]["font_italic"])
+        self.text_edit.setFont(edit_font)
+
+        # 设置编辑框大小（适配原有窗口宽度）
+        self.text_edit.setMinimumSize(panel_config["widget"]["width"] - 20, 150)
+        main_layout.addWidget(self.text_edit)
+
+        # 按钮布局（原有逻辑不变）
+        btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(3)
+        btn_layout.setContentsMargins(0, 5, 0, 0)
+
+        # 确认按钮
+        self.ok_btn = QPushButton("确认")
+        self.ok_btn.setFixedSize(50, 30)
+        self.ok_btn.clicked.connect(self.on_ok)
+        # 取消按钮
+        self.cancel_btn = QPushButton("取消")
+        self.cancel_btn.setFixedSize(50, 30)
+        self.cancel_btn.clicked.connect(self.on_cancel)
+
+        # 按钮样式（沿用原有按钮风格）
+        btn_style = f"""
+            QPushButton {{
+                font-family: {self.font_family};
+                font-size: {self.font_size + 5}px;
+                background-color: {to_css_rgba(panel_config["button"]["normal_color"])};
+                border: 1px solid {to_css_rgba(panel_config["unpinned"]["border_colors"][0])};
+                border-radius: {panel_config["button"]["border_radius"]}px;
+                color: #000;
+            }}
+            QPushButton:hover {{
+                background-color: {to_css_rgba(panel_config["button"]["hover_color"])};
+            }}
+            QPushButton:pressed {{
+                background-color: {to_css_rgba(panel_config["button"]["pinned_color"])};
+            }}
+        """
+        self.ok_btn.setStyleSheet(btn_style)
+        self.cancel_btn.setStyleSheet(btn_style)
+
+        btn_layout.addStretch()
+        btn_layout.addWidget(self.ok_btn)
+        btn_layout.addWidget(self.cancel_btn)
+        btn_layout.addStretch()
+        main_layout.addLayout(btn_layout)
+
+        # 调整窗口大小
+        self.adjustSize()
+        # 居中显示（相对于父窗口）
+        if parent:
+            self.move(parent.mapToGlobal(parent.rect().center()) - self.rect().center())
+
+    def paintEvent(self, event):
+        # 绘制圆角背景（和原有RoundedWidget一致）
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # 绘制背景
+        painter.setBrush(QBrush(self.bg_color))
+        painter.setPen(Qt.NoPen)
+        painter.drawRoundedRect(self.rect(), self.border_radius, self.border_radius)
+
+        # 绘制边框
+        pen = QPen(self.border_color)
+        pen.setWidth(panel_config["widget"]["border_width"])
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(
+            self.rect().x() + 1, self.rect().y() + 1,
+            self.rect().width() - 2, self.rect().height() - 2,
+            self.border_radius - 1, self.border_radius - 1
+        )
+
+    def on_ok(self):
+        self.result_text = self.text_edit.toPlainText().strip()
+        if not self.result_text:
+            #QMessageBox.warning(self, "提示", "编辑的文字不能为空！")
+            return
+        self.accept()
+
+    def on_cancel(self):
+        self.reject()
+
+    def get_result(self):
+        return self.result_text
+
+
 class TextLineWidget(QWidget):
     def __init__(self, text, title, is_pinned, is_reviewing, parent=None):
         super().__init__(parent)
@@ -601,57 +777,92 @@ class TextLineWidget(QWidget):
     def edit_label_text(self):
         # 保存编辑前的原始文字（用于匹配全局数据的key）
         old_text = self.text.strip()
-        # 弹出多行输入框，默认显示当前文字
-        new_text, ok = QInputDialog.getMultiLineText(
-            self,
-            "编辑文字",
-            "修改当前行的文字：",
-            self.text
-        )
 
-        if not ok:  # 点击取消，直接返回
-            return
+        # 1. 创建自定义编辑窗口
+        dialog = EditTextDialog(self.text, self)
+        # 先计算窗口大小（必须先调用adjustSize，否则尺寸为0）
+        dialog.adjustSize()
 
-        new_text = new_text.strip()
-        if not new_text:  # 输入为空，提示并返回
-            # QMessageBox.warning(self, "提示", "编辑的文字不能为空！")
-            return
+        # 2. 获取关键坐标/尺寸（修复：Qt6兼容的屏幕信息获取方式）
+        # 2.1 获取当前Label（content_label）的全局顶部坐标
+        label_top_global = self.content_label.mapToGlobal(self.content_label.rect().topLeft())
+        # 2.2 获取当前Label所在屏幕的可用区域（Qt6推荐写法，兼容多屏幕）
+        current_screen = QGuiApplication.screenAt(label_top_global)  # 获取Label所在的屏幕
+        if not current_screen:
+            current_screen = QGuiApplication.primaryScreen()  # 兜底：用主屏幕
+        screen_geo = current_screen.availableGeometry()  # 屏幕可用区域（排除任务栏）
+        screen_max_x = screen_geo.width()  # 屏幕最大X轴
+        screen_max_y = screen_geo.height()  # 屏幕最大Y轴
+        screen_bottom = screen_geo.bottom()  # 屏幕底部Y坐标（等价于screen_max_y）
+        screen_left = screen_geo.left()  # 屏幕左侧X坐标
+        screen_top = screen_geo.top()  # 屏幕顶部Y坐标
 
-        # 1. 更新当前控件的文字（界面立即生效）
-        self.text = new_text
-        self.content_label.setText(new_text)  # 触发多行省略逻辑
+        # 3. 计算编辑窗口的理想位置（顶部对齐Label顶部）
+        # 方案A：和Label左侧对齐
+        # dialog_x = label_top_global.x()
+        # 方案B：Label水平居中（推荐，避免编辑框超出屏幕右侧）
+        dialog_x = label_top_global.x() + (self.content_label.width() - dialog.width()) // 2
 
-        # 2. 同步更新父控件的 sentence_group（当前组数据）
-        if self.parent_widget and hasattr(self.parent_widget, 'sentence_group'):
-            # 找到当前行对应的 key（simplified/traditional/english）
-            target_key = None
-            for line_config in panel_config["text_lines"]:
-                key = line_config["key"]
-                # 用旧文字匹配对应key（关键！避免新文字和旧数据不匹配）
-                if self.parent_widget.sentence_group.get(key, "").strip() == old_text:
-                    target_key = key
-                    break
+        # 3.2 Y坐标：默认和Label顶部齐平
+        dialog_y = label_top_global.y()
 
-            if target_key:
-                # 更新当前组的对应key值
-                self.parent_widget.sentence_group[target_key] = new_text
+        # 4. 边界校验：确保编辑窗口不超出屏幕
+        # 4.1 校验右侧：若编辑框右侧超出屏幕，左移至屏幕内
+        if dialog_x + dialog.width() > screen_geo.right():
+            dialog_x = screen_geo.right() - dialog.width() - 10  # 留10px边距
+        # 4.2 校验左侧：若编辑框左侧小于屏幕左边界，右移至屏幕内
+        if dialog_x < screen_left:
+            dialog_x = screen_left + 10  # 留10px边距
+        # 4.3 校验底部：若编辑框底部超出屏幕，上移至底部贴屏幕
+        dialog_bottom = dialog_y + dialog.height()
+        if dialog_bottom > screen_bottom:
+            dialog_y = screen_bottom - dialog.height() - 10  # 留10px边距
+            # 兜底：若调整后顶部小于屏幕顶部，强制置顶
+            if dialog_y < screen_top:
+                dialog_y = screen_top + 10
 
-                # 3. 同步更新全局数据源（pinned_groups/unpinned_groups）
-                global pinned_groups, unpinned_groups
-                # 更新固定组
-                for i, group in enumerate(pinned_groups):
-                    if group_equal(group, self.parent_widget.sentence_group):
-                        pinned_groups[i][target_key] = new_text
-                        save_pinned()  # 保存到文件，持久化
+        # 5. 应用最终位置并显示窗口
+        dialog.move(dialog_x, dialog_y)
+
+        # 6. 执行窗口并处理结果（原有逻辑不变）
+        if dialog.exec() == QDialog.Accepted:
+            new_text = dialog.get_result()
+
+            # 1. 更新当前控件的文字（界面立即生效）
+            self.text = new_text
+            self.content_label.setText(new_text)  # 触发多行省略逻辑
+
+            # 2. 同步更新父控件的 sentence_group（当前组数据）
+            if self.parent_widget and hasattr(self.parent_widget, 'sentence_group'):
+                # 找到当前行对应的 key（simplified/traditional/english）
+                target_key = None
+                for line_config in panel_config["text_lines"]:
+                    key = line_config["key"]
+                    # 用旧文字匹配对应key（关键！避免新文字和旧数据不匹配）
+                    if self.parent_widget.sentence_group.get(key, "").strip() == old_text:
+                        target_key = key
                         break
-                # 更新非固定组
-                for i, group in enumerate(unpinned_groups):
-                    if group_equal(group, self.parent_widget.sentence_group):
-                        unpinned_groups[i][target_key] = new_text
-                        break
 
-        print(f"文字已更新：{new_text[:20]}...")
-        reset_global_timer()  # 重置自动关闭定时器
+                if target_key:
+                    # 更新当前组的对应key值
+                    self.parent_widget.sentence_group[target_key] = new_text
+
+                    # 3. 同步更新全局数据源（pinned_groups/unpinned_groups）
+                    global pinned_groups, unpinned_groups
+                    # 更新固定组
+                    for i, group in enumerate(pinned_groups):
+                        if group_equal(group, self.parent_widget.sentence_group):
+                            pinned_groups[i][target_key] = new_text
+                            save_pinned()  # 保存到文件，持久化
+                            break
+                    # 更新非固定组
+                    for i, group in enumerate(unpinned_groups):
+                        if group_equal(group, self.parent_widget.sentence_group):
+                            unpinned_groups[i][target_key] = new_text
+                            break
+
+            # print(f"文字已更新：{new_text[:20]}...")
+            reset_global_timer()  # 重置自动关闭定时器
 
     def toggle_review(self):
         line = self.text.strip()
