@@ -28,6 +28,7 @@ DEFAULT_CONFIG = {
         "font_italic": False,
         "color": [252, 220, 129, 255],
         "bg_color": [0, 0, 0, 0],
+        "hover_bg_color": [255, 240, 160, 140],
         "border_color": [0, 0, 0, 0],
         "border_width": 0,
         "min_width": 18,
@@ -42,6 +43,7 @@ DEFAULT_CONFIG = {
         "font_italic": False,
         "color": [255, 255, 255, 255],
         "bg_color": [0, 0, 0, 0],
+        "hover_bg_color": [80, 0, 22, 50],
         "border_color": [0, 0, 0, 0],
         "border_width": 0,
         "line_spacing": 3,
@@ -317,7 +319,8 @@ class MultiLineElidedLabel(QLabel):
         self.setWordWrap(True)
         # self.setFixedWidth(self.fixed_width)
         # 内容标签背景色（透明）
-        self.setStyleSheet(f"background-color: {to_css_rgba(panel_config['content']['bg_color'])};")
+        # self.setStyleSheet(f"background-color: {to_css_rgba(panel_config['content']['bg_color'])};")
+        self.setAttribute(Qt.WA_StyledBackground, True)
         # 解除宽度限制
         self.setMinimumWidth(0)
         self.setMaximumWidth(16777215)
@@ -388,6 +391,7 @@ class TextLineWidget(QWidget):
 
         # 容器背景透明（继承父容器颜色）
         self.setStyleSheet("")
+        self.setAttribute(Qt.WA_StyledBackground, True)
 
         self.line_layout = QHBoxLayout(self)
         self.line_layout.setSpacing(panel_config["content"]["line_spacing"])
@@ -410,13 +414,17 @@ class TextLineWidget(QWidget):
         font.setItalic(panel_config["title"]["font_italic"])  # 应用斜体配置
         self.title_label.setFont(font)
 
-        style_sheet = f"""
-            color: {to_css_rgba(panel_config["title"]["color"])};
-            background-color: {to_css_rgba(panel_config["title"]["bg_color"])};
-            border: {panel_config["title"]["border_width"]}px solid {to_css_rgba(panel_config["title"]["border_color"])};
-            padding: 0 {panel_config["title"]["padding"]}px;
-        """
-        self.title_label.setStyleSheet(style_sheet)
+
+        self.title_label.setAttribute(Qt.WA_StyledBackground, True)
+        # 原始样式用单行拼接，避免换行导致的解析问题
+        self.title_original_style = (
+            f"color: {to_css_rgba(panel_config['title']['color'])}; "
+            f"background-color: {to_css_rgba(panel_config['title']['bg_color'])}; "
+            f"border: {panel_config['title']['border_width']}px solid {to_css_rgba(panel_config['title']['border_color'])}; "
+            f"padding: 0 {panel_config['title']['padding']}px; "
+            f"border-radius: 4px;"
+        )
+        self.title_label.setStyleSheet(self.title_original_style)
 
         # 计算标题文字的实际宽度（根据字体和内容）
         font_metrics = self.title_label.fontMetrics()
@@ -437,11 +445,15 @@ class TextLineWidget(QWidget):
             panel_config["content"]["font_family"],
             panel_config["content"]["font_size"]
         ))
-        self.content_label.setStyleSheet(f"""
-            color: {to_css_rgba(panel_config["content"]["color"])};
-            background-color: {to_css_rgba(panel_config["content"]["bg_color"])};
-            border: {panel_config["content"]["border_width"]}px solid {to_css_rgba(panel_config["content"]["border_color"])};
-        """)
+
+        self.content_label.setAttribute(Qt.WA_StyledBackground, True)
+        self.content_original_style = (
+            f"color: {to_css_rgba(panel_config['content']['color'])}; "
+            f"background-color: {to_css_rgba(panel_config['content']['bg_color'])}; "
+            f"border: {panel_config['content']['border_width']}px solid {to_css_rgba(panel_config['content']['border_color'])}; "
+            f"border-radius: 4px;"
+        )
+        self.content_label.setStyleSheet(self.content_original_style)
         self.content_label.setText(text)
 
         # 布局拉伸设置（核心）
@@ -537,10 +549,21 @@ class TextLineWidget(QWidget):
         self.buttons_container.setFixedSize(self.buttons_container.sizeHint())
 
     def enterEvent(self, event):
+        # 标题 Label 切换悬浮样式
+        self.title_label.setStyleSheet(
+            f"{self.title_original_style} background-color: {to_css_rgba(panel_config['title']['hover_bg_color'])};"
+        )
+        # 内容 Label 切换悬浮样式
+        self.content_label.setStyleSheet(
+            f"{self.content_original_style} background-color: {to_css_rgba(panel_config['content']['hover_bg_color'])};"
+        )
         self.buttons_container.show()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
+        # 恢复 Label 原始样式
+        self.title_label.setStyleSheet(self.title_original_style)
+        self.content_label.setStyleSheet(self.content_original_style)
         self.buttons_container.hide()
         super().leaveEvent(event)
 
