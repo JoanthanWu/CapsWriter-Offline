@@ -30,7 +30,7 @@
 9. - ☑ 更改名字:
 	- 功能名字 : "智能历史操作面板 / Smart History Actions Panel" →
 		- smart_history_actions_panel → history_actions_panel
-		- enabled_smart_history_actions_panel → history_actions_panel_enabled
+		- ~~enabled_smart_history_actions_panel~~ → history_actions_panel_enabled
 	- 产生的文件名字:
     	- history_panel_config.toml : 配置文件名字
     	- history_pinned_groups.json : 储存固定组的文件名字
@@ -141,7 +141,11 @@ start_client_gui.py
 
 - [ ] Bug1. 鼠標離開面板後，`QTimer`有時候並沒有正確運行,來隱藏面板
 
-- [ ] Bug2: `Click_mode`: 錯誤的翻譯, 會導致不需要的翻譯. 原因: 錯誤的翻譯文件. 解決方法: 修正翻譯文件."Shift + 雙擊錄音鍵" 然後馬上 "錄音鍵" 會卡住不動, 應該是已經開啓任務之後, 對"capslock"的按鍵沒反應了
+- [ ] Bug2: `Click_mode`: 錯誤的翻譯, 會導致不需要的翻譯.
+
+- [x] Bug3: `Click_mode`: `Shift + 雙擊錄音鍵` 然後馬上 `錄音鍵` 會卡住不動, 應該是已經開啓任務之後, 對"capslock"的按鍵沒反應了
+   - 解決方法: 每次使用`shift + 雙擊錄音鍵`呼換出面板之後, 重置`last_time_released = 0`
+
 ```
 An error occurred: [WinError 1225] 遠端電腦拒絕網路連線。
 2025-12-12 14:05:50.417 | ERROR    | util.client_translate_offline:translate_offline:41 - 离线翻译时出错: [WinError 1225] 遠端電腦拒絕網路連線。

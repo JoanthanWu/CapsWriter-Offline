@@ -423,6 +423,7 @@ def click_mode(e: keyboard.KeyboardEvent):
             key_pressed = False
             saved_result_for_offline_translate_needed = False
             saved_result_for_online_translate_needed = False
+            last_time_released = 0
             restore_audio_playing()
             return
         # ----------- smart_history_actions_panel -----------
