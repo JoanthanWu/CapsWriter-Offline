@@ -106,7 +106,8 @@ DEFAULT_CONFIG = {
         "max_text_groups": 12,
         "auto_close_timeout": 1000,
         "window_stay_on_top": True,
-        "window_frameless": True
+        "window_frameless": True,
+        "history_panel_arrange_method": 1
     }
 }
 
@@ -1107,6 +1108,99 @@ class RoundedWidget(QWidget):
 
 
 def show_widgets():
+    match panel_config["global"]["history_panel_arrange_method"]:
+        case 0:
+            arrange_method_0()
+        case 1:
+            arrange_method_1()
+
+
+def arrange_method_1():
+    global active_widgets, mouse_hover_count
+    # 基础配置参数
+    base_x = panel_config["widget"]["initial_x"]
+    base_y = panel_config["widget"]["initial_y"]
+    spacing = panel_config["widget"]["spacing"]
+    widget_width = panel_config["widget"]["width"]  # 控件固定宽度（用于计算列偏移）
+
+    # ========== 关键：获取屏幕可用区域（Qt6兼容） ==========
+    # 获取主屏幕可用区域（排除任务栏/状态栏）
+    primary_screen = QGuiApplication.primaryScreen()
+    screen_geo = primary_screen.availableGeometry()
+    screen_bottom = screen_geo.bottom()  # 屏幕底部Y坐标（可用区域）
+    screen_left = screen_geo.left()      # 屏幕左侧X坐标
+    screen_right = screen_geo.right()    # 屏幕右侧X坐标
+
+    # 关闭已有控件（保留原有逻辑）
+    if active_widgets:
+        close_all_widgets()
+        return
+
+    # 重置悬浮计数和定时器（保留原有逻辑）
+    mouse_hover_count = 0
+    if global_timer and global_timer.isActive():
+        global_timer.stop()
+
+    # ========== 初始化列布局参数 ==========
+    current_col_x = base_x  # 当前列的X坐标（初始为base_x）
+    current_col_y = base_y  # 当前列的Y坐标（初始为base_y）
+    all_groups = []         # 合并固定组和非固定组（保持固定组优先）
+    # 1. 添加固定组（带标记）
+    for i, group in enumerate(pinned_groups):
+        all_groups.append(("pinned", i, group))
+    # 2. 添加非固定组（带标记）
+    for i, group in enumerate(unpinned_groups):
+        all_groups.append(("unpinned", i, group))
+
+    # ========== 按列排列所有控件 ==========
+    for group_type, idx, group in all_groups:
+        # 创建控件（保留原有属性）
+        w = RoundedWidget(group, group=group_type, index=idx)
+        flags = Qt.WindowFlags()
+        if panel_config["global"]["window_frameless"]:
+            flags |= Qt.FramelessWindowHint
+        if panel_config["global"]["window_stay_on_top"]:
+            flags |= Qt.WindowStaysOnTopHint
+        flags |= Qt.Tool | Qt.WindowDoesNotAcceptFocus
+        w.setWindowFlags(flags)
+        w.setAttribute(Qt.WA_TranslucentBackground)
+        w.adjustSize()  # 计算控件实际尺寸
+
+        # ========== 核心：判断是否需要换列 ==========
+        # 计算当前控件底部Y坐标（当前列Y + 控件高度）
+        widget_bottom = current_col_y + w.height()
+        # 如果当前控件底部超出屏幕底部 → 切换到下一列
+        if widget_bottom > screen_bottom - 100:
+            # 计算下一列X坐标：当前列X + 控件宽度 + 间距
+            current_col_x += widget_width + spacing
+            # 校验下一列是否超出屏幕右侧（兜底：若超出则重置到第一列，Y轴继续往下）
+            if current_col_x + widget_width > screen_right:
+                current_col_x = base_x
+                current_col_y = screen_bottom + spacing  # 超出屏幕右侧则移到屏幕下方
+            # 重置当前列Y坐标为顶部
+            current_col_y = base_y
+
+        # ========== 定位并显示控件 ==========
+        w.move(current_col_x, current_col_y)
+        w.show()
+        active_widgets.append(w)
+
+        # 更新当前列Y坐标（当前Y + 控件高度 + 行间距）
+        current_col_y += w.height() + spacing
+
+    # ========== 兜底：若所有列都超出屏幕 → 强制缩放到屏幕内 ==========
+    if current_col_x + widget_width > screen_right and current_col_y > screen_bottom:
+        # 极端情况：控件过多，所有列都超出 → 重置为原始单行排列（避免完全不可见）
+        current_y_reset = base_y
+        for w in active_widgets:
+            w.move(base_x, current_y_reset)
+            current_y_reset += w.height() + spacing
+            # 超出屏幕底部则截断（避免无限排列）
+            if current_y_reset > screen_bottom:
+                break
+                
+
+def arrange_method_0():
     global active_widgets, mouse_hover_count
     base_x = panel_config["widget"]["initial_x"]
     base_y = panel_config["widget"]["initial_y"]
