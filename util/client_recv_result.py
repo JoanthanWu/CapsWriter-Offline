@@ -27,6 +27,8 @@ warnings.filterwarnings("ignore")
 
 # ----------- smart_history_actions_panel -----------
 import sys
+from util.history_panel_situation_selector import situation_selector, history_panel_output_selector
+
 # if Config.enabled_smart_history_actions_panel:
 # from . import smart_history_actions_panel
 # add_sentence_group = smart_history_actions_panel.add_sentence_group
@@ -37,24 +39,6 @@ import sys
 # with open("history_r.log", "a", encoding="utf-8") as f:
     # f.write(f"in client_recv_result: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
 
-buffer_group = {}
-def update_buffer(key, value):
-    global buffer_group
-    # 填入或更新元素
-    buffer_group[key] = value.strip()
-
-
-def flush_buffer():
-    global buffer_group
-    if buffer_group:
-        sent_group = buffer_group.copy()   # 建立副本
-        # add_sentence_group(sent_group)     # 傳副本進去
-        # 核心：加标记 + 序列化 + 发送到stdout（管道）
-        send_data = f"###LIST_A###{json.dumps(sent_group, ensure_ascii=False)}\n"
-        # ensure_ascii=False：保留中文，避免序列化后中文变成\u编码
-        #console.print(f"{send_data}")
-        sys.stdout.write(send_data)
-        buffer_group.clear()                  # 清空暫存
 # ----------- smart_history_actions_panel -----------
 
 
@@ -75,15 +59,16 @@ async def recv_result():
             if not message["is_final"] or not text.strip():
                 continue
 
+            # ----------- smart_history_actions_panel -----------
+            # if Config.enabled_smart_history_actions_panel:
+            situation = situation_selector(Cosmic.opposite_state, Cosmic.offline_translate_needed, Cosmic.online_translate_needed)
+            # ----------- smart_history_actions_panel -----------
+
             # 消除末尾标点
             text = strip_punc(text)
 
             # 热词替换
             text = hot_sub(text)
-# ----------- smart_history_actions_panel -----------
-            # if Config.enabled_smart_history_actions_panel:
-            update_buffer('simplified', text)
-# ----------- smart_history_actions_panel -----------
 
             # 简繁转换
             convert_to_traditional_chinese_done = False
@@ -98,7 +83,7 @@ async def recv_result():
 
 # ----------- smart_history_actions_panel -----------
                 # if Config.enabled_smart_history_actions_panel:
-                update_buffer('english', offline_translated_text)
+                # update_buffer('english', offline_translated_text)
 # ----------- smart_history_actions_panel -----------
 
                 Cosmic.offline_translate_needed = False
@@ -111,7 +96,7 @@ async def recv_result():
 
 # ----------- smart_history_actions_panel -----------
                 # if Config.enabled_smart_history_actions_panel:
-                update_buffer('english', online_translated_text)
+                # update_buffer('english', online_translated_text)
 # ----------- smart_history_actions_panel -----------
 
                 Cosmic.online_translate_needed = False
@@ -165,7 +150,7 @@ async def recv_result():
 
 # ----------- smart_history_actions_panel -----------
                                 # if Config.enabled_smart_history_actions_panel:
-                                update_buffer('traditional', traditional_text)
+                                # update_buffer('traditional', traditional_text)
 # ----------- smart_history_actions_panel -----------
 
                         case _:
@@ -174,7 +159,7 @@ async def recv_result():
 
 # ----------- smart_history_actions_panel -----------
                                 # if Config.enabled_smart_history_actions_panel:
-                                update_buffer('traditional', traditional_text)
+                                # update_buffer('traditional', traditional_text)
 # ----------- smart_history_actions_panel -----------
 
                             else:
@@ -186,7 +171,16 @@ async def recv_result():
 
 # ----------- smart_history_actions_panel -----------
             # if Config.enabled_smart_history_actions_panel:
-            flush_buffer()
+            # flush_buffer()
+            offline_translated_text = locals().get("offline_translated_text", "")
+            online_translated_text = locals().get("online_translated_text", "")
+            history_panel_output_selector(
+                situation,
+                text,
+                traditional_text,
+                offline_translated_text,
+                online_translated_text
+            )
 # ----------- smart_history_actions_panel -----------
 
             Cosmic.opposite_state = False

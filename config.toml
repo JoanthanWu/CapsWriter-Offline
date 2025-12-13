@@ -275,6 +275,21 @@ opencc_converter = "s2t"
 # t2jp Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁体（OpenCC 标准，旧字体）到日文新字体
 # jp2t New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
 
+history_actions_panel_enabled = true
+
+output_traditional_when_simplified = true
+output_simplified_when_simplified_opposite_state = true
+output_traditional_when_simplified_offline_translate = true
+output_simplified_when_simplified_offline_translate = true
+output_traditional_when_simplified_online_translate = true
+output_simplified_when_simplified_online_translate = true
+
+output_simplified_when_traditional = true
+output_traditional_when_traditional_opposite_state = true
+output_simplified_when_traditional_offline_translate = true
+output_traditional_when_traditional_offline_translate = true
+output_simplified_when_traditional_online_translate = true
+output_traditional_when_traditional_online_translate = true
 
 # ======================LibreTranslate 配置==================================
 [libretranslate]

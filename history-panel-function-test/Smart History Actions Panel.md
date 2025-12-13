@@ -37,7 +37,7 @@
     	- history_sanitize_list.txt : 审查列表文件名字
     	- ~~history_received_text.log~~ : 接收到的文本日志文件名字(def add_sentence_group(new_group):)
 10. 優化潜在点
-    1.  - [ ] ★★★ 面板堆积位置算法
+   1.  - [ ] ★★★ 面板堆积位置算法
 		- 现在是第一块面板在固定位置，然后通过 Y 轴计算下一个面板的位置，如果数量太多的话, 这样会导致面板出现在屏幕外，影响使用体验。
 		- 优化方向：面板堆积位置算法应当根据面板数量、窗口尺寸、屏幕尺寸等因素，动态调整面板位置。
 	2.  - [ ] ★★☆ 复用窗口实例
@@ -46,19 +46,21 @@
            - 减少不必要的重绘与布局计算RoundedWidget的paintEvent中，_calc_background_size可能被频繁调用（如窗口移动、鼠标 hover 时），导致重复计算尺寸。优化方案：在resizeEvent中缓存背景尺寸（bg_width/bg_height），仅当窗口尺寸变化时更新，paintEvent直接复用缓存值，减少重复计算。
 	4. - [ ] ★★☆ 缓存文本处理结果，避免重复计算
 			- 缓存文本处理结果，避免重复计算MultiLineElidedLabel的setText()中，文本换行和省略号计算（基于QTextLayout）在文本或宽度不变时会重复执行，尤其长文本场景下耗时明显。优化方案：为文本处理结果添加缓存（如lru_cache），以 “文本内容 + 可用宽度” 为键，缓存处理后的换行文本和高度，相同输入直接复用结果，减少计算量。
-	5. - [ ] ☆ 降低 IO 操作频率，批量处理持久化
+	5. - ❌ ~~☆ 降低 IO 操作频率，批量处理持久化~~
 			- 降低 IO 操作频率，批量处理持久化目前每次pin_sentence_group()会立即调用save_pinned()写入文件，若短时间内频繁操作（如连续固定多个组），会产生多次磁盘 IO。优化方案：使用定时器实现批量保存，例如设置 1 秒延迟，若 1 秒内有新的固定操作则重置定时器，超时后一次性写入文件，减少 IO 次数。
 	6. - [ ] ☆ 优化事件响应，避免高频触发鼠标进入 / 离开事件
 			- 优化事件响应，避免高频触发鼠标进入 / 离开事件（enterEvent/leaveEvent）在多窗口场景下可能高频触发，尤其_delayed_leave_check的定时器若设置过短，会增加线程调度开销。优化方案：延长延迟检查时间（如从 50ms 增至 100ms），并在事件处理中增加判断（如当前窗口是否真的需要处理），减少无效调度。
 	7. - [ ] ☆ 精简内存占用，清理无效数据
 			- 精简内存占用，清理无效数据审查过的文本（reviewed_lines）会被拦截，但unpinned_groups中可能仍保留对应数据，占用内存。优化方案：每次加载审查记录后，过滤unpinned_groups和pinned_groups中已审查的文本组，及时清理无效数据。
+   8. - [ ] 看時機替換窗口關閉的動作`close()` 改爲 `hide()`, 減少窗口建立的次數
+         - 如果`pinned_groups or unpinned_groups` 沒有更新的時候使用`hide()`, 如果有更新的時候使用`close()`
 11. - [x] 編輯功能(~~QInputDialog~~, QTextEdit, QDialog)
     - 改爲使用  `QTextEdit + QDialog`
     - 爲此編輯框套用一致的風格
     - 邊界計算, 以免編輯框超出屏幕的範圍
 12. - [x] 所有按鈕改爲右側
 13. - [x] 鼠標所在的label隨着改變顏色, 讓人可以識別現在是在哪一個label？
-14. - [ ] 增加自由選擇是否加入句子種類的選項 `繁/簡/譯`
+14. - [x] 增加可自由選擇是否加入`繁/簡/譯`句子種類的選項 
 
 ## `history-panel-function-test` 目录结构
 ├─📄 010C smart_history_actions_panel_demo.py------------- # 以"行"为单位, 4个按钮功能正常
@@ -78,6 +80,15 @@
 ├─📄 history_sanitize_list.txt---------------------------- # 储存需要过滤的句子, 避免污染
 └─📄 Smart History Actions Panel.md----------------------- # 智能历史操作面板的进度和说明
 
+
+## 增加或者修改过的文件
+config.py
+config.toml
+history_panel_situation_selector.py
+client_recv_result.py
+client_shortcut_handler.py
+smart_history_actions_panel.py
+start_client_gui.py
 
 ## 整合Smart History Actions Panel 进 CapsWriter-Offline-GUI 遇到的难题
 - [x] 問題1. 无法正常把文字资料填进 PySide6 相关的函数中
