@@ -9,16 +9,15 @@ from PySide6.QtGui import QPainter, QColor, QBrush, QFontMetrics, QPen, QTextLay
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QSize
 import tomllib
 
-
 # 配置文件路径
 CONFIG_FILE = "history_panel_config.toml"
 
 DEFAULT_CONFIG = {
     # 文本行定义（可自定义顺序、标题、键）
     "text_lines": [
-        {"key": "simplified", "title": "简"},   # 简体
-        {"key": "traditional", "title": "繁"}, # 繁体
-        {"key": "english", "title": "译"}      # 英文
+        {"key": "simplified", "title": "简"},  # 简体
+        {"key": "traditional", "title": "繁"},  # 繁体
+        {"key": "english", "title": "译"}  # 英文
     ],
     # 标题文本配置
     "title": {
@@ -104,13 +103,12 @@ DEFAULT_CONFIG = {
     # 全局行为配置
     "global": {
         "max_text_groups": 12,
-        "auto_close_timeout": 1000,
+        "auto_close_timeout": 10000,  # 延长超时时间便于测试
         "window_stay_on_top": True,
         "window_frameless": True,
         "history_panel_arrange_method": 1
     }
 }
-
 
 
 # 颜色转换辅助函数（列表转QColor和CSS格式）
@@ -122,19 +120,18 @@ def to_qcolor(color_list):
 def to_css_rgba(color_list):
     """直接使用 0-255 的 alpha 值（符合 Qt 兼容的格式）"""
     try:
-        # 补全并校验颜色值（确保 r/g/b/a 在 0-255 范围内）
         if not isinstance(color_list, list):
-            color_list = [255, 255, 204, 255]  # 默认标题色
+            color_list = [255, 255, 204, 255]
 
         r = max(0, min(255, int(color_list[0]))) if len(color_list) > 0 else 255
         g = max(0, min(255, int(color_list[1]))) if len(color_list) > 1 else 255
         b = max(0, min(255, int(color_list[2]))) if len(color_list) > 2 else 204
-        a = max(0, min(255, int(color_list[3]))) if len(color_list) > 3 else 255  # 保留 0-255
+        a = max(0, min(255, int(color_list[3]))) if len(color_list) > 3 else 255
 
-        return f"rgba({r}, {g}, {b}, {a})"  # 直接使用 a 的原始值（不除以 255）
+        return f"rgba({r}, {g}, {b}, {a})"
     except Exception as e:
         print(f"颜色解析错误：{e}，使用默认色")
-        return "rgba(255, 255, 204, 255)"  # 默认标题色（alpha=255）
+        return "rgba(255, 255, 204, 255)"
 
 
 # 读取配置文件（不存在或无效时生成默认配置）
@@ -194,9 +191,11 @@ PINNED_FILE = "history_pinned_groups.json"
 MAX_TEXT_GROUPS = panel_config["global"]["max_text_groups"]
 pinned_groups = []
 unpinned_groups = []
-active_widgets = []
+cached_widgets = []  # 缓存所有创建过的窗口实例（复用）
+active_displayed_widgets = []  # 当前显示的窗口列表
 global_timer = None
 mouse_hover_count = 0
+is_widgets_visible = False  # 新增：标记窗口是否处于显示状态
 
 
 # 读取审查文件
@@ -236,12 +235,15 @@ def load_pinned():
         pinned_groups = []
 
 
-# 核心逻辑
-def close_all_widgets():
-    global active_widgets
-    for w in active_widgets[:]:
-        w.close()
-    active_widgets.clear()
+# 核心逻辑 - 隐藏所有窗口（替代关闭）
+def hide_all_widgets():
+    """隐藏所有缓存的窗口，不释放资源"""
+    global active_displayed_widgets, mouse_hover_count, is_widgets_visible
+    mouse_hover_count = 0
+    for w in cached_widgets:
+        w.hide()
+    active_displayed_widgets.clear()
+    is_widgets_visible = False  # 隐藏时同步更新状态标记
 
 
 def reset_global_timer():
@@ -251,7 +253,7 @@ def reset_global_timer():
     if global_timer is None:
         global_timer = QTimer()
         global_timer.setSingleShot(True)
-        global_timer.timeout.connect(close_all_widgets)
+        global_timer.timeout.connect(hide_all_widgets)  # hide_all_widgets已同步状态
     if global_timer.isActive():
         global_timer.stop()
     global_timer.start(panel_config["global"]["auto_close_timeout"])
@@ -286,9 +288,21 @@ def add_sentence_group(new_group):
 
     unpinned_groups.append(new_group)
     max_unpinned = MAX_TEXT_GROUPS - len(pinned_groups)
+
+    # ========== 关键修改开始 ==========
+    # 1. 校验 max_unpinned 有效性，避免负数导致无限循环
+    if max_unpinned < 0:
+        unpinned_groups.clear()  # 固定组已超上限，清空所有非固定组
+        print("固定组数量已达上限，清空所有非固定组")
+        return
+
+    # 2. 循环移除旧数据时，增加空列表判断
     while len(unpinned_groups) > max_unpinned:
+        if not unpinned_groups:  # 空列表时直接退出循环
+            break
         unpinned_groups.pop(0)
         print("移除最旧未钉住组")
+    # ========== 关键修改结束 ==========
 
 
 def pin_sentence_group(group):
@@ -316,43 +330,33 @@ class MultiLineElidedLabel(QLabel):
     def __init__(self, text="", parent=None):
         super().__init__(text, parent)
         self.max_lines = panel_config["content"]["max_lines"]
-        # self.fixed_width = panel_config["content"]["width"]
         self.ellipsis = panel_config["content"]["ellipsis"]
         self.setWordWrap(True)
-        # self.setFixedWidth(self.fixed_width)
-        # 内容标签背景色（透明）
-        # self.setStyleSheet(f"background-color: {to_css_rgba(panel_config['content']['bg_color'])};")
         self.setAttribute(Qt.WA_StyledBackground, True)
-        # 解除宽度限制
         self.setMinimumWidth(0)
         self.setMaximumWidth(16777215)
-        # 新增：设置内容字体（包含粗体和斜体）
+
         font = QFont(
             panel_config["content"]["font_family"],
             panel_config["content"]["font_size"]
         )
-        font.setBold(panel_config["content"]["font_bold"])  # 应用粗体配置
-        font.setItalic(panel_config["content"]["font_italic"])  # 应用斜体配置
+        font.setBold(panel_config["content"]["font_bold"])
+        font.setItalic(panel_config["content"]["font_italic"])
         self.setFont(font)
 
     def setText(self, text):
         fm = QFontMetrics(self.font())
         line_height = fm.lineSpacing() + panel_config["content"]["line_spacing"]
 
-        # 关键：获取父容器（TextLineWidget）的总宽度（即widget分配给该行的宽度）
         if self.parent() and self.parent().width() > 0:
-            # 总宽度 = 父容器宽度 - 标题宽度 - 两边边距（避免溢出）
             parent_width = self.parent().width()
-            title_width = self.parent().title_label.width()  # 标题实际宽度
-            layout_width = parent_width - title_width - 20  # 减20避免边距挤压
+            title_width = self.parent().title_label.width()
+            layout_width = parent_width - title_width - 20
         else:
-            #  fallback：使用配置的content.width（500）
             layout_width = panel_config["content"].get("width", 500)
 
-        # 确保最小宽度（避免过窄）
         layout_width = max(layout_width, 100)
 
-        # 以下是原有的文本换行逻辑（使用计算出的layout_width）
         layout = QTextLayout(text, self.font())
         layout.beginLayout()
         lines = []
@@ -361,7 +365,7 @@ class MultiLineElidedLabel(QLabel):
             line = layout.createLine()
             if not line.isValid():
                 break
-            line.setLineWidth(layout_width)  # 使用计算出的可用宽度
+            line.setLineWidth(layout_width)
             start = line.textStart()
             length = line.textLength()
             lines.append(text[start:start + length])
@@ -373,13 +377,12 @@ class MultiLineElidedLabel(QLabel):
 
         if more_lines_exist and lines:
             last_line = lines[-1]
-            # 用计算出的layout_width判断是否需要省略号
             while last_line and fm.horizontalAdvance(last_line + self.ellipsis) > layout_width:
                 last_line = last_line[:-1]
             lines[-1] = last_line + self.ellipsis
 
         actual_lines = len(lines)
-        self.setFixedHeight(actual_lines * line_height)  # 高度自适应行数
+        self.setFixedHeight(actual_lines * line_height)
         super().setText("\n".join(lines))
 
 
@@ -390,65 +393,52 @@ class EditTextDialog(QDialog):
         self.init_text = init_text
         self.result_text = ""
 
-        # 沿用原有配置的样式参数
         self.border_radius = panel_config["widget"]["border_radius"]
         self.bg_color = to_qcolor(panel_config["unpinned"]["bg_colors"][0])
         self.border_color = to_qcolor(panel_config["unpinned"]["border_colors"][0])
-        # 编辑框字体大小比Label大1px（抵消QTextEdit的紧凑渲染）
         self.font_family = panel_config["content"]["font_family"]
-        self.font_size = panel_config["content"]["font_size"] + 3  # 从9→10px，视觉匹配
-        self.line_spacing = panel_config["content"]["line_spacing"] + 2  # 增加行高
+        self.font_size = panel_config["content"]["font_size"] + 3
+        self.line_spacing = panel_config["content"]["line_spacing"] + 2
 
-        # 设置窗口属性（无边框+置顶，和原有窗口一致）
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Dialog)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        # 主布局
         main_layout = QVBoxLayout(self)
         pad = panel_config["widget"]["padding"]
         main_layout.setContentsMargins(pad[0] + 1, pad[1] + 1, pad[2] + 1, pad[3] + 1)
         main_layout.setSpacing(panel_config["widget"]["spacing"])
 
-        # 文本编辑框（核心：优化字体/行高 + 自定义滚动条）
         self.text_edit = QTextEdit()
         self.text_edit.setText(init_text)
 
-        # ========== 关键：新增滚动条样式 + 优化文字显示 ==========
         scroll_bar_style = f"""
-            /* 垂直滚动条整体样式 */
             QScrollBar:vertical {{
                 background-color: {to_css_rgba(panel_config["unpinned"]["bg_colors"][1])};
                 width: 8px;
                 margin: 0px 0px 0px 0px;
                 border-radius: 4px;
             }}
-            /* 滚动条滑块 */
             QScrollBar::handle:vertical {{
                 background-color: {to_css_rgba(panel_config["button"]["hover_color"])};
                 border-radius: 4px;
                 min-height: 20px;
             }}
-            /* 滑块hover状态 */
             QScrollBar::handle:vertical:hover {{
                 background-color: {to_css_rgba(panel_config["button"]["normal_color"])};
             }}
-            /* 滚动条上下箭头（隐藏，简化样式） */
             QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical {{
                 height: 0px;
                 width: 0px;
             }}
-            /* 滚动条上下空白区域 */
             QScrollBar::sub-page:vertical, QScrollBar::add-page:vertical {{
                 background-color: {to_css_rgba(panel_config["unpinned"]["bg_colors"][0])};
                 border-radius: 4px;
             }}
-            /* 水平滚动条（隐藏，只保留垂直） */
             QScrollBar:horizontal {{
                 height: 0px;
             }}
         """
 
-        # 合并文字样式和滚动条样式
         self.text_edit.setStyleSheet(f"""
             QTextEdit {{
                 font-family: {self.font_family};
@@ -465,34 +455,28 @@ class EditTextDialog(QDialog):
                 border-color: {to_css_rgba(panel_config["button"]["hover_color"])};
                 outline: none;
             }}
-            {scroll_bar_style}  /* 嵌入滚动条样式 */
+            {scroll_bar_style}
         """)
 
-        # 额外：强制设置字体（确保和Label完全一致）
         edit_font = QFont(self.font_family, self.font_size)
         edit_font.setBold(panel_config["content"]["font_bold"])
         edit_font.setItalic(panel_config["content"]["font_italic"])
         self.text_edit.setFont(edit_font)
 
-        # 设置编辑框大小（适配原有窗口宽度）
         self.text_edit.setMinimumSize(panel_config["widget"]["width"] - 20, 150)
         main_layout.addWidget(self.text_edit)
 
-        # 按钮布局（原有逻辑不变）
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(3)
         btn_layout.setContentsMargins(0, 5, 0, 0)
 
-        # 确认按钮
         self.ok_btn = QPushButton("确认")
         self.ok_btn.setFixedSize(50, 30)
         self.ok_btn.clicked.connect(self.on_ok)
-        # 取消按钮
         self.cancel_btn = QPushButton("取消")
         self.cancel_btn.setFixedSize(50, 30)
         self.cancel_btn.clicked.connect(self.on_cancel)
 
-        # 按钮样式（沿用原有按钮风格）
         btn_style = f"""
             QPushButton {{
                 font-family: {self.font_family};
@@ -518,23 +502,18 @@ class EditTextDialog(QDialog):
         btn_layout.addStretch()
         main_layout.addLayout(btn_layout)
 
-        # 调整窗口大小
         self.adjustSize()
-        # 居中显示（相对于父窗口）
         if parent:
             self.move(parent.mapToGlobal(parent.rect().center()) - self.rect().center())
 
     def paintEvent(self, event):
-        # 绘制圆角背景（和原有RoundedWidget一致）
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # 绘制背景
         painter.setBrush(QBrush(self.bg_color))
         painter.setPen(Qt.NoPen)
         painter.drawRoundedRect(self.rect(), self.border_radius, self.border_radius)
 
-        # 绘制边框
         pen = QPen(self.border_color)
         pen.setWidth(panel_config["widget"]["border_width"])
         painter.setPen(pen)
@@ -548,7 +527,6 @@ class EditTextDialog(QDialog):
     def on_ok(self):
         self.result_text = self.text_edit.toPlainText().strip()
         if not self.result_text:
-            #QMessageBox.warning(self, "提示", "编辑的文字不能为空！")
             return
         self.accept()
 
@@ -567,34 +545,27 @@ class TextLineWidget(QWidget):
         self.is_pinned = is_pinned
         self.is_reviewing = is_reviewing
 
-        # 容器背景透明（继承父容器颜色）
         self.setStyleSheet("")
         self.setAttribute(Qt.WA_StyledBackground, True)
 
         self.line_layout = QHBoxLayout(self)
         self.line_layout.setSpacing(panel_config["content"]["line_spacing"])
-        # 读取配置的内边距（左、上、右、下）
         margins = panel_config["content"]["margins"]
-        # 容错处理：确保参数是4个整数
         if not isinstance(margins, list) or len(margins) != 4:
-            margins = [0, 0, 0, 0]  # 默认为0
+            margins = [0, 0, 0, 0]
         left, top, right, bottom = margins
-        self.line_layout.setContentsMargins(left, top, right, bottom)  # 应用自定义内边距
+        self.line_layout.setContentsMargins(left, top, right, bottom)
 
-        # 标题标签（自适应宽度）
         self.title_label = QLabel(title)
-        # 新增：设置标题字体（包含粗体和斜体）
         font = QFont(
             panel_config["title"]["font_family"],
             panel_config["title"]["font_size"]
         )
-        font.setBold(panel_config["title"]["font_bold"])  # 应用粗体配置
-        font.setItalic(panel_config["title"]["font_italic"])  # 应用斜体配置
+        font.setBold(panel_config["title"]["font_bold"])
+        font.setItalic(panel_config["title"]["font_italic"])
         self.title_label.setFont(font)
 
-
         self.title_label.setAttribute(Qt.WA_StyledBackground, True)
-        # 原始样式用单行拼接，避免换行导致的解析问题
         self.title_original_style = (
             f"color: {to_css_rgba(panel_config['title']['color'])}; "
             f"background-color: {to_css_rgba(panel_config['title']['bg_color'])}; "
@@ -604,20 +575,14 @@ class TextLineWidget(QWidget):
         )
         self.title_label.setStyleSheet(self.title_original_style)
 
-        # 计算标题文字的实际宽度（根据字体和内容）
         font_metrics = self.title_label.fontMetrics()
-        text_width = font_metrics.horizontalAdvance(title)  # 文字本身宽度
-        total_width = text_width + 2 * panel_config["title"]["padding"]  # 加上左右内边距
-
-        # 应用 min/max 宽度限制（来自配置）
+        text_width = font_metrics.horizontalAdvance(title)
+        total_width = text_width + 2 * panel_config["title"]["padding"]
         min_width = panel_config["title"]["min_width"]
         max_width = panel_config["title"]["max_width"]
-        final_width = max(min_width, min(total_width, max_width))  # 限制在 [min, max] 范围内
-        self.title_label.setFixedWidth(final_width)  # 标题固定为计算后的宽度
+        final_width = max(min_width, min(total_width, max_width))
+        self.title_label.setFixedWidth(final_width)
 
-        self.line_layout.addWidget(self.title_label)
-
-        # 内容标签（占据剩余空间）
         self.content_label = MultiLineElidedLabel(text)
         self.content_label.setFont(QFont(
             panel_config["content"]["font_family"],
@@ -634,31 +599,24 @@ class TextLineWidget(QWidget):
         self.content_label.setStyleSheet(self.content_original_style)
         self.content_label.setText(text)
 
-        # 布局拉伸设置（核心）
-        # 标题拉伸因子为 0（不拉伸，保持自身宽度）
-        # 内容拉伸因子为 1（占据所有剩余空间）
         self.line_layout.addWidget(self.title_label, stretch=0)
         self.line_layout.addWidget(self.content_label, stretch=1)
 
-        # 按钮容器（背景透明）
         self.buttons_container = QWidget(self)
         self.buttons_container.setAttribute(Qt.WA_TranslucentBackground)
-        # self.buttons_container.setStyleSheet("")
         self.buttons_container.hide()
 
-        # 按钮布局
         btn_layout = QHBoxLayout(self.buttons_container)
         btn_layout.setSpacing(0)
         btn_layout.setContentsMargins(0, 0, 0, 0)
 
-        # 按钮顺序：pin → copy → paste → type → 横线 → review
         button_order = ["pin", "edit", "copy", "paste", "type", "review"]
         self.buttons = {}
         for name in button_order:
             if panel_config["button"][f"show_{name}"]:
                 if name == "pin":
                     self.buttons[name] = QPushButton("📌")
-                elif name == "edit":  # 新增编辑按钮
+                elif name == "edit":
                     self.buttons[name] = QPushButton("✏️")
                 elif name == "copy":
                     self.buttons[name] = QPushButton("📑")
@@ -669,7 +627,6 @@ class TextLineWidget(QWidget):
                 elif name == "review":
                     self.buttons[name] = QPushButton("⛓")
 
-        # 设置按钮属性
         for name, btn in self.buttons.items():
             btn.setObjectName(f"btn_{name}")
             if name == "pin":
@@ -679,7 +636,6 @@ class TextLineWidget(QWidget):
             btn.style().unpolish(btn)
             btn.style().polish(btn)
 
-        # 绑定事件
         if "pin" in self.buttons:
             self.buttons["pin"].clicked.connect(self.pin_group)
         if "edit" in self.buttons:
@@ -693,16 +649,13 @@ class TextLineWidget(QWidget):
         if "review" in self.buttons:
             self.buttons["review"].clicked.connect(self.toggle_review)
 
-        # 添加按钮到布局（前5个→横线→第6个）
         btn_w, btn_h = panel_config["button"]["size"]
         button_list = list(self.buttons.items())
 
-        # 前5个按钮
         for i, (name, btn) in enumerate(button_list[:5]):
             btn.setFixedSize(btn_w, btn_h)
             btn_layout.addWidget(btn)
 
-        # 横线（仅当有第6个按钮）
         if len(button_list) >= 6:
             separator = QFrame()
             separator.setFrameShape(QFrame.HLine)
@@ -712,7 +665,6 @@ class TextLineWidget(QWidget):
             separator.setStyleSheet(f"border: 3px solid {sep_color}; background-color: transparent;")
             btn_layout.addWidget(separator)
 
-            # 第6个按钮（review）
             name, btn = button_list[5]
             btn.setFixedSize(btn_w, btn_h)
             btn_layout.addWidget(btn)
@@ -721,21 +673,16 @@ class TextLineWidget(QWidget):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        # 按钮容器定位到当前行的右侧（窗口右侧）
         btn_width = self.buttons_container.sizeHint().width()
-        # 右侧间距 5px，按钮容器贴窗口右边缘
         x = self.width() - btn_width - 5
-        # 垂直居中对齐文本
         y = (self.height() - self.buttons_container.sizeHint().height()) // 2
         self.buttons_container.move(x, y)
         self.buttons_container.setFixedSize(self.buttons_container.sizeHint())
 
     def enterEvent(self, event):
-        # 标题 Label 切换悬浮样式
         self.title_label.setStyleSheet(
             f"{self.title_original_style} background-color: {to_css_rgba(panel_config['title']['hover_bg_color'])};"
         )
-        # 内容 Label 切换悬浮样式
         self.content_label.setStyleSheet(
             f"{self.content_original_style} background-color: {to_css_rgba(panel_config['content']['hover_bg_color'])};"
         )
@@ -743,13 +690,11 @@ class TextLineWidget(QWidget):
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        # 恢复 Label 原始样式
         self.title_label.setStyleSheet(self.title_original_style)
         self.content_label.setStyleSheet(self.content_original_style)
         self.buttons_container.hide()
         super().leaveEvent(event)
 
-    # 按钮功能
     def copy_only(self):
         QApplication.clipboard().setText(self.text)
         print(f"已复制: {self.text[:20]}...")
@@ -759,11 +704,11 @@ class TextLineWidget(QWidget):
         QApplication.clipboard().setText(self.text)
         time.sleep(0.1)
         keyboard.send("ctrl+v")
-        close_all_widgets()
+        hide_all_widgets()
 
     def simulate_typing(self):
         keyboard.write(self.text)
-        close_all_widgets()
+        hide_all_widgets()
 
     def pin_group(self):
         self.parent_widget.pin_group()
@@ -774,96 +719,64 @@ class TextLineWidget(QWidget):
             self.buttons["pin"].style().polish(self.buttons["pin"])
         reset_global_timer()
 
-    # ========== 新增：编辑Label文字的方法 ==========
     def edit_label_text(self):
-        # 保存编辑前的原始文字（用于匹配全局数据的key）
         old_text = self.text.strip()
-
-        # 1. 创建自定义编辑窗口
         dialog = EditTextDialog(self.text, self)
-        # 先计算窗口大小（必须先调用adjustSize，否则尺寸为0）
         dialog.adjustSize()
 
-        # 2. 获取关键坐标/尺寸（修复：Qt6兼容的屏幕信息获取方式）
-        # 2.1 获取当前Label（content_label）的全局顶部坐标
         label_top_global = self.content_label.mapToGlobal(self.content_label.rect().topLeft())
-        # 2.2 获取当前Label所在屏幕的可用区域（Qt6推荐写法，兼容多屏幕）
-        current_screen = QGuiApplication.screenAt(label_top_global)  # 获取Label所在的屏幕
+        current_screen = QGuiApplication.screenAt(label_top_global)
         if not current_screen:
-            current_screen = QGuiApplication.primaryScreen()  # 兜底：用主屏幕
-        screen_geo = current_screen.availableGeometry()  # 屏幕可用区域（排除任务栏）
-        screen_max_x = screen_geo.width()  # 屏幕最大X轴
-        screen_max_y = screen_geo.height()  # 屏幕最大Y轴
-        screen_bottom = screen_geo.bottom()  # 屏幕底部Y坐标（等价于screen_max_y）
-        screen_left = screen_geo.left()  # 屏幕左侧X坐标
-        screen_top = screen_geo.top()  # 屏幕顶部Y坐标
+            current_screen = QGuiApplication.primaryScreen()
+        screen_geo = current_screen.availableGeometry()
+        screen_max_x = screen_geo.width()
+        screen_max_y = screen_geo.height()
+        screen_bottom = screen_geo.bottom()
+        screen_left = screen_geo.left()
+        screen_top = screen_geo.top()
 
-        # 3. 计算编辑窗口的理想位置（顶部对齐Label顶部）
-        # 方案A：和Label左侧对齐
-        # dialog_x = label_top_global.x()
-        # 方案B：Label水平居中（推荐，避免编辑框超出屏幕右侧）
         dialog_x = label_top_global.x() + (self.content_label.width() - dialog.width()) // 2
-
-        # 3.2 Y坐标：默认和Label顶部齐平
         dialog_y = label_top_global.y()
 
-        # 4. 边界校验：确保编辑窗口不超出屏幕
-        # 4.1 校验右侧：若编辑框右侧超出屏幕，左移至屏幕内
         if dialog_x + dialog.width() > screen_geo.right():
-            dialog_x = screen_geo.right() - dialog.width() - 10  # 留10px边距
-        # 4.2 校验左侧：若编辑框左侧小于屏幕左边界，右移至屏幕内
+            dialog_x = screen_geo.right() - dialog.width() - 10
         if dialog_x < screen_left:
-            dialog_x = screen_left + 10  # 留10px边距
-        # 4.3 校验底部：若编辑框底部超出屏幕，上移至底部贴屏幕
+            dialog_x = screen_left + 10
         dialog_bottom = dialog_y + dialog.height()
         if dialog_bottom > screen_bottom:
-            dialog_y = screen_bottom - dialog.height() - 10  # 留10px边距
-            # 兜底：若调整后顶部小于屏幕顶部，强制置顶
+            dialog_y = screen_bottom - dialog.height() - 10
             if dialog_y < screen_top:
                 dialog_y = screen_top + 10
 
-        # 5. 应用最终位置并显示窗口
         dialog.move(dialog_x, dialog_y)
 
-        # 6. 执行窗口并处理结果（原有逻辑不变）
         if dialog.exec() == QDialog.Accepted:
             new_text = dialog.get_result()
-
-            # 1. 更新当前控件的文字（界面立即生效）
             self.text = new_text
-            self.content_label.setText(new_text)  # 触发多行省略逻辑
+            self.content_label.setText(new_text)
 
-            # 2. 同步更新父控件的 sentence_group（当前组数据）
             if self.parent_widget and hasattr(self.parent_widget, 'sentence_group'):
-                # 找到当前行对应的 key（simplified/traditional/english）
                 target_key = None
                 for line_config in panel_config["text_lines"]:
                     key = line_config["key"]
-                    # 用旧文字匹配对应key（关键！避免新文字和旧数据不匹配）
                     if self.parent_widget.sentence_group.get(key, "").strip() == old_text:
                         target_key = key
                         break
 
                 if target_key:
-                    # 更新当前组的对应key值
                     self.parent_widget.sentence_group[target_key] = new_text
-
-                    # 3. 同步更新全局数据源（pinned_groups/unpinned_groups）
                     global pinned_groups, unpinned_groups
-                    # 更新固定组
                     for i, group in enumerate(pinned_groups):
                         if group_equal(group, self.parent_widget.sentence_group):
                             pinned_groups[i][target_key] = new_text
-                            save_pinned()  # 保存到文件，持久化
+                            save_pinned()
                             break
-                    # 更新非固定组
                     for i, group in enumerate(unpinned_groups):
                         if group_equal(group, self.parent_widget.sentence_group):
                             unpinned_groups[i][target_key] = new_text
                             break
 
-            # print(f"文字已更新：{new_text[:20]}...")
-            reset_global_timer()  # 重置自动关闭定时器
+            reset_global_timer()
 
     def toggle_review(self):
         line = self.text.strip()
@@ -909,30 +822,50 @@ class RoundedWidget(QWidget):
         self.main_layout.setContentsMargins(pad_left, pad_top, pad_right, pad_bottom)
         self.main_layout.setSpacing(panel_config["content"]["line_spacing"])
 
-        # 创建文本行
         for line_config in panel_config["text_lines"]:
-            key = line_config["key"]  # 如 "simplified"
-            title = line_config["title"]  # 如 "简："
-            self.create_text_line(key, title)  # 调用原方法创建
+            key = line_config["key"]
+            title = line_config["title"]
+            self.create_text_line(key, title)
 
-        # 应用按钮样式
         self.setStyleSheet(self._get_stylesheet())
         self.setFixedWidth(panel_config["widget"]["width"])
         self.adjustSize()
 
+    def update_group_data(self, sentence_group, group_type, index):
+        """更新窗口数据，复用已有窗口实例"""
+        self.sentence_group = sentence_group
+        self.group = group_type
+        self.index = index
+        self.is_pinned = any(group_equal(g, self.sentence_group) for g in pinned_groups)
+
+        # 清空原有文本行
+        while self.main_layout.count():
+            item = self.main_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+        # 重新创建文本行
+        for line_config in panel_config["text_lines"]:
+            key = line_config["key"]
+            title = line_config["title"]
+            self.create_text_line(key, title)
+
+        # 更新样式和尺寸
+        self.setStyleSheet(self._get_stylesheet())
+        self.adjustSize()
+        self.update()
+
     def _get_stylesheet(self):
-        """使用自定义 hover 颜色：区分 pinned/reviewing 的 true/false 状态"""
-        # 转换颜色为 CSS 格式
         normal_color = to_css_rgba(panel_config['button']['normal_color'])
-        hover_color = to_css_rgba(panel_config['button']['hover_color'])  # false 状态 hover
+        hover_color = to_css_rgba(panel_config['button']['hover_color'])
         pinned_color = to_css_rgba(panel_config['button']['pinned_color'])
-        pinned_hover_color = to_css_rgba(panel_config['button']['pinned_hover_color'])  # true 状态 hover
+        pinned_hover_color = to_css_rgba(panel_config['button']['pinned_hover_color'])
         review_color = to_css_rgba(panel_config['button']['review_color'])
-        review_hover_color = to_css_rgba(panel_config['button']['review_hover_color'])  # true 状态 hover
+        review_hover_color = to_css_rgba(panel_config['button']['review_hover_color'])
         border_color = to_css_rgba(panel_config['unpinned']['border_colors'][0])
 
         return f"""
-            /* 基础样式 */
             QPushButton {{
                 border: 1px solid {border_color};
                 background-color: {normal_color};
@@ -941,7 +874,6 @@ class RoundedWidget(QWidget):
                 font-size: 12px;
             }}
 
-            /* 按钮形状 */
             QPushButton#btn_pin {{
                 border-top-left-radius: {panel_config['button']['border_radius']}px;
                 border-bottom-left-radius: {panel_config['button']['border_radius']}px;
@@ -971,38 +903,34 @@ class RoundedWidget(QWidget):
                 font-size: 14px;
             }}
 
-            /* Pin 按钮状态 */
             QPushButton#btn_pin[pinned="true"] {{
-                background-color: {pinned_color};  /* true 正常状态 */
+                background-color: {pinned_color};
             }}
             QPushButton#btn_pin[pinned="false"] {{
-                background-color: {normal_color};  /* false 正常状态 */
+                background-color: {normal_color};
             }}
 
-            /* Review 按钮状态 */
             QPushButton#btn_review[reviewing="true"] {{
-                background-color: {review_color};  /* true 正常状态 */
+                background-color: {review_color};
             }}
             QPushButton#btn_review[reviewing="false"] {{
-                background-color: {normal_color};  /* false 正常状态 */
+                background-color: {normal_color};
             }}
 
-            /* Hover 状态（核心：区分 true/false） */
             QPushButton#btn_pin[pinned="true"]:hover {{
-                background-color: {pinned_hover_color};  /* pinned=true 时用专用 hover 色 */
+                background-color: {pinned_hover_color};
             }}
             QPushButton#btn_pin[pinned="false"]:hover {{
-                background-color: {hover_color};  /* pinned=false 时用通用 hover 色 */
+                background-color: {hover_color};
             }}
 
             QPushButton#btn_review[reviewing="true"]:hover {{
-                background-color: {review_hover_color};  /* reviewing=true 时用专用 hover 色 */
+                background-color: {review_hover_color};
             }}
             QPushButton#btn_review[reviewing="false"]:hover {{
-                background-color: {hover_color};  /* reviewing=false 时用通用 hover 色 */
+                background-color: {hover_color};
             }}
 
-            /* 其他按钮（copy/paste/type）使用通用 hover 色 */
             QPushButton#btn_edit:hover,
             QPushButton#btn_copy:hover,
             QPushButton#btn_paste:hover,
@@ -1010,12 +938,7 @@ class RoundedWidget(QWidget):
                 background-color: {hover_color};
             }}
         """
-    def _calc_background_size(self):
-        content_height = self.main_layout.sizeHint().height()
-        pad_top, _, pad_bottom, _ = panel_config["widget"]["padding"]
-        bg_height = content_height + pad_top + pad_bottom
-        bg_width = panel_config["widget"]["width"]  # 强制使用配置的宽度（700）
-        return bg_width, bg_height
+
     def create_text_line(self, key, title):
         text = self.sentence_group.get(key, '').strip()
         if not text:
@@ -1028,7 +951,7 @@ class RoundedWidget(QWidget):
         content_height = self.main_layout.sizeHint().height()
         pad_top, _, pad_bottom, _ = panel_config["widget"]["padding"]
         bg_height = content_height + pad_top + pad_bottom
-        bg_width = panel_config["widget"]["width"]  # 强制使用配置的宽度（700）
+        bg_width = panel_config["widget"]["width"]
         return bg_width, bg_height
 
     def sizeHint(self):
@@ -1047,7 +970,6 @@ class RoundedWidget(QWidget):
         if self.width() != bg_width:
             self.setFixedWidth(bg_width)
 
-        # 背景和边框颜色（直接用QColor解析列表）
         if self.group == "pinned":
             colors = panel_config["pinned"]["bg_colors"]
             border_colors = panel_config["pinned"]["border_colors"]
@@ -1056,15 +978,13 @@ class RoundedWidget(QWidget):
             border_colors = panel_config["unpinned"]["border_colors"]
 
         color_idx = self.index % len(colors)
-        bg_color = to_qcolor(colors[color_idx])  # 直接转换列表为QColor
+        bg_color = to_qcolor(colors[color_idx])
         border_color = to_qcolor(border_colors[color_idx % len(border_colors)])
 
-        # 绘制背景
         painter.setBrush(QBrush(bg_color))
         painter.setPen(Qt.NoPen)
         painter.drawRoundedRect(0, 0, bg_width, bg_height, border_radius, border_radius)
 
-        # 绘制边框
         pen = QPen(border_color)
         pen.setWidth(panel_config["widget"]["border_width"])
         painter.setPen(pen)
@@ -1108,145 +1028,131 @@ class RoundedWidget(QWidget):
 
 
 def show_widgets():
-    match panel_config["global"]["history_panel_arrange_method"]:
-        case 0:
-            arrange_method_0()
-        case 1:
-            arrange_method_1()
+    """复用窗口的核心逻辑：匹配数据→复用窗口→更新布局（新增开关逻辑）"""
+    global is_widgets_visible
 
-
-def arrange_method_1():
-    global active_widgets, mouse_hover_count
-    # 基础配置参数
-    base_x = panel_config["widget"]["initial_x"]
-    base_y = panel_config["widget"]["initial_y"]
-    spacing = panel_config["widget"]["spacing"]
-    widget_width = panel_config["widget"]["width"]  # 控件固定宽度（用于计算列偏移）
-
-    # ========== 关键：获取屏幕可用区域（Qt6兼容） ==========
-    # 获取主屏幕可用区域（排除任务栏/状态栏）
-    primary_screen = QGuiApplication.primaryScreen()
-    screen_geo = primary_screen.availableGeometry()
-    screen_bottom = screen_geo.bottom()  # 屏幕底部Y坐标（可用区域）
-    screen_left = screen_geo.left()      # 屏幕左侧X坐标
-    screen_right = screen_geo.right()    # 屏幕右侧X坐标
-
-    # 关闭已有控件（保留原有逻辑）
-    if active_widgets:
-        close_all_widgets()
+    # ========== 核心修改：开关逻辑 ==========
+    # 如果当前窗口是显示状态 → 直接隐藏并返回
+    if is_widgets_visible:
+        hide_all_widgets()
         return
 
-    # 重置悬浮计数和定时器（保留原有逻辑）
+    # 隐藏状态 → 执行「显示+更新」逻辑
+    # ======================================
+
+    # 收集需要显示的所有组
+    display_groups = []
+    for i, group in enumerate(pinned_groups):
+        display_groups.append(("pinned", i, group))
+    for i, group in enumerate(unpinned_groups):
+        display_groups.append(("unpinned", i, group))
+
+    if not display_groups:
+        is_widgets_visible = False
+        return
+
+    global cached_widgets, active_displayed_widgets, mouse_hover_count
     mouse_hover_count = 0
     if global_timer and global_timer.isActive():
         global_timer.stop()
 
-    # ========== 初始化列布局参数 ==========
-    current_col_x = base_x  # 当前列的X坐标（初始为base_x）
-    current_col_y = base_y  # 当前列的Y坐标（初始为base_y）
-    all_groups = []         # 合并固定组和非固定组（保持固定组优先）
-    # 1. 添加固定组（带标记）
-    for i, group in enumerate(pinned_groups):
-        all_groups.append(("pinned", i, group))
-    # 2. 添加非固定组（带标记）
-    for i, group in enumerate(unpinned_groups):
-        all_groups.append(("unpinned", i, group))
+    # 第一步：匹配缓存窗口和需要显示的组
+    used_cache_indices = []
+    for display_idx, (group_type, idx, group) in enumerate(display_groups):
+        # 查找匹配的缓存窗口
+        matched_widget = None
+        for cache_idx, w in enumerate(cached_widgets):
+            if cache_idx in used_cache_indices:
+                continue
+            if group_equal(w.sentence_group, group):
+                matched_widget = w
+                used_cache_indices.append(cache_idx)
+                break
 
-    # ========== 按列排列所有控件 ==========
-    for group_type, idx, group in all_groups:
-        # 创建控件（保留原有属性）
-        w = RoundedWidget(group, group=group_type, index=idx)
-        flags = Qt.WindowFlags()
-        if panel_config["global"]["window_frameless"]:
-            flags |= Qt.FramelessWindowHint
-        if panel_config["global"]["window_stay_on_top"]:
-            flags |= Qt.WindowStaysOnTopHint
-        flags |= Qt.Tool | Qt.WindowDoesNotAcceptFocus
-        w.setWindowFlags(flags)
-        w.setAttribute(Qt.WA_TranslucentBackground)
-        w.adjustSize()  # 计算控件实际尺寸
+        # 无匹配则创建新窗口
+        if not matched_widget:
+            matched_widget = RoundedWidget(group, group=group_type, index=idx)
+            # 设置窗口属性
+            flags = Qt.WindowFlags()
+            if panel_config["global"]["window_frameless"]:
+                flags |= Qt.FramelessWindowHint
+            if panel_config["global"]["window_stay_on_top"]:
+                flags |= Qt.WindowStaysOnTopHint
+            flags |= Qt.Tool | Qt.WindowDoesNotAcceptFocus
+            matched_widget.setWindowFlags(flags)
+            matched_widget.setAttribute(Qt.WA_TranslucentBackground)
+            cached_widgets.append(matched_widget)
 
-        # ========== 核心：判断是否需要换列 ==========
-        # 计算当前控件底部Y坐标（当前列Y + 控件高度）
+        # 更新窗口数据（即使匹配也要更新索引/类型）
+        matched_widget.update_group_data(group, group_type, idx)
+        active_displayed_widgets.append(matched_widget)
+
+    # 第二步：根据配置的排列方式布局
+    match panel_config["global"]["history_panel_arrange_method"]:
+        case 0:
+            arrange_method_0(active_displayed_widgets)
+        case 1:
+            arrange_method_1(active_displayed_widgets)
+
+    # 第三步：显示所有需要展示的窗口
+    for w in active_displayed_widgets:
+        w.show()
+
+    # 更新显示状态标记
+    is_widgets_visible = True
+
+
+def arrange_method_1(display_widgets):
+    """按列排列 - 复用窗口版本"""
+    base_x = panel_config["widget"]["initial_x"]
+    base_y = panel_config["widget"]["initial_y"]
+    spacing = panel_config["widget"]["spacing"]
+    widget_width = panel_config["widget"]["width"]
+
+    primary_screen = QGuiApplication.primaryScreen()
+    screen_geo = primary_screen.availableGeometry()
+    screen_bottom = screen_geo.bottom()
+    screen_right = screen_geo.right()
+
+    current_col_x = base_x
+    current_col_y = base_y
+
+    for w in display_widgets:
+        w.adjustSize()
+
+        # 检查是否需要换列
         widget_bottom = current_col_y + w.height()
-        # 如果当前控件底部超出屏幕底部 → 切换到下一列
         if widget_bottom > screen_bottom - 100:
-            # 计算下一列X坐标：当前列X + 控件宽度 + 间距
             current_col_x += widget_width + spacing
-            # 校验下一列是否超出屏幕右侧（兜底：若超出则重置到第一列，Y轴继续往下）
             if current_col_x + widget_width > screen_right:
                 current_col_x = base_x
-                current_col_y = screen_bottom + spacing  # 超出屏幕右侧则移到屏幕下方
-            # 重置当前列Y坐标为顶部
+                current_col_y = screen_bottom + spacing
             current_col_y = base_y
 
-        # ========== 定位并显示控件 ==========
+        # 定位窗口
         w.move(current_col_x, current_col_y)
-        w.show()
-        active_widgets.append(w)
-
-        # 更新当前列Y坐标（当前Y + 控件高度 + 行间距）
         current_col_y += w.height() + spacing
 
-    # ========== 兜底：若所有列都超出屏幕 → 强制缩放到屏幕内 ==========
+    # 兜底处理
     if current_col_x + widget_width > screen_right and current_col_y > screen_bottom:
-        # 极端情况：控件过多，所有列都超出 → 重置为原始单行排列（避免完全不可见）
         current_y_reset = base_y
-        for w in active_widgets:
+        for w in display_widgets:
             w.move(base_x, current_y_reset)
             current_y_reset += w.height() + spacing
-            # 超出屏幕底部则截断（避免无限排列）
             if current_y_reset > screen_bottom:
                 break
-                
 
-def arrange_method_0():
-    global active_widgets, mouse_hover_count
+
+def arrange_method_0(display_widgets):
+    """单行排列 - 复用窗口版本"""
     base_x = panel_config["widget"]["initial_x"]
     base_y = panel_config["widget"]["initial_y"]
     current_y = base_y
     spacing = panel_config["widget"]["spacing"]
 
-    if active_widgets:
-        close_all_widgets()
-        return
-
-    mouse_hover_count = 0
-    if global_timer and global_timer.isActive():
-        global_timer.stop()
-
-    # 显示固定组
-    for i, group in enumerate(pinned_groups):
-        w = RoundedWidget(group, group="pinned", index=i)
-        flags = Qt.WindowFlags()
-        if panel_config["global"]["window_frameless"]:
-            flags |= Qt.FramelessWindowHint
-        if panel_config["global"]["window_stay_on_top"]:
-            flags |= Qt.WindowStaysOnTopHint
-        flags |= Qt.Tool | Qt.WindowDoesNotAcceptFocus
-        w.setWindowFlags(flags)
-        w.setAttribute(Qt.WA_TranslucentBackground)  # 允许背景透明
+    for w in display_widgets:
         w.adjustSize()
         w.move(base_x, current_y)
-        w.show()
-        active_widgets.append(w)
-        current_y += w.height() + spacing
-
-    # 显示非固定组
-    for i, group in enumerate(unpinned_groups):
-        w = RoundedWidget(group, group="unpinned", index=i)
-        flags = Qt.WindowFlags()
-        if panel_config["global"]["window_frameless"]:
-            flags |= Qt.FramelessWindowHint
-        if panel_config["global"]["window_stay_on_top"]:
-            flags |= Qt.WindowStaysOnTopHint
-        flags |= Qt.Tool | Qt.WindowDoesNotAcceptFocus
-        w.setWindowFlags(flags)
-        w.setAttribute(Qt.WA_TranslucentBackground)
-        w.adjustSize()
-        w.move(base_x, current_y)
-        w.show()
-        active_widgets.append(w)
         current_y += w.height() + spacing
 
 
@@ -1257,19 +1163,16 @@ counter = 1
 def simulate_new_group():
     global counter
     new_group = {
-        'simplified': f"简体示例：你们好吗？山上的小朋友",
-        'traditional': f"繁體示例：你們好嗎？山上的小朋友",
+        'simplified': f"简体示例：你们好吗？山上的小朋友{counter}",
+        'traditional': f"繁體示例：你們好嗎？山上的小朋友{counter}",
         'english': f"Example {counter}：How are you? The kids on the hill."
     }
     add_sentence_group(new_group)
     print(f"新增组 {counter}")
     counter += 1
-    # if active_widgets:
-    #     close_all_widgets()
-    #     show_widgets()
 
 
-# 键盘监听线程（按z键显示/隐藏窗口）
+# 键盘监听线程（按/键显示/隐藏窗口）
 class KeyboardThread(QThread):
     trigger = Signal()
 
@@ -1278,7 +1181,7 @@ class KeyboardThread(QThread):
             if e.event_type == "down":
                 self.trigger.emit()
 
-        keyboard.hook_key("/", handler, suppress=True)
+        keyboard.hook_key("]", handler, suppress=True)
         keyboard.wait()
 
 
@@ -1286,12 +1189,12 @@ if __name__ == "__main__":
     load_reviewed_lines()
     load_pinned()
 
-    # 测试数据z
+    # 测试数据
     test_groups = [
         {
-            'simplified': "你们好吗？山上的小朋友你们好吗？山上的小朋友你们好吗？山上的小朋友你们好吗？山上的小朋友你们好吗？山上的小朋友你们好吗？山上的小朋友你们好吗？山上的小朋友",
-            'traditional': "你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 ",
-            'english': "How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. How are you? The kids on the hill. "
+            'simplified': "你们好吗？山上的小朋友你们好吗？山上的小朋友你们好吗？山上的小朋友",
+            'traditional': "你們好嗎？山上的小朋友 你們好嗎？山上的小朋友 你們好嗎？山上的小朋友",
+            'english': "How are you? The kids on the hill. How are you? The kids on the hill."
         },
         {
             'simplified': "这是一个只有简体的例子",
@@ -1317,9 +1220,9 @@ if __name__ == "__main__":
     kb_thread.trigger.connect(show_widgets)
     kb_thread.start()
 
+    # 定时新增测试组（3秒一次）
     timer = QTimer()
     timer.timeout.connect(simulate_new_group)
     timer.start(3000)
 
     sys.exit(app.exec())
-
