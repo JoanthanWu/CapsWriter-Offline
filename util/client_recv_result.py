@@ -29,7 +29,7 @@ warnings.filterwarnings("ignore")
 import sys
 from util.history_panel_situation_selector import situation_selector, history_panel_output_selector
 
-# if Config.enabled_smart_history_actions_panel:
+# if Config.history_actions_panel_enabled:
 # from . import smart_history_actions_panel
 # add_sentence_group = smart_history_actions_panel.add_sentence_group
 # from util.smart_history_actions_panel import smart_history_actions_panel
@@ -47,6 +47,9 @@ async def recv_result():
         return
     console.print("[green]连接成功\n")
 
+    offline_translated_text = ""
+    online_translated_text = ""
+
     try:
         while True:
             # 接收消息
@@ -60,7 +63,7 @@ async def recv_result():
                 continue
 
             # ----------- smart_history_actions_panel -----------
-            # if Config.enabled_smart_history_actions_panel:
+            # if Config.history_actions_panel_enabled:
             situation = situation_selector(Cosmic.opposite_state, Cosmic.offline_translate_needed, Cosmic.online_translate_needed)
             # ----------- smart_history_actions_panel -----------
 
@@ -82,7 +85,7 @@ async def recv_result():
                 offline_translate_done = True
 
 # ----------- smart_history_actions_panel -----------
-                # if Config.enabled_smart_history_actions_panel:
+                # if Config.history_actions_panel_enabled:
                 # update_buffer('english', offline_translated_text)
 # ----------- smart_history_actions_panel -----------
 
@@ -95,7 +98,7 @@ async def recv_result():
                 online_translate_done = True
 
 # ----------- smart_history_actions_panel -----------
-                # if Config.enabled_smart_history_actions_panel:
+                # if Config.history_actions_panel_enabled:
                 # update_buffer('english', online_translated_text)
 # ----------- smart_history_actions_panel -----------
 
@@ -149,7 +152,7 @@ async def recv_result():
                                 await type_result(traditional_text)
 
 # ----------- smart_history_actions_panel -----------
-                                # if Config.enabled_smart_history_actions_panel:
+                                # if Config.history_actions_panel_enabled:
                                 # update_buffer('traditional', traditional_text)
 # ----------- smart_history_actions_panel -----------
 
@@ -158,7 +161,7 @@ async def recv_result():
                                 await type_result(traditional_text)
 
 # ----------- smart_history_actions_panel -----------
-                                # if Config.enabled_smart_history_actions_panel:
+                                # if Config.history_actions_panel_enabled:
                                 # update_buffer('traditional', traditional_text)
 # ----------- smart_history_actions_panel -----------
 
@@ -170,7 +173,7 @@ async def recv_result():
 
 
 # ----------- smart_history_actions_panel -----------
-            # if Config.enabled_smart_history_actions_panel:
+            # if Config.history_actions_panel_enabled:
             # flush_buffer()
             offline_translated_text = locals().get("offline_translated_text", "")
             online_translated_text = locals().get("online_translated_text", "")

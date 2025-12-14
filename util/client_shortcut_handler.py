@@ -402,7 +402,7 @@ def click_mode(e: keyboard.KeyboardEvent):
 
 
         # ----------- smart_history_actions_panel -----------
-        # if Config.enabled_smart_history_actions_panel:
+        # if Config.history_actions_panel_enabled:
         if (saved_result_for_offline_translate_needed or saved_result_for_online_translate_needed) and is_short_duration and history_actions_panel_launched:
             if double_clicked:
                 cancel_task()
@@ -571,7 +571,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
             # 处理双击切换简/繁状态, 当初为何使用这个double_clicked变量来判断？嗯，记不起来了. 可能是当时还没使用key_pressed来锁定
             if double_clicked:
                 # ----------- smart_history_actions_panel -----------
-                # if Config.enabled_smart_history_actions_panel:
+                # if Config.history_actions_panel_enabled:
                 if Cosmic.offline_translate_needed or Cosmic.online_translate_needed:
                     # 如果 `shifts + 双击录音键` 就会唤起界面, 然后还原状态
                     call_gui_from_child()

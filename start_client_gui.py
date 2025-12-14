@@ -36,15 +36,15 @@ from util.check_microphone_usage import is_microphone_in_use
 from util.check_process import check_process
 from util.config import ClientConfig as Config
 
-# if Config.enabled_smart_history_actions_panel:
+# if Config.history_actions_panel_enabled:
 # ----------- smart_history_actions_panel -----------
 import json
-import util.smart_history_actions_panel
-load_reviewed_lines = util.smart_history_actions_panel.load_reviewed_lines
-load_pinned = util.smart_history_actions_panel.load_pinned
-KeyboardThread = util.smart_history_actions_panel.KeyboardThread
-show_widgets = util.smart_history_actions_panel.show_widgets
-add_sentence_group = util.smart_history_actions_panel.add_sentence_group
+import util.history_actions_panel
+load_reviewed_lines = util.history_actions_panel.load_reviewed_lines
+load_pinned = util.history_actions_panel.load_pinned
+KeyboardThread = util.history_actions_panel.KeyboardThread
+show_widgets = util.history_actions_panel.show_widgets
+add_sentence_group = util.history_actions_panel.add_sentence_group
 '''
 import panelVal
 with open("history_r.log", "a", encoding="utf-8") as f:
@@ -628,7 +628,7 @@ class GUI(QMainWindow):
     '''
 
     # ----------- smart_history_actions_panel -----------
-    # if Config.enabled_smart_history_actions_panel:
+    # if Config.history_actions_panel_enabled:
     def enqueue_output(self, out, queue):
         """读取 PIPE 输出：过滤 List_A 标记行，保留原有queue逻辑（GUI显示核心）"""
         for line in iter(out.readline, ""):
@@ -850,7 +850,7 @@ def start_client_gui():
         gui.show()
 
     # ----------- smart_history_actions_panel -----------
-    # if Config.enabled_smart_history_actions_panel:
+    # if Config.history_actions_panel_enabled:
     global controller
     controller = MyController()
     load_reviewed_lines()
