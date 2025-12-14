@@ -9,6 +9,7 @@ from PySide6.QtGui import QPainter, QColor, QBrush, QFontMetrics, QPen, QTextLay
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QSize
 import tomllib
 
+
 # 配置文件路径
 CONFIG_FILE = "history_panel_config.toml"
 
@@ -1202,12 +1203,17 @@ def simulate_new_group():
 class KeyboardThread(QThread):
     trigger = Signal()
 
+    def __init__(self, shortcut):
+        super().__init__()
+        self.shortcut = shortcut  # 保存傳入的快捷鍵
+
     def run(self):
+        if not self.shortcut:
+            return
+        
         def handler():
             self.trigger.emit()
-        # 定義複合快捷鍵，例如 Ctrl+Shift+Z
-        # 使用 add_hotkey 來監聽複合鍵
-        keyboard.add_hotkey("ctrl+shift+alt+z", handler, suppress=True)
+        keyboard.add_hotkey(self.shortcut, handler, suppress=True)
         keyboard.wait()
 
 
