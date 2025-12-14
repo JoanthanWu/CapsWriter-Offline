@@ -55,6 +55,8 @@ DEFAULT_CONFIG = {
     "widget": {
         "padding": [3, 3, 3, 3],
         "spacing": 5,
+        "widget_width_spacing": 3,
+        "widget_height_spacing": -2,
         "width": 350,
         "initial_x": 100,
         "initial_y": 100,
@@ -1119,7 +1121,8 @@ def arrange_method_1(display_widgets):
     """按列排列 - 统一尺寸计算逻辑"""
     base_x = panel_config["widget"]["initial_x"]
     base_y = panel_config["widget"]["initial_y"]
-    spacing = panel_config["widget"]["spacing"]
+    widget_width_spacing = panel_config["widget"]["widget_width_spacing"]
+    widget_height_spacing = panel_config["widget"]["widget_height_spacing"]
     widget_width = panel_config["widget"]["width"]
 
     primary_screen = QGuiApplication.primaryScreen()
@@ -1137,9 +1140,9 @@ def arrange_method_1(display_widgets):
         widget_height = w.height()
 
         # 检查是否需要换列（预留100px底部空间）
-        widget_bottom = current_col_y + widget_height
+        widget_bottom = current_col_y + widget_width_spacing
         if widget_bottom > screen_bottom - 100:
-            current_col_x += widget_width + spacing
+            current_col_x += widget_width + widget_width_spacing
             # 检查列是否超出屏幕右侧
             if current_col_x + widget_width > screen_right:
                 current_col_x = base_x
@@ -1151,7 +1154,7 @@ def arrange_method_1(display_widgets):
         w.move(final_x, final_y)
 
         # 更新下一个窗口的y坐标
-        current_col_y += widget_height + spacing
+        current_col_y += widget_height + widget_height_spacing
 
 
 def arrange_method_0(display_widgets):
@@ -1159,8 +1162,8 @@ def arrange_method_0(display_widgets):
     base_x = panel_config["widget"]["initial_x"]
     base_y = panel_config["widget"]["initial_y"]
     current_y = base_y
-    spacing = panel_config["widget"]["spacing"]
-
+    widget_width_spacing = panel_config["widget"]["widget_width_spacing"]
+    widget_height_spacing = panel_config["widget"]["widget_height_spacing"]
     primary_screen = QGuiApplication.primaryScreen()
     screen_geo = primary_screen.availableGeometry()
 
@@ -1176,7 +1179,7 @@ def arrange_method_0(display_widgets):
         w.move(final_x, final_y)
 
         # 更新下一个窗口的y坐标
-        current_y += widget_height + spacing
+        current_y += widget_height + widget_height_spacing
 
 
 # 模拟新增组
@@ -1204,7 +1207,7 @@ class KeyboardThread(QThread):
             if e.event_type == "down":
                 self.trigger.emit()
 
-        keyboard.hook_key("]", handler, suppress=True)
+        keyboard.hook_key("/", handler, suppress=True)
         keyboard.wait()
 
 
@@ -1247,6 +1250,6 @@ if __name__ == "__main__":
     # 定时新增测试组（3秒一次）
     timer = QTimer()
     timer.timeout.connect(simulate_new_group)
-    timer.start(3000)
+    timer.start(1000)
 
     sys.exit(app.exec())
