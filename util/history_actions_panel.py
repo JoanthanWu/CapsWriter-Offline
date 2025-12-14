@@ -1203,11 +1203,11 @@ class KeyboardThread(QThread):
     trigger = Signal()
 
     def run(self):
-        def handler(e):
-            if e.event_type == "down":
-                self.trigger.emit()
-
-        keyboard.hook_key("/", handler, suppress=True)
+        def handler():
+            self.trigger.emit()
+        # 定義複合快捷鍵，例如 Ctrl+Shift+Z
+        # 使用 add_hotkey 來監聽複合鍵
+        keyboard.add_hotkey("ctrl+shift+alt+z", handler, suppress=True)
         keyboard.wait()
 
 

@@ -73,6 +73,7 @@
 14. - [x] 增加可自由選擇是否加入`繁/簡/譯`句子種類的選項 
 15. - [x] 修復首次創建窗口和更新窗口的位置佈置不一樣的問題
     1.  [x] 優化窗口之間的距離間隔
+16. - [x] 修改呼換面板按鍵方案 單鍵→複合鍵 (keyboard.hook_key → keyboard.add_hotkey)
 
 
 ## `history-panel-function-test` 目录结构
