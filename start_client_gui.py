@@ -41,12 +41,12 @@ from util.safe_logger import init_logging
 # ----------- smart_history_actions_panel -----------
 if Config.history_actions_panel_enabled:
     import json
-    import util.history_actions_panel
-    load_reviewed_lines = util.history_actions_panel.load_reviewed_lines
-    load_pinned = util.history_actions_panel.load_pinned
-    KeyboardThread = util.history_actions_panel.KeyboardThread
-    show_widgets = util.history_actions_panel.show_widgets
-    add_sentence_group = util.history_actions_panel.add_sentence_group
+    import util.history_actions_panel.history_actions_panel
+    load_reviewed_lines = util.history_actions_panel.history_actions_panel.load_reviewed_lines
+    load_pinned = util.history_actions_panel.history_actions_panel.load_pinned
+    KeyboardThread = util.history_actions_panel.history_actions_panel.KeyboardThread
+    show_widgets = util.history_actions_panel.history_actions_panel.show_widgets
+    add_sentence_group = util.history_actions_panel.history_actions_panel.add_sentence_group
 
 
     class MyController(QObject):
@@ -762,8 +762,8 @@ def start_client_gui():
     global gui
     gui = GUI()
 
-    apply_stylesheet(gui, theme="dark_teal.xml", css_file="util\\client\\gui_theme_custom.css"
-    apply_stylesheet(tray_menu, theme="dark_teal.xml", css_file="util\\client\\gui_theme_custom.css"
+    apply_stylesheet(gui, theme="dark_teal.xml", css_file="util\\client\\gui_theme_custom.css")
+    apply_stylesheet(tray_menu, theme="dark_teal.xml", css_file="util\\client\\gui_theme_custom.css")
 
     if not Config.shrink_automatically_to_tray:
         gui.show()

@@ -30,7 +30,7 @@ warnings.filterwarnings("ignore")
 # ----------- smart_history_actions_panel -----------
 if Config.history_actions_panel_enabled:
     import sys
-    from util.history_panel_situation_selector import situation_selector, history_panel_output_selector
+    from util.history_actions_panel.history_panel_situation_selector import situation_selector, history_panel_output_selector
 # ----------- smart_history_actions_panel -----------
 
 
@@ -39,11 +39,11 @@ async def recv_result():
         return
     console.print("[green]连接成功\n")
 
-# ----------- smart_history_actions_panel -----------
-if Config.history_actions_panel_enabled:
-    offline_translated_text = ""
-    online_translated_text = ""
-# ----------- smart_history_actions_panel -----------
+    # ----------- smart_history_actions_panel -----------
+    if Config.history_actions_panel_enabled:
+        offline_translated_text = ""
+        online_translated_text = ""
+    # ----------- smart_history_actions_panel -----------
 
     try:
         while True:
