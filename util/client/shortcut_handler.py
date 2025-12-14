@@ -53,21 +53,17 @@ saved_special_apps = []
 
 
 # ----------- smart_history_actions_panel -----------
-import sys
-history_actions_panel_launched = False
-b_time = 0
-# launch_task_A = False
-# import panelVal
-# with open("history_r.log", "a", encoding="utf-8") as f:
-    # f.write(f"in client_shortcut_handler: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
+if Config.history_actions_panel_enabled:
+    import sys
+    history_actions_panel_launched = False
+    b_time = 0
 
 
-
-def call_gui_from_child():
-    """子进程发送「显示GUI」'指令'给主进程"""
-    show_gui_cmd = "###SHOW_GUI###\n"
-    sys.stdout.write(show_gui_cmd)
-    sys.stdout.flush()
+    def call_gui_from_child():
+        """子进程发送「显示GUI」'指令'给主进程"""
+        show_gui_cmd = "###SHOW_GUI###\n"
+        sys.stdout.write(show_gui_cmd)
+        sys.stdout.flush()
 # ----------- smart_history_actions_panel -----------
 
 
@@ -457,30 +453,30 @@ def click_mode(e: keyboard.KeyboardEvent):
 
 
         # ----------- smart_history_actions_panel -----------
-        # if Config.history_actions_panel_enabled:
-        if (saved_result_for_offline_translate_needed or saved_result_for_online_translate_needed) and is_short_duration and history_actions_panel_launched:
-            if double_clicked:
-                cancel_task()
-            # 如果 `shifts + 双击录音键` 就会唤起界面, 結束錄音, 然后还原状态
-            call_gui_from_child()
-            Cosmic.offline_translate_needed = False
-            Cosmic.online_translate_needed = False
-            double_clicked = False
-            is_short_duration = False
-            send_signal_to_hint_while_recording(
-                False,
-                is_short_duration,
-                Cosmic.offline_translate_needed,
-                Cosmic.online_translate_needed,
-                Config.hold_mode,
-                Config.convert_to_traditional_chinese_main,
-            )
-            key_pressed = False
-            saved_result_for_offline_translate_needed = False
-            saved_result_for_online_translate_needed = False
-            last_time_released = 0
-            restore_audio_playing()
-            return
+        if Config.history_actions_panel_enabled:
+            if (saved_result_for_offline_translate_needed or saved_result_for_online_translate_needed) and is_short_duration and history_actions_panel_launched:
+                if double_clicked:
+                    cancel_task()
+                # 如果 `shifts + 双击录音键` 就会唤起界面, 結束錄音, 然后还原状态
+                call_gui_from_child()
+                Cosmic.offline_translate_needed = False
+                Cosmic.online_translate_needed = False
+                double_clicked = False
+                is_short_duration = False
+                send_signal_to_hint_while_recording(
+                    False,
+                    is_short_duration,
+                    Cosmic.offline_translate_needed,
+                    Cosmic.online_translate_needed,
+                    Config.hold_mode,
+                    Config.convert_to_traditional_chinese_main,
+                )
+                key_pressed = False
+                saved_result_for_offline_translate_needed = False
+                saved_result_for_online_translate_needed = False
+                last_time_released = 0
+                restore_audio_playing()
+                return
         # ----------- smart_history_actions_panel -----------
         # 如果大于`Config.threshold`的值, 判定为`長按`, 就取消本栈启动的任务(`cancel_task()`)
         if (Config.restore_key and return_allowed) or is_b_time:
@@ -507,12 +503,6 @@ def click_mode(e: keyboard.KeyboardEvent):
             if Cosmic.online_translate_needed or Cosmic.offline_translate_needed:
                 history_actions_panel_launched = True
             double_clicked = True
-            # saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed
-            # saved_result_for_online_translate_needed = Cosmic.online_translate_needed
-            # 這會導致無法英文翻譯
-            # if is_short_duration:
-            #     Cosmic.offline_translate_needed = False
-            #     Cosmic.online_translate_needed = False
             key_pressed = False
             return
 
@@ -521,7 +511,8 @@ def click_mode(e: keyboard.KeyboardEvent):
             Cosmic.offline_translate_needed = saved_result_for_offline_translate_needed
             Cosmic.online_translate_needed = saved_result_for_online_translate_needed
             finish_task()
-            b_time = time.time()
+            if Config.history_actions_panel_enabled:
+                b_time = time.time()
             send_signal_to_hint_while_recording(
                 False,
                 is_short_duration,
@@ -551,10 +542,10 @@ def click_mode(e: keyboard.KeyboardEvent):
                 Config.hold_mode,
                 Config.convert_to_traditional_chinese_main,
             )
+
             Cosmic.opposite_state = not Cosmic.opposite_state
             Cosmic.offline_translate_needed = False
             Cosmic.online_translate_needed = False
-            # double_clicked = False
             key_pressed = False
             # return
 
@@ -626,19 +617,19 @@ def hold_mode(e: keyboard.KeyboardEvent):
             # 处理双击切换简/繁状态, 当初为何使用这个double_clicked变量来判断？嗯，记不起来了. 可能是当时还没使用key_pressed来锁定
             if double_clicked:
                 # ----------- smart_history_actions_panel -----------
-                # if Config.history_actions_panel_enabled:
-                if Cosmic.offline_translate_needed or Cosmic.online_translate_needed:
-                    # 如果 `shifts + 双击录音键` 就会唤起界面, 然后还原状态
-                    call_gui_from_child()
-                    # `history_actions_panel_launched`这个变量是为让`capslock`按鍵的功能不被错误的触发而设置. 针对的情况是:
-                        # `shifts + 双击录音键` 但是不馬上抬起`capslock`按鍵, 而是继续按着, 根据键盘原来的设定是循环触发, 那么`def hold_mode(e: keyboard.KeyboardEvent):`就会再次启动, 最后`capslock`灯复原的功能也会因此错误触发.
-                    history_actions_panel_launched = True
-                    Cosmic.offline_translate_needed = False
-                    Cosmic.online_translate_needed = False
-                    double_clicked = False
-                    is_short_press = False
-                    key_pressed = False
-                    return
+                if Config.history_actions_panel_enabled:
+                    if Cosmic.offline_translate_needed or Cosmic.online_translate_needed:
+                        # 如果 `shifts + 双击录音键` 就会唤起界面, 然后还原状态
+                        call_gui_from_child()
+                        # `history_actions_panel_launched`这个变量是为让`capslock`按鍵的功能不被错误的触发而设置. 针对的情况是:
+                            # `shifts + 双击录音键` 但是不馬上抬起`capslock`按鍵, 而是继续按着, 根据键盘原来的设定是循环触发, 那么`def hold_mode(e: keyboard.KeyboardEvent):`就会再次启动, 最后`capslock`灯复原的功能也会因此错误触发.
+                        history_actions_panel_launched = True
+                        Cosmic.offline_translate_needed = False
+                        Cosmic.online_translate_needed = False
+                        double_clicked = False
+                        is_short_press = False
+                        key_pressed = False
+                        return
                 # ----------- smart_history_actions_panel -----------
                 Cosmic.opposite_state = not Cosmic.opposite_state
 
