@@ -52,6 +52,25 @@ sessions = []
 saved_special_apps = []
 
 
+# ----------- smart_history_actions_panel -----------
+import sys
+history_actions_panel_launched = False
+b_time = 0
+# launch_task_A = False
+# import panelVal
+# with open("history_r.log", "a", encoding="utf-8") as f:
+    # f.write(f"in client_shortcut_handler: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
+
+
+
+def call_gui_from_child():
+    """子进程发送「显示GUI」'指令'给主进程"""
+    show_gui_cmd = "###SHOW_GUI###\n"
+    sys.stdout.write(show_gui_cmd)
+    sys.stdout.flush()
+# ----------- smart_history_actions_panel -----------
+
+
 def shortcut_correct(e: keyboard.KeyboardEvent):
     # 在我的 Windows 电脑上，left ctrl 和 right ctrl 的 keycode 都是一样的，
     # keyboard 库按 keycode 判断触发
@@ -398,7 +417,11 @@ def click_mode(e: keyboard.KeyboardEvent):
         is_short_duration, \
         restore_audio_playing_needed, \
         restore_capslock_task, \
-        return_allowed
+        return_allowed, \
+        history_actions_panel_launched, \
+        saved_result_for_offline_translate_needed, \
+        saved_result_for_online_translate_needed, \
+        b_time
 
     if e.event_type == keyboard.KEY_DOWN and not key_pressed:
         key_pressed = True
@@ -417,9 +440,10 @@ def click_mode(e: keyboard.KeyboardEvent):
         last_time_pressed = time.time()
 
     elif e.event_type == keyboard.KEY_UP:
+        last_time_released = time.time()
+        is_b_time = True if time.time() - b_time < Config.threshold else False
+        is_short_press = (True if time.time() - last_time_pressed < Config.threshold else False )
         if restore_capslock_task is not None:
-            last_time_released = time.time()
-
             # 取消 延迟恢复原版CapsLock功能的任务
             restore_capslock_task_cancelled = restore_capslock_task.cancel()
             # if restore_capslock_task_cancelled:
@@ -428,16 +452,49 @@ def click_mode(e: keyboard.KeyboardEvent):
             #     print("取消失败（任务可能已执行或已完成）")
             restore_capslock_task = None
 
+        # if not double_clicked:
+        translate_needed()
+
+
+        # ----------- smart_history_actions_panel -----------
+        # if Config.history_actions_panel_enabled:
+        if (saved_result_for_offline_translate_needed or saved_result_for_online_translate_needed) and is_short_duration and history_actions_panel_launched:
+            if double_clicked:
+                cancel_task()
+            # 如果 `shifts + 双击录音键` 就会唤起界面, 結束錄音, 然后还原状态
+            call_gui_from_child()
+            Cosmic.offline_translate_needed = False
+            Cosmic.online_translate_needed = False
+            double_clicked = False
+            is_short_duration = False
+            send_signal_to_hint_while_recording(
+                False,
+                is_short_duration,
+                Cosmic.offline_translate_needed,
+                Cosmic.online_translate_needed,
+                Config.hold_mode,
+                Config.convert_to_traditional_chinese_main,
+            )
+            key_pressed = False
+            saved_result_for_offline_translate_needed = False
+            saved_result_for_online_translate_needed = False
+            last_time_released = 0
+            restore_audio_playing()
+            return
+        # ----------- smart_history_actions_panel -----------
         # 如果大于`Config.threshold`的值, 判定为`長按`, 就取消本栈启动的任务(`cancel_task()`)
-        if Config.restore_key and return_allowed:
+        if (Config.restore_key and return_allowed) or is_b_time:
             # 判定为`長按`，发送原來的按键功能
             # keyboard.send(Config.speech_recognition_shortcut)
+            is_short_duration = False
             key_pressed = False
             return
 
         # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀态
         elif not double_clicked and not is_short_duration:
             translate_needed()
+            saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed
+            saved_result_for_online_translate_needed = Cosmic.online_translate_needed
             send_signal_to_hint_while_recording(
                 True,
                 is_short_duration,
@@ -447,14 +504,24 @@ def click_mode(e: keyboard.KeyboardEvent):
                 Config.convert_to_traditional_chinese_main,
             )
             launch_task()
-
+            if Cosmic.online_translate_needed or Cosmic.offline_translate_needed:
+                history_actions_panel_launched = True
             double_clicked = True
+            # saved_result_for_offline_translate_needed = Cosmic.offline_translate_needed
+            # saved_result_for_online_translate_needed = Cosmic.online_translate_needed
+            # 這會導致無法英文翻譯
+            # if is_short_duration:
+            #     Cosmic.offline_translate_needed = False
+            #     Cosmic.online_translate_needed = False
             key_pressed = False
             return
 
         # 任务在进行中, 且不判定为`短击`, 就结束和完成任务
         elif double_clicked and not is_short_duration:
+            Cosmic.offline_translate_needed = saved_result_for_offline_translate_needed
+            Cosmic.online_translate_needed = saved_result_for_online_translate_needed
             finish_task()
+            b_time = time.time()
             send_signal_to_hint_while_recording(
                 False,
                 is_short_duration,
@@ -466,7 +533,9 @@ def click_mode(e: keyboard.KeyboardEvent):
 
             double_clicked = False
             key_pressed = False
-
+            history_actions_panel_launched = False
+            saved_result_for_offline_translate_needed = False
+            saved_result_for_online_translate_needed = False
             # 恢復音频的播放
             restore_audio_playing()
             return
@@ -482,8 +551,10 @@ def click_mode(e: keyboard.KeyboardEvent):
                 Config.hold_mode,
                 Config.convert_to_traditional_chinese_main,
             )
-
             Cosmic.opposite_state = not Cosmic.opposite_state
+            Cosmic.offline_translate_needed = False
+            Cosmic.online_translate_needed = False
+            # double_clicked = False
             key_pressed = False
             # return
 
@@ -533,7 +604,8 @@ def hold_mode(e: keyboard.KeyboardEvent):
         restore_audio_playing_needed, \
         saved_result_for_restore_audio_playing_needed, \
         saved_result_for_offline_translate_needed, \
-        saved_result_for_online_translate_needed
+        saved_result_for_online_translate_needed, \
+        history_actions_panel_launched
 
     # 处理按键按下事件
     if e.event_type == "down":
@@ -549,11 +621,27 @@ def hold_mode(e: keyboard.KeyboardEvent):
             if is_short_duration:
                 double_clicked = True
 
+            translate_needed()
+
             # 处理双击切换简/繁状态, 当初为何使用这个double_clicked变量来判断？嗯，记不起来了. 可能是当时还没使用key_pressed来锁定
             if double_clicked:
+                # ----------- smart_history_actions_panel -----------
+                # if Config.history_actions_panel_enabled:
+                if Cosmic.offline_translate_needed or Cosmic.online_translate_needed:
+                    # 如果 `shifts + 双击录音键` 就会唤起界面, 然后还原状态
+                    call_gui_from_child()
+                    # `history_actions_panel_launched`这个变量是为让`capslock`按鍵的功能不被错误的触发而设置. 针对的情况是:
+                        # `shifts + 双击录音键` 但是不馬上抬起`capslock`按鍵, 而是继续按着, 根据键盘原来的设定是循环触发, 那么`def hold_mode(e: keyboard.KeyboardEvent):`就会再次启动, 最后`capslock`灯复原的功能也会因此错误触发.
+                    history_actions_panel_launched = True
+                    Cosmic.offline_translate_needed = False
+                    Cosmic.online_translate_needed = False
+                    double_clicked = False
+                    is_short_press = False
+                    key_pressed = False
+                    return
+                # ----------- smart_history_actions_panel -----------
                 Cosmic.opposite_state = not Cosmic.opposite_state
 
-            translate_needed()
             send_signal_to_hint_while_recording(
                 True,
                 is_short_duration,
@@ -599,7 +687,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 last_time_released = 0
 
                 # 松开快捷键后，再按一次，恢复 CapsLock 或 Shift 等按键的状态
-                if not double_clicked and Config.restore_key:
+                if not double_clicked and not history_actions_panel_launched and Config.restore_key:
                     # time.sleep(0.01)
                     keyboard.send(Config.speech_recognition_shortcut)
 
@@ -621,6 +709,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
             # 恢復音频的播放
             restore_audio_playing()
             is_short_press = False
+            history_actions_panel_launched = False
             key_pressed = False  # 标记为未按下
 
 

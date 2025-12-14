@@ -27,10 +27,31 @@ if not Cosmic.transcribe_subtitles:
 warnings.filterwarnings("ignore")
 
 
+# ----------- smart_history_actions_panel -----------
+import sys
+from util.history_panel_situation_selector import situation_selector, history_panel_output_selector
+
+# if Config.history_actions_panel_enabled:
+# from . import smart_history_actions_panel
+# add_sentence_group = smart_history_actions_panel.add_sentence_group
+# from util.smart_history_actions_panel import smart_history_actions_panel
+# add_sentence_group = smart_history_actions_panel.add_sentence_group
+
+# import panelVal
+# with open("history_r.log", "a", encoding="utf-8") as f:
+    # f.write(f"in client_recv_result: id(panelVal.unpinned_groups) = {id(panelVal.unpinned_groups)})\n")
+
+# ----------- smart_history_actions_panel -----------
+
+
 async def recv_result():
     if not await check_websocket():
         return
     console.print("[green]连接成功\n")
+
+    offline_translated_text = ""
+    online_translated_text = ""
+
     try:
         while True:
             # 接收消息
@@ -43,6 +64,11 @@ async def recv_result():
             if not message["is_final"] or not text.strip():
                 continue
 
+            # ----------- smart_history_actions_panel -----------
+            # if Config.history_actions_panel_enabled:
+            situation = situation_selector(Cosmic.opposite_state, Cosmic.offline_translate_needed, Cosmic.online_translate_needed)
+            # ----------- smart_history_actions_panel -----------
+
             # 消除末尾标点
             text = strip_punc(text)
 
@@ -54,12 +80,17 @@ async def recv_result():
             converter = opencc.OpenCC(Config.opencc_converter)
             traditional_text = converter.convert(text)
             convert_to_traditional_chinese_done = True
-
             # 离线翻译
             offline_translate_done = False
             if Cosmic.offline_translate_needed and not Cosmic.transcribe_subtitles:
                 offline_translated_text = await translate_offline(text)
                 offline_translate_done = True
+
+# ----------- smart_history_actions_panel -----------
+                # if Config.history_actions_panel_enabled:
+                # update_buffer('english', offline_translated_text)
+# ----------- smart_history_actions_panel -----------
+
                 Cosmic.offline_translate_needed = False
 
             # 在线翻译
@@ -67,6 +98,12 @@ async def recv_result():
             if Cosmic.online_translate_needed and not Cosmic.transcribe_subtitles:
                 online_translated_text = translate_online(text)
                 online_translate_done = True
+
+# ----------- smart_history_actions_panel -----------
+                # if Config.history_actions_panel_enabled:
+                # update_buffer('english', online_translated_text)
+# ----------- smart_history_actions_panel -----------
+
                 Cosmic.online_translate_needed = False
 
             if Config.save_audio:
@@ -115,14 +152,42 @@ async def recv_result():
                                 await type_result(text)
                             else:
                                 await type_result(traditional_text)
+
+# ----------- smart_history_actions_panel -----------
+                                # if Config.history_actions_panel_enabled:
+                                # update_buffer('traditional', traditional_text)
+# ----------- smart_history_actions_panel -----------
+
                         case _:
                             if Cosmic.opposite_state:
                                 await type_result(traditional_text)
+
+# ----------- smart_history_actions_panel -----------
+                                # if Config.history_actions_panel_enabled:
+                                # update_buffer('traditional', traditional_text)
+# ----------- smart_history_actions_panel -----------
+
                             else:
                                 await type_result(text)
                 else:
                     await type_result(text)
                 convert_to_traditional_chinese_done = False
+
+
+# ----------- smart_history_actions_panel -----------
+            # if Config.history_actions_panel_enabled:
+            # flush_buffer()
+            offline_translated_text = locals().get("offline_translated_text", "")
+            online_translated_text = locals().get("online_translated_text", "")
+            history_panel_output_selector(
+                situation,
+                text,
+                traditional_text,
+                offline_translated_text,
+                online_translated_text
+            )
+# ----------- smart_history_actions_panel -----------
+
             Cosmic.opposite_state = False
     except websockets.ConnectionClosedError:
         console.print("[red]连接断开\n")
