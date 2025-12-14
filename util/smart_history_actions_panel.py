@@ -348,13 +348,8 @@ class MultiLineElidedLabel(QLabel):
         fm = QFontMetrics(self.font())
         line_height = fm.lineSpacing() + panel_config["content"]["line_spacing"]
 
-        if self.parent() and self.parent().width() > 0:
-            parent_width = self.parent().width()
-            title_width = self.parent().title_label.width()
-            layout_width = parent_width - title_width - 20
-        else:
-            layout_width = panel_config["content"].get("width", 500)
-
+        # 强制使用配置的宽度，避免第一次显示时宽度计算错误
+        layout_width = panel_config["content"].get("width", 320)
         layout_width = max(layout_width, 100)
 
         layout = QTextLayout(text, self.font())
@@ -670,14 +665,19 @@ class TextLineWidget(QWidget):
             btn_layout.addWidget(btn)
 
         self.buttons_container.raise_()
+        # 强制初始化布局
+        self.buttons_container.adjustSize()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        btn_width = self.buttons_container.sizeHint().width()
+        # 确保按钮容器尺寸正确
+        self.buttons_container.adjustSize()
+        btn_width = self.buttons_container.width()
         x = self.width() - btn_width - 5
-        y = (self.height() - self.buttons_container.sizeHint().height()) // 2
+        y = (self.height() - self.buttons_container.height()) // 2
+        # 防止按钮容器超出左侧边界
+        x = max(x, self.title_label.width() + 10)
         self.buttons_container.move(x, y)
-        self.buttons_container.setFixedSize(self.buttons_container.sizeHint())
 
     def enterEvent(self, event):
         self.title_label.setStyleSheet(
@@ -822,14 +822,32 @@ class RoundedWidget(QWidget):
         self.main_layout.setContentsMargins(pad_left, pad_top, pad_right, pad_bottom)
         self.main_layout.setSpacing(panel_config["content"]["line_spacing"])
 
+        # 初始化窗口属性
+        flags = Qt.WindowFlags()
+        if panel_config["global"]["window_frameless"]:
+            flags |= Qt.FramelessWindowHint
+        if panel_config["global"]["window_stay_on_top"]:
+            flags |= Qt.WindowStaysOnTopHint
+        flags |= Qt.Tool | Qt.WindowDoesNotAcceptFocus
+        self.setWindowFlags(flags)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+        # 创建文本行
         for line_config in panel_config["text_lines"]:
             key = line_config["key"]
             title = line_config["title"]
             self.create_text_line(key, title)
 
+        # 设置样式和固定宽度
         self.setStyleSheet(self._get_stylesheet())
         self.setFixedWidth(panel_config["widget"]["width"])
-        self.adjustSize()
+        # 强制计算初始尺寸
+        self.calc_and_set_fixed_size()
+
+    def calc_and_set_fixed_size(self):
+        """计算并设置固定尺寸，避免绘制时修改"""
+        bg_width, bg_height = self._calc_background_size()
+        self.setFixedSize(bg_width, bg_height)
 
     def update_group_data(self, sentence_group, group_type, index):
         """更新窗口数据，复用已有窗口实例"""
@@ -853,7 +871,7 @@ class RoundedWidget(QWidget):
 
         # 更新样式和尺寸
         self.setStyleSheet(self._get_stylesheet())
-        self.adjustSize()
+        self.calc_and_set_fixed_size()
         self.update()
 
     def _get_stylesheet(self):
@@ -948,6 +966,9 @@ class RoundedWidget(QWidget):
         self.main_layout.addWidget(line_widget)
 
     def _calc_background_size(self):
+        """计算背景尺寸（仅在初始化/更新时调用）"""
+        # 强制刷新布局
+        self.main_layout.activate()
         content_height = self.main_layout.sizeHint().height()
         pad_top, _, pad_bottom, _ = panel_config["widget"]["padding"]
         bg_height = content_height + pad_top + pad_bottom
@@ -962,13 +983,8 @@ class RoundedWidget(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        bg_width, bg_height = self._calc_background_size()
+        bg_width, bg_height = self.size().width(), self.size().height()
         border_radius = panel_config["widget"]["border_radius"]
-
-        if self.height() != bg_height:
-            self.setFixedHeight(bg_height)
-        if self.width() != bg_width:
-            self.setFixedWidth(bg_width)
 
         if self.group == "pinned":
             colors = panel_config["pinned"]["bg_colors"]
@@ -981,10 +997,12 @@ class RoundedWidget(QWidget):
         bg_color = to_qcolor(colors[color_idx])
         border_color = to_qcolor(border_colors[color_idx % len(border_colors)])
 
+        # 绘制背景
         painter.setBrush(QBrush(bg_color))
         painter.setPen(Qt.NoPen)
         painter.drawRoundedRect(0, 0, bg_width, bg_height, border_radius, border_radius)
 
+        # 绘制边框
         pen = QPen(border_color)
         pen.setWidth(panel_config["widget"]["border_width"])
         painter.setPen(pen)
@@ -1072,19 +1090,14 @@ def show_widgets():
         # 无匹配则创建新窗口
         if not matched_widget:
             matched_widget = RoundedWidget(group, group=group_type, index=idx)
-            # 设置窗口属性
-            flags = Qt.WindowFlags()
-            if panel_config["global"]["window_frameless"]:
-                flags |= Qt.FramelessWindowHint
-            if panel_config["global"]["window_stay_on_top"]:
-                flags |= Qt.WindowStaysOnTopHint
-            flags |= Qt.Tool | Qt.WindowDoesNotAcceptFocus
-            matched_widget.setWindowFlags(flags)
-            matched_widget.setAttribute(Qt.WA_TranslucentBackground)
             cached_widgets.append(matched_widget)
 
         # 更新窗口数据（即使匹配也要更新索引/类型）
         matched_widget.update_group_data(group, group_type, idx)
+        # 强制刷新布局和尺寸
+        matched_widget.ensurePolished()
+        matched_widget.updateGeometry()
+        matched_widget.adjustSize()
         active_displayed_widgets.append(matched_widget)
 
     # 第二步：根据配置的排列方式布局
@@ -1103,7 +1116,7 @@ def show_widgets():
 
 
 def arrange_method_1(display_widgets):
-    """按列排列 - 复用窗口版本"""
+    """按列排列 - 统一尺寸计算逻辑"""
     base_x = panel_config["widget"]["initial_x"]
     base_y = panel_config["widget"]["initial_y"]
     spacing = panel_config["widget"]["spacing"]
@@ -1118,42 +1131,52 @@ def arrange_method_1(display_widgets):
     current_col_y = base_y
 
     for w in display_widgets:
+        # 确保窗口尺寸已确定
+        w.ensurePolished()
         w.adjustSize()
+        widget_height = w.height()
 
-        # 检查是否需要换列
-        widget_bottom = current_col_y + w.height()
+        # 检查是否需要换列（预留100px底部空间）
+        widget_bottom = current_col_y + widget_height
         if widget_bottom > screen_bottom - 100:
             current_col_x += widget_width + spacing
+            # 检查列是否超出屏幕右侧
             if current_col_x + widget_width > screen_right:
                 current_col_x = base_x
-                current_col_y = screen_bottom + spacing
             current_col_y = base_y
 
-        # 定位窗口
-        w.move(current_col_x, current_col_y)
-        current_col_y += w.height() + spacing
+        # 定位窗口（确保坐标在屏幕内）
+        final_x = max(current_col_x, screen_geo.left() + 10)
+        final_y = max(current_col_y, screen_geo.top() + 10)
+        w.move(final_x, final_y)
 
-    # 兜底处理
-    if current_col_x + widget_width > screen_right and current_col_y > screen_bottom:
-        current_y_reset = base_y
-        for w in display_widgets:
-            w.move(base_x, current_y_reset)
-            current_y_reset += w.height() + spacing
-            if current_y_reset > screen_bottom:
-                break
+        # 更新下一个窗口的y坐标
+        current_col_y += widget_height + spacing
 
 
 def arrange_method_0(display_widgets):
-    """单行排列 - 复用窗口版本"""
+    """单行排列 - 统一尺寸计算逻辑"""
     base_x = panel_config["widget"]["initial_x"]
     base_y = panel_config["widget"]["initial_y"]
     current_y = base_y
     spacing = panel_config["widget"]["spacing"]
 
+    primary_screen = QGuiApplication.primaryScreen()
+    screen_geo = primary_screen.availableGeometry()
+
     for w in display_widgets:
+        # 确保窗口尺寸已确定
+        w.ensurePolished()
         w.adjustSize()
-        w.move(base_x, current_y)
-        current_y += w.height() + spacing
+        widget_height = w.height()
+
+        # 确保坐标在屏幕内
+        final_x = max(base_x, screen_geo.left() + 10)
+        final_y = max(current_y, screen_geo.top() + 10)
+        w.move(final_x, final_y)
+
+        # 更新下一个窗口的y坐标
+        current_y += widget_height + spacing
 
 
 # 模拟新增组
@@ -1216,6 +1239,7 @@ if __name__ == "__main__":
         add_sentence_group(group)
 
     app = QApplication(sys.argv)
+    # 禁用Qt的字体缩放，避免尺寸计算偏差
     kb_thread = KeyboardThread()
     kb_thread.trigger.connect(show_widgets)
     kb_thread.start()
