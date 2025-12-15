@@ -286,15 +286,32 @@ opencc_converter = "s2t"
 # jp2t New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
 
 history_actions_panel_enabled = false
+# 是否启用历史操作面板; 只有开启后, 下方的相关面板选项才会作用
+
 sub_activate_panel_shortcut = ""
+# 显示/隐藏 历史操作面板 的辅助快捷键 (默认:""); 注: 主快捷键是"shift + 双击录音键"
+# 支持复合快捷键, 例如: "ctrl + shift + alt + a"
 
+# `简` 中文作为主要输出的时候:
 output_traditional_when_simplified = false
-output_simplified_when_simplified_opposite_state = true
-output_traditional_when_simplified_offline_translate = false
-output_simplified_when_simplified_offline_translate = true
-output_traditional_when_simplified_online_translate = false
-output_simplified_when_simplified_online_translate = true
+# 是否输出繁体中文到历史操作面板里(单击)
 
+output_simplified_when_simplified_opposite_state = true
+# 是否输出简体中文到历史操作面板里当处于临时转换状态时
+
+output_traditional_when_simplified_offline_translate = false
+# 是否输出繁体中文到历史操作面板里当处于离线翻译状态时
+
+output_simplified_when_simplified_offline_translate = true
+# 是否输出简体中文到历史操作面板里当处于离线翻译状态时
+
+output_traditional_when_simplified_online_translate = false
+# 是否输出繁体中文到历史操作面板里当处于在线翻译状态时
+
+output_simplified_when_simplified_online_translate = true
+# 是否输出简体中文到历史操作面板里当处于在线翻译状态时
+
+# `繁` 中文作为主要输出的时候(同上):
 output_simplified_when_traditional = false
 output_traditional_when_traditional_opposite_state = true
 output_simplified_when_traditional_offline_translate = false

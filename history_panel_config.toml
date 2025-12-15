@@ -1,0 +1,174 @@
+[[text_lines]]
+key = "simplified"
+title = "简"
+
+[[text_lines]]
+key = "traditional"
+title = "繁"
+
+[[text_lines]]
+key = "english"
+title = "译"
+
+
+# 标题设置
+[title]
+font_family = "Microsoft YaHei"
+# 标题字体;
+
+font_size = 9
+# 标题字体大小;
+
+font_bold = true
+# 是否加粗标题字体;
+
+font_italic = false
+# 是否斜体标题字体;
+
+color = [ 252, 220, 129, 255,]
+# 标题文字颜色; 格式: [ R, G, B, A,]
+
+bg_color = [ 0, 0, 0, 0,]
+# 标题的背景颜色;
+
+hover_bg_color = [ 255, 240, 160, 140,]
+# 鼠标悬停时标题的背景颜色;
+
+border_color = [ 0, 0, 0, 0,]
+border_width = 0
+min_width = 18
+max_width = 28
+# 标题区域的最小和最大宽度;
+
+padding = 1
+
+
+# 内容设置
+[content]
+font_family = "Microsoft YaHei"
+font_size = 9
+font_bold = false
+font_italic = false
+color = [ 255, 255, 255, 255,]
+# 内容文字颜色; 格式: [ R, G, B, A,]
+
+bg_color = [ 0, 0, 0, 0,]
+# 内容的背景颜色;
+
+hover_bg_color = [ 80, 0, 22, 50,]
+# 鼠标悬停时内容的背景颜色;
+
+border_color = [ 0, 0, 0, 0,]
+border_width = 0
+line_spacing = 3
+# 内容行间距;
+
+max_lines = 2
+# 内容的最大行数;
+
+width = 320
+# 内容区域的宽度;
+
+ellipsis = "[...]"
+# 当内容超出最大行数时显示的省略符号;
+
+margins = [ 0, 0, 0, 0,]
+
+
+# 窗口设置
+[widget]
+padding = [ 3, 3, 3, 3,]
+spacing = 5
+widget_width_spacing = 3
+# 窗口之间的宽度间距;
+
+widget_height_spacing = -2
+# 窗口之间的高度间距;
+
+width = 350
+# 历史记录文本组窗口的宽度 > (28标题宽度 + 320内容宽度)
+
+initial_x = 100
+# 第一个历史记录文本组的初始位置 X 坐标(左上角)
+
+initial_y = 100
+# 第一个历史记录文本组的初始位置 Y 坐标(左上角)
+
+border_radius = 8
+# 窗口的边框圆角半径;
+
+border_width = 4
+# 窗口的边框宽度(粗细);
+
+
+# 钉住状态下的颜色设置
+[pinned]
+bg_colors = [ [ 155, 68, 0, 255,], [ 179, 92, 68, 255,],]
+# 钉住状态下文本组的背景颜色; 格式: [ [ R, G, B, A,], [ R, G, B, A,],]
+# 两组背景颜色交替使用
+
+border_colors = [ [ 84, 67, 50, 255,], [ 137, 103, 71, 255,],]
+# 钉住状态下文本组的边框颜色;
+# 两组边框颜色交替使用
+
+
+# 非钉住状态下的颜色设置
+[unpinned]
+bg_colors = [ [ 44, 79, 84, 255,], [ 31, 49, 52, 255,],]
+# 非钉住状态下文本组的背景颜色; 格式: [ [ R, G, B, A,], [ R, G, B, A,],]
+
+border_colors = [ [ 137, 103, 71, 255,], [ 84, 67, 50, 255,],]
+# 非钉住状态下文本组的边框颜色;
+
+
+# 按钮设置
+[button]
+size = [ 24, 20,]
+# 按钮的宽度和高度; 格式: [ width, height,]
+
+normal_color = [ 255, 204, 51, 255,]
+# 通用按钮的正常状态颜色; 格式: [ R, G, B, A,]
+
+hover_color = [ 255, 255, 153, 255,]
+# 通用按钮的悬停状态颜色;
+
+pinned_color = [ 200, 50, 50, 255,]
+# 钉住按钮的正常状态颜色;
+
+pinned_hover_color = [ 166, 0, 0, 255,]
+# 钉住按钮的悬停状态颜色;
+
+review_color = [ 200, 50, 50, 255,]
+# 复查按钮的正常状态颜色;
+
+review_hover_color = [ 166, 0, 0, 255,]
+# 复查按钮的悬停状态颜色;
+
+border_radius = 10
+# 按钮的边框圆角半径;
+
+show_pin = true
+show_edit = true
+show_copy = true
+show_paste = true
+show_type = true
+show_review = true
+
+
+[global]
+max_text_groups = 20
+# 最大的历史记录文本组数量; 超过后最早(非钉住的)的会被删除
+
+auto_close_timeout = 1000
+# 鼠标离开面板后多少毫秒后自动关闭面板
+
+window_stay_on_top = true
+# 是否始终保持窗口置顶
+
+window_frameless = true
+# 是否启用无边框窗口
+
+history_panel_arrange_method = 1
+# 历史操作面板排列方式; 
+# 0: 单列排序; 
+# 1: 多列排序;
