@@ -146,11 +146,11 @@ def handle_special_media_apps(playing_apps):
 
     # 針對"hold_mode"返回按下的 "shift" 鍵(推測)
     if offline_translate_shortcut_pressed:
-        keyboard.pressed(Config.offline_translate_shortcut)
+        keyboard.press(Config.offline_translate_shortcut)
         if Config.hold_mode:
             offline_translate_shortcut_pressed = False
     if online_translate_shortcut_pressed:
-        keyboard.pressed(Config.online_translate_shortcut)
+        keyboard.press(Config.online_translate_shortcut)
         if Config.hold_mode:
             online_translate_shortcut_pressed = False
 
