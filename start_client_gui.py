@@ -584,6 +584,11 @@ class GUI(QMainWindow):
 
                 # ----------- 原有：普通内容放入队列供console显示 -----------
                 queue.put(line_stripped)
+    else:
+        def enqueue_output(self, out, queue):
+            for line in iter(out.readline, ""):
+                line = line.strip()
+                queue.put(line)
         # ----------- smart_history_actions_panel -----------
 
     def update_text_box(self):

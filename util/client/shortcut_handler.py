@@ -53,10 +53,10 @@ saved_special_apps = []
 
 
 # ----------- smart_history_actions_panel -----------
+b_time = 0
 if Config.history_actions_panel_enabled:
     import sys
     history_actions_panel_launched = False
-    b_time = 0
 
 
     def call_gui_from_child():
