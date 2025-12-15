@@ -153,6 +153,7 @@ async def recv_result():
                     offline_translated_text,
                     online_translated_text
                 )
+                sys.stdout.flush()
             # ----------- smart_history_actions_panel -----------
 
             Cosmic.opposite_state = False

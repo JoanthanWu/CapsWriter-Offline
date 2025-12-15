@@ -1249,7 +1249,9 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     # 禁用Qt的字体缩放，避免尺寸计算偏差
-    kb_thread = KeyboardThread()
+    
+    sub_activate_panel_shortcut = "ctrl+alt+a"
+    kb_thread = KeyboardThread(sub_activate_panel_shortcut)
     kb_thread.trigger.connect(show_widgets)
     kb_thread.start()
 
