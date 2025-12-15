@@ -10,6 +10,8 @@ from pycaw.pycaw import AudioUtilities, IAudioMeterInformation
 
 from util.config import ClientConfig as Config
 
+offline_translate_shortcut_pressed = False
+online_translate_shortcut_pressed = False
 
 def get_audio_playing_apps(exclude_names: List[str] = None) -> Dict[int, str]:
     """
@@ -61,6 +63,19 @@ def handle_special_media_apps(playing_apps):
         tuple: (是否处理了特殊应用, 处理的特殊应用列表)
         处理的应用列表格式: [{"exe": "QQMusic.exe", "windows": ["窗口1", "窗口2"]}, ...]
     """
+    
+    global offline_translate_shortcut_pressed, online_translate_shortcut_pressed
+    # 翻譯功能的"shift"會干擾發送停止播放的快捷鍵, 因此，需要預先釋放
+    if keyboard.is_pressed(Config.offline_translate_shortcut):
+        keyboard.release(Config.offline_translate_shortcut)
+        if Config.hold_mode:
+            # 針對"hold_mode"返回按下的 "shift" 鍵(推測)
+            offline_translate_shortcut_pressed = True
+    if keyboard.is_pressed(Config.online_translate_shortcut):
+        keyboard.release(Config.online_translate_shortcut)
+        if Config.hold_mode:
+            online_translate_shortcut_pressed = True
+
     special_apps_map = {
         "QQMusic.exe": {"hotkey": Config.QQMusic_global_pause_hotkey, "name": "QQ音乐"},
         "CloudMusic.exe": {
@@ -128,6 +143,16 @@ def handle_special_media_apps(playing_apps):
             for window_name in app_info["windows"]:
                 if window_name in playing_apps:
                     playing_apps.pop(window_name)
+
+    # 針對"hold_mode"返回按下的 "shift" 鍵(推測)
+    if offline_translate_shortcut_pressed:
+        keyboard.pressed(Config.offline_translate_shortcut)
+        if Config.hold_mode:
+            offline_translate_shortcut_pressed = False
+    if online_translate_shortcut_pressed:
+        keyboard.pressed(Config.online_translate_shortcut)
+        if Config.hold_mode:
+            online_translate_shortcut_pressed = False
 
     return True, processed_apps
 

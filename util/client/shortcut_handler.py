@@ -137,6 +137,12 @@ def restore_audio_playing():
                     #     f"未配置 {app_info['name']} 的全局暂停快捷键，不需要恢复音频播放"
                     # )
                 else:
+                    # 翻譯功能的"shift"會干擾發送停止播放的快捷鍵, 因此，需要預先釋放
+                    if keyboard.is_pressed(Config.offline_translate_shortcut):
+                        keyboard.release(Config.offline_translate_shortcut)
+                    if keyboard.is_pressed(Config.online_translate_shortcut):
+                        keyboard.release(Config.online_translate_shortcut)
+
                     # 发送相同的快捷键恢复播放
                     keyboard.send(app_info["hotkey"])
                     # print(f"已恢复 {app_info['name']}（{app_info['hotkey']}）")
@@ -395,10 +401,10 @@ def click_mode(e: keyboard.KeyboardEvent):
     # - [x] Bug4: 20250919: click_mode : "Shift + double_clicked / double_clicked" 可能导致恢复播放失败。
     # 解决方法-Bug4: 在 "elif (double_clicked and is_short_duration)" 中移除 restore_audio_playing()。
 
-    # - [ ] 潜在改善点: 20250924: 假如有两个应用在运行, 其中第1个在播放，第2个在暂停, 那么我进行录音，第一个会被暂停，而第2个在录音期间依然会被播放(靜音)，不符合“暂停所有应用”的设想。
+    # - [x] 潜在改善点: 20250924: 假如有两个应用在运行, 其中第1个在播放，第2个在暂停, 那么我进行录音，第一个会被暂停，而第2个在录音期间依然会被播放(靜音)，不符合“暂停所有应用”的设想。
     # 思路:
     # 1. 能否指定某应用暂停/播放？
-    # - [ ]
+    # - [x]
     #   handle_special_media_apps(playing_apps) 处理 网易云音乐/QQ音乐/PotPlayer/foobar2000 播放时 使用 播放器设置的 全局快捷键 暂停/恢复 播放。
     #   非网易云音乐/QQ音乐/PotPlayer/foobar2000，仅有一个应用在播放时，使用全局媒体键 播放/暂停 ，如果后台有其他已暂停播放的应用，可能影响其他后台已暂停应用的播放 😂
     #   非网易云音乐/QQ音乐/PotPlayer/foobar2000，有两个以上应用在播放时，不使用全局媒体键 播放/暂停 ，只能指望静音其他音频播放的功能 😂
