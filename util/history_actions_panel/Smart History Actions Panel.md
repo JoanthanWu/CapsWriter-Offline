@@ -1,3 +1,22 @@
+## **历史操作面板**主要功能
+- 是用於對歷史文本的`複製`,`粘貼`和`逐字輸出`, 加以`固定`,`編輯`及`預先审查`的功能進行輔助. 
+## 需求覆蓋範圍:
+- 複用歷史輸出文本
+- 對複用的文本進行編輯
+- 不再受限制於剪貼板 (Config.paste = false)&(部分程式/遊戲不能使用剪貼功能)
+- `繁/簡` 再次選擇/對照
+- 查看翻譯後的中文用於對照
+## 使用說明-激活方法
+- 历史操作面板功能總開關 : `config.toml : history_actions_panel_enabled`
+- "shift + 雙擊錄音鍵"(有限制)
+- "自定義快捷鍵"(`config.toml : sub_activate_panel_shortcut`)
+- "自定義輸出內容種類到達面板的選項"(`config.toml`)
+## 文件說明:
+- `history_panel_config.toml` : 配置文件
+- `history_pinned_groups.json` : 储存固定文本的文件
+- `history_sanitize_list.txt` : 預先审查列表文件
+
+
 ## 六个按钮功能说明
 - 📌 **Pin**  
   固定或取消固定当前句子, 避免被新来的句子挤掉。
@@ -10,7 +29,7 @@
 - ✍️ **Type**  
   模拟人工逐字输入当前文本。  
 - ⛓ **Review**  
-  将句子加入或移出审查清单，以免污染智能历史操作面板。
+  将句子加入或移出审查清单，以免污染历史操作面板。
 
 
 ## 进度
@@ -26,10 +45,10 @@
    	- Enter 运行功能
 6. - [x] 加入修改字體
 7. - [x] 可改變量-全部列出來
-8. - [ ] 刪除不必要的代碼
+8. - [x] 刪除不必要的代碼
 9. - [x] 更改名字:
    - 文件名字應該用 `history` 作爲開頭，保持一致性
-	- 功能名字 : "智能历史操作面板 / Smart History Actions Panel" →
+	- 功能名字 : "历史操作面板 / History Actions Panel" →
 		- ~~smart_history_actions_panel~~ → history_actions_panel
 		- ~~enabled_smart_history_actions_panel~~ → history_actions_panel_enabled
 	- 产生的文件名字:
@@ -77,30 +96,19 @@
 17. - [ ] 預激活面板(無感): 避免首次激活的時候花費時間
     - `config.py` 增加可選是否預激活面板的選項
 18. - [x] `config.py` 增加呼換面板`自定義熱鍵`(預設爲空)
-
-
-## `history-panel-function-test` 目录结构
-├─📄 010C smart_history_actions_panel_demo.py------------- # 以"行"为单位, 4个按钮功能正常
-├─📄 011E smart_history_actions_panel_demo.py------------- # 以"组"为单位, 4个按钮功能正常
-├─📄 012A smart_history_actions_panel_demo.py------------- # 以"组"为单位, 增加第5个按钮功能: 审查清单
-├─📄 014C smart_history_actions_panel_demo.py------------- # 以"组"为单位, 5个按钮功能正常, 自定义变量
-├─📄 015 smart_history_actions_panel_demo.py-------------- # 以"组"为单位, 5个按钮功能正常, 自定义变量, 更改相关文件名字
-├─📄 016 smart_history_actions_panel.py------------------- # ★★★功能完整★★★ (z按键操控)
-├─📄 history_panel_config.toml---------------------------- # 储存面板参数的配置,
-├─📄 history_pinned_groups.json--------------------------- # 储存已经钉住的"组",  以免重启后丢失
-├─📄 history_sanitize_list.txt---------------------------- # 储存需要过滤的句子, 避免污染
-└─📄 Smart History Actions Panel.md----------------------- # 智能历史操作面板的进度和说明
+19. - [ ] 粘貼按鈕的功能運作時, 還原之前粘貼板內容的選項
 
 
 ## 增加或者修改过的文件
-- [x] config.py
-- [x] config.toml
-- [x] start_client_gui.py
-- [x] client_shortcut_handler.py
-- [x] client_recv_result.py
-- [x] history_actions_panel.py
-- [x] history_panel_situation_selector.py
-- [x] Smart History Actions Panel.md
+- [x] M: config.py
+- [x] M: config.toml
+- [x] M: start_client_gui.py
+- [x] M: client_shortcut_handler.py
+- [x] M: client_recv_result.py
+- [x] A: history_actions_panel.py
+- [x] A: history_panel_situation_selector.py
+- [x] A: Smart History Actions Panel.md
+
 
 ## 整合Smart History Actions Panel 进 CapsWriter-Offline-GUI 遇到的难题
 - [x] 問題1. 无法正常把文字资料填进 PySide6 相关的函数中
