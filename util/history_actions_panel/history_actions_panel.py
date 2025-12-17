@@ -1203,9 +1203,10 @@ def simulate_new_group():
 class KeyboardThread(QThread):
     trigger = Signal()
 
-    def __init__(self, shortcut):
+    def __init__(self, shortcut, sub_activate_panel_shortcut_suppress):
         super().__init__()
         self.shortcut = shortcut  # 保存傳入的快捷鍵
+        self.sub_activate_panel_shortcut_suppress = sub_activate_panel_shortcut_suppress  # 保存傳入的快捷鍵是否需要抑制
 
     def run(self):
         if not self.shortcut:
@@ -1213,7 +1214,7 @@ class KeyboardThread(QThread):
         
         def handler():
             self.trigger.emit()
-        keyboard.add_hotkey(self.shortcut, handler, suppress=True)
+        keyboard.add_hotkey(self.shortcut, handler, suppress=self.sub_activate_panel_shortcut_suppress)
         keyboard.wait()
 
 

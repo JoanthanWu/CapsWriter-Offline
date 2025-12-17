@@ -780,7 +780,7 @@ def start_client_gui():
         load_reviewed_lines()
         load_pinned()
 
-        kb_thread = KeyboardThread(Config.sub_activate_panel_shortcut)
+        kb_thread = KeyboardThread(Config.sub_activate_panel_shortcut, Config.sub_activate_panel_shortcut_suppress)
         kb_thread.trigger.connect(controller.show_widgets_signal.emit)
         kb_thread.start()
     # ----------- smart_history_actions_panel -----------

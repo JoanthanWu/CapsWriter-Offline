@@ -138,6 +138,7 @@ class ClientConfig:
 
     history_actions_panel_enabled: bool = config["client"]["history_actions_panel_enabled"]
     sub_activate_panel_shortcut: str = config["client"]["sub_activate_panel_shortcut"]
+    sub_activate_panel_shortcut_suppress: str = config["client"]["sub_activate_panel_shortcut_suppress"]
 
     # 简体主体相关
     output_traditional_when_simplified: bool = config["client"]["output_traditional_when_simplified"]

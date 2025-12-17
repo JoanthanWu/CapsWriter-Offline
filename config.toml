@@ -292,6 +292,9 @@ sub_activate_panel_shortcut = ""
 # 显示/隐藏 历史操作面板 的辅助快捷键 (默认:""); 注: 主快捷键是"shift + 双击录音键"
 # 支持复合快捷键, 例如: "ctrl + shift + alt + a"
 
+sub_activate_panel_shortcut_suppress = false
+# 是否阻塞 辅助快捷键 的按键事件 (让其它程序收不到这个按键消息); 不建议开启, 会造成部分的按键不灵敏
+
 # `简` 中文作为主要输出的时候:
 output_traditional_when_simplified = false
 # 是否输出繁体中文到历史操作面板里(单击)
