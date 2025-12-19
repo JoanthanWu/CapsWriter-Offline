@@ -1209,9 +1209,6 @@ class KeyboardThread(QThread):
         self.sub_activate_panel_shortcut_suppress = sub_activate_panel_shortcut_suppress  # 保存傳入的快捷鍵是否需要抑制
 
     def run(self):
-        if not self.shortcut:
-            return
-        
         def handler():
             self.trigger.emit()
         keyboard.add_hotkey(self.shortcut, handler, suppress=self.sub_activate_panel_shortcut_suppress)
