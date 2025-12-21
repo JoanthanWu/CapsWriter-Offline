@@ -620,6 +620,9 @@ def hold_mode(e: keyboard.KeyboardEvent):
 
             translate_needed()
 
+            if history_actions_panel_launched:
+                history_actions_panel_launched = False
+
             # 处理双击切换简/繁状态, 当初为何使用这个double_clicked变量来判断？嗯，记不起来了. 可能是当时还没使用key_pressed来锁定
             if double_clicked:
                 # ----------- smart_history_actions_panel -----------
