@@ -859,4 +859,171 @@ pip install  --target .\site-packages pywin32
 
 ## [PyQt-SiliconUI](https://github.com/ChinaIceF/PyQt-SiliconUI)
 
+# FFmpeg & FFplay
+
+## 参考
+[Windows 平台下使用 MSYS 2 编译 FFmpeg](https://www.scott-sloan.cn/archives/449/)
+
+## 准备
+### 下载
+
+https://www.msys2.org/
+
+https://ffmpeg.org/download.html -> C:\Users\user0\Documents\FFmpeg\
+https://github.com/libsdl-org/SDL/releases -> C:\Users\user0\Documents\FFmpeg\SDL2\
+https://sourceforge.net/projects/lame/files/lame/ -> C:\Users\user0\Documents\FFmpeg\lame\
+
+### 装包
+```sh
+pacman -S mingw-w64-ucrt-x86_64-gcc
+```
+
+```sh
+pacman -S make pkg-config mingw-w64-ucrt-x86_64-nasm mingw-w64-ucrt-x86_64-diffutils
+```
+
+## lame
+
+###  编译 & 安装
+
+```sh
+cd "/c/Users/user0/Documents/FFmpeg"
+```
+
+```sh
+cd ./lame
+```
+
+```sh
+./configure --help
+```
+
+```sh
+make distclean
+```
+
+```sh
+CFLAGS="-O3 -ffast-math -flto -march=x86-64 -mtune=generic" \
+LDFLAGS="-flto" \
+./configure \
+--prefix=/c/Users/user0/Documents/FFmpeg/lame/build \
+--disable-shared \
+--disable-frontend \
+--disable-decoder \
+--disable-gtktest \
+--disable-analyzer-hooks \
+--enable-static \
+--enable-silent-rules \
+--disable-dependency-tracking \
+--disable-rpath \
+--disable-debug \
+--with-fileio=lame \
+--host=x86_64-w64-mingw32
+```
+
+```sh
+make clean
+```
+
+```sh
+make -j8 2>&1 | tee build.log
+```
+
+```sh
+make install
+```
+
+### 测试
+
+```sh
+x86_64-w64-mingw32-gcc test_lame.c \
+    -I/c/Users/user0/Documents/FFmpeg/lame/build/include \
+    -L/c/Users/user0/Documents/FFmpeg/lame/build/lib \
+    -lmp3lame -o test_lame.exe
+```
+
+```sh
+./test_lame.exe
+```
+
+```sh
+du -h /c/Users/user0/Documents/FFmpeg/lame/build/lib/*.a
+```
+
+```sh
+make clean
+```
+
+## FFmpeg & FFplay
+
+### 编译 & 安装
+
+```sh
+cd ..
+```
+
+```sh
+./configure --help
+```
+
+```sh
+make distclean
+```
+
+```sh
+./gccconf
+```
+
+```sh
+export ARCH=x86_64
+
+./configure \
+--prefix=./ffmpeg-build \
+--disable-doc \
+--disable-shared \
+--disable-everything \
+--disable-ffprobe \
+--disable-avdevice \
+--disable-network \
+--disable-autodetect \
+--enable-static \
+--enable-small \
+--enable-ffmpeg \
+--enable-ffplay \
+--enable-sdl2 \
+--enable-demuxer="concat,ffmetadata,mov,mp4,flv,m4a,mp3,wav,matroska,ogg,rawdata,rawvideo,f32le,pcm_f32le,pcm_s16le,s16le" \
+--enable-muxer="mp4,flv,mp3,m4a,wav,matroska,ogg,f32le,pcm_f32le,pcm_s16le,s16le" \
+--enable-decoder="h264,hevc,av1,aac,flac,eac3,ac3,mp3,f32le,pcm_f32le,pcm_s16le,s16le,vorbis,opus" \
+--enable-encoder="libmp3lame,f32le,pcm_f32le,pcm_s16le,s16le" \
+--enable-parser="h264,hevc,aac,flac,ac3,mp3,pcm" \
+--enable-protocol="file,concat,pipe,fd,cache,data" \
+--enable-filter="aresample,asetnsamples,atempo,afade,volume,silenceremove" \
+--enable-libmp3lame \
+--enable-gpl \
+--extra-cflags="-I/c/Users/user0/Documents/FFmpeg/lame/build/include -I/c/Users/user0/Documents/FFmpeg/SDL2/x86_64-w64-mingw32/include -I/c/Users/user0/Documents/FFmpeg/SDL2/x86_64-w64-mingw32/include/SDL2 -Dmain=SDL_main" \
+--extra-ldflags="-static -static-libgcc -static-libstdc++ -L/c/Users/user0/Documents/FFmpeg/lame/build/lib -L/c/Users/user0/Documents/FFmpeg/SDL2/x86_64-w64-mingw32/lib" \
+--extra-libs="-lmingw32 -lSDL2main -lSDL2 -mwindows -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid"
+```
+
+```sh
+make install
+```
+
+### 测试
+
+```sh
+python -c "
+import struct
+sample_rate = 48000
+channels = 1
+duration = 1.0
+num_samples = int(sample_rate * duration * channels)
+import math
+data = b''.join(struct.pack('f', 0.5 * math.sin(2 * math.pi * 440 * i / sample_rate)) for i in range(num_samples))
+import sys
+sys.stdout.buffer.write(data)
+" | ./ffmpeg-build/bin/ffmpeg -y -f f32le -ar 48000 -ac 1 -i - -c:a libmp3lame -b:a 192k test.mp3
+```
+
+
 </details>
