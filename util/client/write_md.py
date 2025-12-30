@@ -3,6 +3,7 @@ from os import makedirs
 from pathlib import Path
 
 from util.client.hot_kwds import kwd_list
+from util.config import ClientConfig as Config
 
 # def do_updata_kwd(kwd_text: str):
 #     """
@@ -53,6 +54,10 @@ def write_md(text: str, time_start: float, file_audio: Path):
 
     # 为 md 文件写入识别记录
     for kwd, file_md in md_list:
+        # 根据配置决定是否跳过非关键词记录
+        if Config.save_non_kwd_markdown is False and kwd == "":
+            continue
+
         # 确保 md 文件存在
         if not file_md.exists():
             create_md(file_md)

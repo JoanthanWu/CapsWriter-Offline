@@ -78,6 +78,7 @@ class ClientConfig:
     ]
     save_audio: bool = config["client"]["save_audio"]
     save_markdown: bool = config["client"]["save_markdown"]
+    save_non_kwd_markdown: bool = config["client"]["save_non_kwd_markdown"]
     audio_name_len: int = config["client"]["audio_name_len"]
     reduce_audio_files: bool = config["client"]["reduce_audio_files"]
     trash_punc: str = config["client"]["trash_punc"]
