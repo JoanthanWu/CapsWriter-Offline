@@ -93,6 +93,7 @@ class ClientConfigPage(SiPage):
         self.hint_while_recording_at_cursor_position.toggled.connect(
             lambda: self.hint_while_recording_at_cursor_position_changed()
         )
+        self.save_markdown.toggled.connect(lambda: self.save_markdown_changed())
         self.convert_to_traditional_chinese_main.toggled.connect(
             lambda: self.convert_to_traditional_chinese_main_changed()
         )
@@ -1091,6 +1092,23 @@ class ClientConfigPage(SiPage):
             )
             self.save_markdown_linear_attaching.addWidget(self.save_markdown)
 
+            # 是否记录非关键词日记内容到 Markdown 文件
+            self.save_non_kwd_markdown = SiSwitch(self)
+            self.save_non_kwd_markdown.setChecked(
+                self.config["client"]["save_non_kwd_markdown"]
+            )
+            self.save_non_kwd_markdown_linear_attaching = SiOptionCardLinear(self)
+            self.save_non_kwd_markdown_linear_attaching.setTitle(
+                "将非关键词日记内容写入 Markdown 文件",
+                "在 将记录写入 Markdown 文件 启用的情况下有效",
+            )
+            self.save_non_kwd_markdown_linear_attaching.load(
+                SiGlobal.siui.iconpack.get("ic_fluent_save_regular")
+            )
+            self.save_non_kwd_markdown_linear_attaching.addWidget(
+                self.save_non_kwd_markdown
+            )
+
             # 设置项
             self.speech_recognition_container = SiDenseVContainer(self)
             self.speech_recognition_container.setFixedWidth(700)
@@ -1200,6 +1218,10 @@ class ClientConfigPage(SiPage):
             self.speech_recognition_container.addWidget(
                 self.save_markdown_linear_attaching
             )
+            self.speech_recognition_container.addWidget(
+                self.save_non_kwd_markdown_linear_attaching
+            )
+
             group.addWidget(self.speech_recognition_container)
 
         with self.titled_widgets_group as group:
@@ -1548,6 +1570,12 @@ class ClientConfigPage(SiPage):
         else:
             self.check_microphone_usage_by_linear_attaching.hide()
 
+    def save_markdown_changed(self):
+        if self.save_markdown.isChecked():
+            self.save_non_kwd_markdown_linear_attaching.show()
+        else:
+            self.save_non_kwd_markdown_linear_attaching.hide()
+
     def convert_to_traditional_chinese_main_changed(self):
         if self.convert_to_traditional_chinese_main.isChecked():
             self.convert_to_traditional_chinese_main.setText("繁")
@@ -1632,6 +1660,9 @@ class ClientConfigPage(SiPage):
             )
             self.config["client"]["save_audio"] = self.save_audio.isChecked()
             self.config["client"]["save_markdown"] = self.save_markdown.isChecked()
+            self.config["client"]["save_non_kwd_markdown"] = (
+                self.save_non_kwd_markdown.isChecked()
+            )
             self.config["client"]["audio_name_len"] = self.audio_name_len.value()
             self.config["client"]["reduce_audio_files"] = (
                 self.reduce_audio_files.isChecked()
@@ -1813,6 +1844,11 @@ class ClientConfigPage(SiPage):
                 "save_markdown",
                 clearly_type(self.config["client"]["save_markdown"]),
                 str(self.config["client"]["save_markdown"]),
+            )
+            table.add_row(
+                "save_non_kwd_markdown",
+                clearly_type(self.config["client"]["save_non_kwd_markdown"]),
+                str(self.config["client"]["save_non_kwd_markdown"]),
             )
             table.add_row(
                 "audio_name_len",
