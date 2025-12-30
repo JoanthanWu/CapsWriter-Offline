@@ -29,6 +29,10 @@
 <details>
 <summary><h1">展开最近更新</h1></summary>
 
+## 新增 客户端托盘菜单 热切换 保存音频 保存日记 保存非关键词日记
+> 是否记录非关键词日记内容到 Markdown 文件
+> 在 保存日记 save_markdown 启用的情况下有效
+
 ## 通过 常用播放器内设置的 播放/暂停快捷键 控制 录音时暂停音频播放
 > QQ音乐、网易云音乐、PotPlayer、foobar2000 可通过 edit_config_gui.exe 配置 用于 播放/暂停 的快捷键
 > 如果还有其他特殊应用 请配置 config.toml [client.additional_special_apps]
