@@ -438,6 +438,10 @@ save_audio = true
 save_markdown = true
 # 是否将记录写入 Markdown 文件
 
+save_non_kwd_markdown = true
+# 是否记录非关键词日记内容到 Markdown 文件
+# 在save_markdown启用的情况下有效
+
 audio_name_len = 20
 # 将录音识别结果的前多少个字存储到录音文件名中，建议不要超过 200
 

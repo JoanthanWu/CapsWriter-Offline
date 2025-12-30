@@ -241,7 +241,7 @@ play_start_music = true
 start_music_path = "assets/start.mp3"
 # 开始任务提示音的文件路径
 
-start_music_volume = "94"
+start_music_volume = "100"
 # 开始任务提示音的音量，0 ~ 100 之间
 
 play_stop_music = true
