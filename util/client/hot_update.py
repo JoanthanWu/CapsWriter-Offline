@@ -8,9 +8,8 @@ from pathlib import Path
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-from util.client import hot_sub_zh
+from util.client import hot_kwds, hot_sub_en, hot_sub_rule, hot_sub_zh
 from util.client.cosmic import console
-from util.client import hot_kwds, hot_sub_en, hot_sub_rule
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tomlkit import parse
@@ -78,32 +77,65 @@ def update_hot_kwds():
     console.print(f"已载入 [green4]{num_kwd:5}[/] 条日记关键词")
 
 
-def update_convert_to_traditional_chinese():
-    """专门更新繁简体转换配置"""
+def update_config():
+    """更新配置文件"""
     try:
         # 重新加载配置文件
         with config_toml_path.open("r", encoding="utf-8") as f:
             config_str = f.read()
             new_config = parse(config_str)
-
-        # 只更新繁简体转换配置
-
-        old_value: Literal["简", "繁"] = Config.convert_to_traditional_chinese_main
-        new_value: Literal["简", "繁"] = new_config["client"][
-            "convert_to_traditional_chinese_main"
-        ]
-
-        if old_value != new_value:
-            Config.convert_to_traditional_chinese_main = new_value
-            console.print(f"[green4]繁简体转换配置已更新，单键输出 {new_value} 体[/]")
-        else:
-            console.print("[dim]繁简体转换配置无变化[/]")
-
+            update_save_audio(new_config)
+            update_save_markdown(new_config)
+            update_save_non_kwd_markdown(new_config)
+            update_convert_to_traditional_chinese(new_config)
         return True
-
     except Exception as e:
-        console.print(f"[red]繁简体转换配置热更新失败: {e}[/]")
+        console.print(f"[red]配置热更新失败: {e}[/]")
         return False
+
+
+def update_save_audio(new_config):
+    """更新保存音频配置"""
+    old_value: bool = Config.save_audio
+    new_value: bool = new_config["client"]["save_audio"]
+
+    if old_value != new_value:
+        Config.save_audio = new_value
+        console.print(f"[green4]保存音频配置已更新，保存音频为 {new_value} [/]")
+
+
+def update_save_markdown(new_config):
+    """更新保存日记配置"""
+    old_value: bool = Config.save_markdown
+    new_value: bool = new_config["client"]["save_markdown"]
+
+    if old_value != new_value:
+        Config.save_markdown = new_value
+        console.print(f"[green4]保存日记配置已更新，保存日记为 {new_value} [/]")
+
+
+def update_save_non_kwd_markdown(new_config):
+    """更新保存非关键词日记配置"""
+    old_value: bool = Config.save_non_kwd_markdown
+    new_value: bool = new_config["client"]["save_non_kwd_markdown"]
+
+    if old_value != new_value:
+        Config.save_non_kwd_markdown = new_value
+        console.print(
+            f"[green4]保存非关键词日记配置已更新，保存非关键词日记为 {new_value} [/]"
+        )
+
+
+def update_convert_to_traditional_chinese(new_config):
+    """更新繁简体转换配置"""
+    old_value: Literal["简", "繁"] = Config.convert_to_traditional_chinese_main
+    new_value: Literal["简", "繁"] = new_config["client"][
+        "convert_to_traditional_chinese_main"
+    ]
+
+    if old_value != new_value:
+        Config.convert_to_traditional_chinese_main = new_value
+        console.print(f"[green4]繁简体转换配置已更新，单键输出 {new_value} 体[/]")
 
 
 def update_hot_all():
@@ -131,7 +163,7 @@ class HotHandler(FileSystemEventHandler):
         path_en: update_hot_en,
         path_rule: update_hot_rule,
         path_kwds: update_hot_kwds,
-        config_toml_path: update_convert_to_traditional_chinese,
+        config_toml_path: update_config,
     }
 
     def on_modified(self, event):
@@ -151,9 +183,9 @@ class HotHandler(FileSystemEventHandler):
         time.sleep(0.2)
 
         if event_path == config_toml_path:
-            console.print("[green4]检测到配置文件更新，[/]", end="")
+            console.print("[green4]检测到配置文件更新：[/]")
         else:
-            console.print("[green4]检测到热词文件更新，[/]", end="")
+            console.print("[green4]检测到热词文件更新：[/]")
 
         # 更新
         try:
