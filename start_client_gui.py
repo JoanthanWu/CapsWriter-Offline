@@ -383,8 +383,13 @@ class GUI(QMainWindow):
             match old_value:
                 case True:
                     self.save_markdown_action.setText("❌ 保存日记")
+                    self.save_non_kwd_markdown_action.setText("❗ 请先启用保存日记")
+                    self.save_non_kwd_markdown_action.setEnabled(False)
                 case False:
                     self.save_markdown_action.setText("✅ 保存日记")
+                    self.save_non_kwd_markdown_action.setText("⚙️ 保存非关键词日记")
+                    self.save_non_kwd_markdown_action.setEnabled(True)
+                    self.update_save_non_kwd_markdown(toml_config)
         except Exception as e:
             init_logging()
             logger.error(f"修改配置文件失败: {e}")
@@ -427,6 +432,18 @@ class GUI(QMainWindow):
         except Exception as e:
             init_logging()
             logger.error(f"修改配置文件失败: {e}")
+
+    def update_save_non_kwd_markdown(self, toml_config):
+        try:
+            old_value: bool = toml_config["client"]["save_non_kwd_markdown"]
+            match old_value:
+                case True:
+                    self.save_non_kwd_markdown_action.setText("✅ 保存非关键词日记")
+                case False:
+                    self.save_non_kwd_markdown_action.setText("❌ 保存非关键词日记")
+        except Exception as e:
+            init_logging()
+            logger.error(f"更新托盘菜单失败: {e}")
 
     def switch_between_simplified_and_traditional(self):
         # 获取当前值
