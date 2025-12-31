@@ -1,0 +1,145 @@
+name: Bug 反馈
+description: 创建反馈以帮助我们改进
+title: "[BUG] 请清晰简洁地描述错误是什么"
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 请先完成以下自主排查
+        
+        在提交问题前，请确认您已完成以下检查，这有助于我们更快定位问题。
+  - type: checkboxes
+    id: self_check
+    attributes:
+      label: 自主排查
+      options:
+        - label: 我已确定使用的是最新版本（[在发布页检查更新](https://github.com/H1DDENADM1N/CapsWriter-Offline/releases)）
+          required: false
+        - label: 我已经阅读 readme.md 的 [❗ 注意事项](https://github.com/H1DDENADM1N/CapsWriter-Offline#-%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9) 章节
+          required: false
+        - label: 我已搜索 [issues 列表](https://github.com/H1DDENADM1N/CapsWriter-Offline/issues)（包括已关闭的 issues）以确定类似错误尚未报告
+          required: false
+        - label: 我已核对 *.7z SHA-256 值（[在发布页查看 SHA-256](https://github.com/H1DDENADM1N/CapsWriter-Offline/releases)）以确定下载的文件完整
+          required: false
+        - label: 我已运用搜索引擎检索报错内容；或在 [deepwiki](https://deepwiki.com/H1DDENADM1N/CapsWriter-Offline) 等平台尝试解决错误
+          required: false
+    validations:
+      required: true
+  
+  - type: markdown
+    attributes:
+      value: |
+        ## 软件信息
+  - type: input
+    id: version_info
+    attributes:
+      label: CapsWriter 规格（压缩包名称）
+      description: 请填写您使用的客户端和服务端模型压缩包名称
+      placeholder: 例如：CapsWriter-Offline-GUI-v3.4.0_2025-12-31.7z, models_for_CapsWriter-Offline-GUI_2025-11-11.7z
+    validations:
+      required: true
+  
+  - type: markdown
+    attributes:
+      value: |
+        ## 错误详情
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: 错误描述
+      description: 请清晰简洁地描述错误是什么
+      placeholder: 例如：启动客户端后连接服务端失败，显示"连接超时"...
+    validations:
+      required: true
+  
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: 复现步骤
+      description: 描述导致该行为的步骤
+      placeholder: |
+        1. 前往“……”
+        2. 点击“……”
+        3. 向下滚动到“……”
+        4. 看到错误
+    validations:
+      required: true
+  
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: 预期行为
+      description: 清晰简洁地描述你期望发生的情况
+      placeholder: 例如：正常连接服务端并开始语音识别...
+    validations:
+      required: true
+  
+  - type: markdown
+    attributes:
+      value: |
+        ## 错误日志
+  - type: textarea
+    id: client_log
+    attributes:
+      label: 客户端 GUI（start_client_gui.exe）报错内容
+      description: 请粘贴完整的错误信息
+      placeholder: |
+        连接服务端... （服务端载入模块时长约 50 秒，请耐心等待。若好几分钟了还无响应
+        -> 服务端软件 start_server_gui.exe 启动了吗？ 服务端地址当前设置 127.0.0.1:6016
+        是正确的吗？）
+        连接成功
+      render: shell
+  
+  - type: textarea
+    id: server_log
+    attributes:
+      label: 服务端 GUI（start_server_gui.exe）报错内容
+      description: 请粘贴完整的错误信息
+      placeholder: |
+        接客了：<websockets.asyncio.server.ServerConnection object at
+        0x0000019A82767620>
+      render: shell
+  
+  - type: markdown
+    attributes:
+      value: |
+        ## 附件
+  - type: textarea
+    id: logs_note
+    attributes:
+      label: 日志文件
+      description: |
+        请压缩 `./logs` 文件夹中的所有日志文件为 logs.zip，然后拖拽上传到此处。
+        
+        **注意：** 上传前请检查日志中是否包含敏感信息。
+      placeholder: 我已经上传 logs.zip 文件
+      render: false
+  
+  - type: dropdown
+    id: logs_provided
+    attributes:
+      label: 是否已上传日志文件？
+      options:
+        - 已上传
+        - 日志文件不存在
+        - 稍后上传
+    validations:
+      required: true
+  
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图
+      description: |
+        如果适用，请添加截图以帮助说明问题。
+        您可以将截图拖拽到此处上传，然后在下方描述截图内容。
+      placeholder: 我已经上传相关截图，截图显示了...
+  
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: 其他信息
+      description: 在此提供关于该问题的其他任何背景信息
+      placeholder: 例如：操作系统版本、Python版本（对于从源码运行的其他开发者）、运行环境等...
