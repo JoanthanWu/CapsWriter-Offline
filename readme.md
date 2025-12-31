@@ -830,6 +830,12 @@ doNotShowHintList=:PotPlayer.exe:PotPlayer64.exe:PotPlayerMini.exe:PotPlayerMini
 
 [![Star History Chart](https://api.star-history.com/svg?repos=H1DDENADM1N/CapsWriter-Offline&type=date&legend=top-left)](https://www.star-history.com/#H1DDENADM1N/CapsWriter-Offline&type=date&legend=top-left)
 
+## DeepWiki
+
+[!TIP]
+对话 此项目 [DeepWiki](https://deepwiki.com/H1DDENADM1N/CapsWriter-Offline)
+
+
 <details>
 <summary><h1">了解更多</h1></summary>
 
