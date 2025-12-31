@@ -83,7 +83,7 @@ offline_translate_port_gemma2b = "11434"
 speech_recognition_shortcut = "caps lock"
 # 控制录音的快捷键，默认是 "caps lock"
 
-disable_exe_list = ["forhonor.exe"]
+disable_exe_list = ["游戏-forhonor.exe"]
 # 在运行这些程序时，不启用客户端功能
 
 use_offline_translate_function = true

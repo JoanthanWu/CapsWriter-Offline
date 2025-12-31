@@ -1,5 +1,6 @@
 import psutil
 from loguru import logger
+
 from util.safe_logger import init_logging
 
 
@@ -45,5 +46,5 @@ if __name__ == "__main__":
     import time
 
     now = time.time()
-    print(check_process("forhonor.exe"))
+    print(check_process("游戏-forhonor.exe"))
     print(time.time() - now)  # 0.01s
