@@ -7,6 +7,11 @@ assignees: ''
 
 ---
 
+**自主排查**
+- [ ] 我已经阅读 readme.md [❗ 注意事项](https://github.com/H1DDENADM1N/CapsWriter-Offline#-%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9) 章节
+- [ ] 我已搜索 [issues 列表](https://github.com/H1DDENADM1N/CapsWriter-Offline/issues) （包括 closed issues） 以确定类似错误尚未报告
+- [ ] 我已核对 *.7z SHA-256 值 （[在发布页查看 SHA-256](https://github.com/H1DDENADM1N/CapsWriter-Offline/releases)）以确定下载的文件完整
+
 **CapsWriter 规格（压缩包名称）**
 CapsWriter-Offline-GUI-v3.4.0_2025-12-31.7z
 models_for_CapsWriter-Offline-GUI_2025-11-11.7z
