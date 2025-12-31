@@ -1,44 +1,149 @@
-import subprocess
+import ctypes
+from ctypes import wintypes
 
+import psutil
 from loguru import logger
 
 from util.safe_logger import init_logging
 
 
+def get_target_names(name):
+    """
+    获取要搜索的进程名列表
+    """
+    target_name = name.lower()
+    search_names = [target_name]
+    if target_name.endswith(".exe"):
+        search_names.append(target_name[:-4])  # 去除.exe后缀
+    return search_names
+
+
+def is_process_match(proc_name, search_names):
+    """
+    检查进程名是否匹配搜索列表中的任一名称
+    """
+    if not proc_name:
+        return False
+    proc_name_lower = proc_name.lower()
+    for search_name in search_names:
+        if proc_name_lower == search_name:
+            return True
+    return False
+
+
 def check_process(name):
-    # 使用tasklist命令查找进程
-    command = ["tasklist", "/FO", "CSV", "/NH"]  # 使用CSV格式输出，不显示标题行
-
-    # 创建STARTUPINFO结构并设置wShowWindow为SW_HIDE
-    si = subprocess.STARTUPINFO()
-    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    si.wShowWindow = subprocess.SW_HIDE
-
+    """
+    使用psutil检查指定名称的进程是否存在
+    """
     try:
-        # 执行命令并捕获输出
-        output = subprocess.check_output(command, startupinfo=si).decode(
-            "utf-8", errors="replace"
-        )
-    except FileNotFoundError:
-        linit_logging()
-        logger.error("未找到命令，检查是否安装在环境中。")
+        search_names = get_target_names(name)
+
+        # 遍历所有进程
+        for proc in psutil.process_iter(["name"]):
+            try:
+                proc_name = proc.info["name"]
+                if is_process_match(proc_name, search_names):
+                    return True
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                # 进程可能已结束或无权访问，跳过
+                continue
+            except Exception as e:
+                # 记录其他异常但不中断循环
+                logger.debug(f"检查进程时出现异常: {e}")
+                continue
+
         return False
     except Exception as e:
         init_logging()
         logger.error(f"检查进程时出错: {e}")
         return False
 
-    # 清洗输出并检查进程名称是否在输出中
-    for line in output.splitlines():
-        # 解析输出，获取进程名称
-        parts = line.split('",')
-        if len(parts) > 1:
-            process_name = parts[0].replace('"', "").lower()
-            if process_name == name.lower():
-                return True
 
-    return False
+def check_focus(name):
+    """
+    检查指定名称的进程是否为当前焦点程序（前台窗口）
+    """
+    try:
+        search_names = get_target_names(name)
+
+        # 获取前台窗口的进程ID
+        try:
+            # 使用ctypes调用Windows API
+            hwnd = ctypes.windll.user32.GetForegroundWindow()
+            if hwnd == 0:
+                return False
+
+            # 获取进程ID
+            pid = wintypes.DWORD()
+            ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+
+            # 获取进程信息
+            try:
+                proc = psutil.Process(pid.value)
+                proc_name = proc.name()
+
+                # 检查是否匹配目标进程
+                if is_process_match(proc_name, search_names):
+                    return True
+
+                # 如果进程有父进程，也检查父进程（有些应用有启动器）
+                try:
+                    parent = proc.parent()
+                    if parent:
+                        parent_name = parent.name()
+                        if is_process_match(parent_name, search_names):
+                            return True
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                return False
+
+        except Exception as e:
+            logger.debug(f"获取前台窗口信息时出错: {e}")
+            return False
+
+        return False
+
+    except Exception as e:
+        logger.error(f"检查焦点进程时出错: {e}")
+        return False
 
 
 if __name__ == "__main__":
-    print(check_process("notepad.exe"))
+    import time
+
+    init_logging()
+
+    # 测试进程检查
+    process_name = "do-not-exist.exe"
+
+    print("=== 测试进程检查 ===")
+    start = time.time()
+    exists = check_process(process_name)
+    print(f"进程 '{process_name}' 存在: {exists}")  # False 0.01s
+    print(f"耗时: {time.time() - start:.3f}s")
+
+    process_name = "游戏-forhonor.exe"
+
+    print("=== 测试进程检查 ===")
+    start = time.time()
+    exists = check_process(process_name)
+    print(f"进程 '{process_name}' 存在: {exists}")  # True 0.001s
+    print(f"耗时: {time.time() - start:.3f}s")
+
+    process_name = "游戏-forhonor.exe"
+
+    print("\n=== 测试焦点检查 ===")
+    start = time.time()
+    focused = check_focus(process_name)
+    print(f"进程 '{process_name}' 是否为焦点: {focused}")  # False 0.007s
+    print(f"耗时: {time.time() - start:.3f}s")
+
+    process_name = "Code - Insiders.exe"
+
+    print("\n=== 测试焦点检查 ===")
+    start = time.time()
+    focused = check_focus(process_name)
+    print(f"进程 '{process_name}' 是否为焦点: {focused}")  # True 0.000s
+    print(f"耗时: {time.time() - start:.3f}s")
