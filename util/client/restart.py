@@ -55,7 +55,7 @@ def stop_client():
     exe_name_list = [
         "start_client_gui_admin.exe",
         "start_client_gui.exe",
-        "pythonw_CapsWriter_Client.exe",
+        "python_CapsWriter_Client.exe",
         "hint_while_recording.exe",
     ]
 
