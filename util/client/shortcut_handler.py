@@ -429,9 +429,17 @@ def click_mode(e: keyboard.KeyboardEvent):
         is_short_duration, \
         restore_audio_playing_needed, \
         restore_capslock_task, \
-        return_allowed
+        return_allowed, \
+        disable_exe_exist
 
     if e.event_type == keyboard.KEY_DOWN and not key_pressed:
+        handle_disable_exe_list()
+        # 如果存在禁用的exe，直接返回，不启动任务
+        if disable_exe_exist:
+            # 模拟保持按键按下
+            keyboard.press(Config.speech_recognition_shortcut)
+            return
+
         key_pressed = True
         return_allowed = False
 
@@ -448,6 +456,12 @@ def click_mode(e: keyboard.KeyboardEvent):
         last_time_pressed = time.time()
 
     elif e.event_type == keyboard.KEY_UP:
+        # 如果存在禁用的exe，直接返回，不启动任务
+        if disable_exe_exist:
+            # 模拟按键抬起
+            keyboard.release(Config.speech_recognition_shortcut)
+            return
+
         if restore_capslock_task is not None:
             last_time_released = time.time()
 
