@@ -34,6 +34,7 @@ client = [
     "keyboard>=0.13.5",
     "libretranslatepy>=2.1.4",
     "opencc-python-reimplemented>=0.1.7",
+    "psutil>=7.2.1",
     "pycaw>=20251023",
     "pypinyin>=0.55.0",
     "pywin32>=311",

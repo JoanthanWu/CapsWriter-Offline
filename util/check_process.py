@@ -1,43 +1,44 @@
-import subprocess
-
+import psutil
 from loguru import logger
-
 from util.safe_logger import init_logging
 
 
 def check_process(name):
-    # 使用tasklist命令查找进程
-    command = ["tasklist", "/FO", "CSV", "/NH"]  # 使用CSV格式输出，不显示标题行
-
-    # 创建STARTUPINFO结构并设置wShowWindow为SW_HIDE
-    si = subprocess.STARTUPINFO()
-    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    si.wShowWindow = subprocess.SW_HIDE
-
+    """
+    使用psutil检查指定名称的进程是否存在
+    """
     try:
-        # 执行命令并捕获输出
-        output = subprocess.check_output(command, startupinfo=si).decode(
-            "utf-8", errors="replace"
-        )
-    except FileNotFoundError:
-        linit_logging()
-        logger.error("未找到命令，检查是否安装在环境中。")
+        # 将进程名转换为小写以便比较
+        target_name = name.lower()
+
+        # 如果输入包含.exe后缀，同时尝试不包含后缀的版本
+        search_names = [target_name]
+        if target_name.endswith(".exe"):
+            search_names.append(target_name[:-4])  # 去除.exe后缀
+
+        # 遍历所有进程
+        for proc in psutil.process_iter(["name"]):
+            try:
+                proc_name = proc.info["name"]
+                if proc_name:
+                    proc_name_lower = proc_name.lower()
+                    # 检查进程名是否匹配任一搜索名
+                    for search_name in search_names:
+                        if proc_name_lower == search_name:
+                            return True
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                # 进程可能已结束或无权访问，跳过
+                continue
+            except Exception as e:
+                # 记录其他异常但不中断循环
+                logger.debug(f"检查进程时出现异常: {e}")
+                continue
+
         return False
     except Exception as e:
         init_logging()
         logger.error(f"检查进程时出错: {e}")
         return False
-
-    # 清洗输出并检查进程名称是否在输出中
-    for line in output.splitlines():
-        # 解析输出，获取进程名称
-        parts = line.split('",')
-        if len(parts) > 1:
-            process_name = parts[0].replace('"', "").lower()
-            if process_name == name.lower():
-                return True
-
-    return False
 
 
 if __name__ == "__main__":
@@ -45,4 +46,4 @@ if __name__ == "__main__":
 
     now = time.time()
     print(check_process("forhonor.exe"))
-    print(time.time() - now)  # 0.8s 😂
+    print(time.time() - now)  # 0.01s
