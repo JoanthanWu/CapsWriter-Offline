@@ -41,4 +41,8 @@ def check_process(name):
 
 
 if __name__ == "__main__":
-    print(check_process("notepad.exe"))
+    import time
+
+    now = time.time()
+    print(check_process("forhonor.exe"))
+    print(time.time() - now)  # 0.8s 😂
