@@ -9,7 +9,7 @@ from flask import sessions
 from loguru import logger
 from pycaw.pycaw import AudioUtilities
 
-from util.check_process import check_process
+from util.check_process import check_focus, check_process
 from util.client.cosmic import Cosmic
 from util.client.pause_other_audio import (
     get_audio_playing_apps,
@@ -74,7 +74,9 @@ def handle_disable_exe_list():
     global disable_exe_exist
     if Config.disable_exe_list:
         for exe_name in Config.disable_exe_list:
+            # if check_process(exe_name) or check_focus(exe_name):
             if check_process(exe_name):
+                # if check_focus(exe_name):
                 status.update("请关闭 " + exe_name + " 后再试")
                 disable_exe_exist = True
                 return True
