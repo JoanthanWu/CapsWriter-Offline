@@ -54,6 +54,7 @@ class ClientConfig:
         "offline_translate_port_gemma2b"
     ]
     speech_recognition_shortcut: str = config["client"]["speech_recognition_shortcut"]
+    disable_exe_list: list[str] = config["client"]["disable_exe_list"]
     use_offline_translate_function: bool = config["client"][
         "use_offline_translate_function"
     ]

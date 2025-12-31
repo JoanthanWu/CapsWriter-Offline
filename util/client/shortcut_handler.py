@@ -1,4 +1,5 @@
 import asyncio
+import dis
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -9,6 +10,7 @@ from flask import sessions
 from loguru import logger
 from pycaw.pycaw import AudioUtilities
 
+from util.check_process import check_process
 from util.client.cosmic import Cosmic
 from util.client.pause_other_audio import (
     get_audio_playing_apps,
@@ -50,6 +52,7 @@ unmute_task = None
 restore_capslock_task = None
 sessions = []
 saved_special_apps = []
+disable_exe_exist = False
 
 
 def shortcut_correct(e: keyboard.KeyboardEvent):
@@ -65,6 +68,19 @@ def shortcut_correct(e: keyboard.KeyboardEvent):
     if key_expect != key_actual:
         return False
     return True
+
+
+def handle_disable_exe_list():
+    # 在运行这些程序时，不启用客户端功能
+    global disable_exe_exist
+    if Config.disable_exe_list:
+        for exe_name in Config.disable_exe_list:
+            if check_process(exe_name):
+                status.update("请关闭 " + exe_name + " 后再试")
+                disable_exe_exist = True
+                return True
+    disable_exe_exist = False
+    return False
 
 
 def mute_all_sessions():
@@ -172,11 +188,19 @@ def launch_task():
     # 現在不採用異步的方法, 除非有辦法能解決短時間內抬起，不會恢復播放的問題
     # Git: 753321e008117e227d666efba188543c4200b48e
 
+    global \
+        hold_mode_first_time_cancel_task, \
+        unmute_task, \
+        restore_capslock_task, \
+        disable_exe_exist
+    # 如果存在禁用的exe，直接返回，不启动任务
+    if disable_exe_exist:
+        return
+
     # 开始任务时播放提示音
     if shutil.which("ffplay") and Config.play_start_music:
         play_music(Config.start_music_path, Config.start_music_volume)
 
-    global hold_mode_first_time_cancel_task, unmute_task
     # 确认是否需要翻译
     # 改为独立调用
     # translate_needed()
@@ -321,7 +345,10 @@ def cancel_task():
 
 
 def finish_task():
-    global task
+    global task, disable_exe_exist
+    # 如果存在禁用的exe，直接返回，不启动任务
+    if disable_exe_exist:
+        return
 
     # 通知停止录音，关掉滚动条
     Cosmic.on = False
@@ -533,10 +560,12 @@ def hold_mode(e: keyboard.KeyboardEvent):
         restore_audio_playing_needed, \
         saved_result_for_restore_audio_playing_needed, \
         saved_result_for_offline_translate_needed, \
-        saved_result_for_online_translate_needed
+        saved_result_for_online_translate_needed, \
+        disable_exe_exist
 
     # 处理按键按下事件
     if e.event_type == "down":
+        handle_disable_exe_list()
         if not key_pressed:
             key_pressed = True  # 标记为已按下
             last_time_pressed = time.time()
@@ -554,14 +583,15 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 Cosmic.opposite_state = not Cosmic.opposite_state
 
             translate_needed()
-            send_signal_to_hint_while_recording(
-                True,
-                is_short_duration,
-                Cosmic.offline_translate_needed,
-                Cosmic.online_translate_needed,
-                Config.hold_mode,
-                Config.convert_to_traditional_chinese_main,
-            )
+            if not disable_exe_exist:
+                send_signal_to_hint_while_recording(
+                    True,
+                    is_short_duration,
+                    Cosmic.offline_translate_needed,
+                    Cosmic.online_translate_needed,
+                    Config.hold_mode,
+                    Config.convert_to_traditional_chinese_main,
+                )
             # 启动录音任务
             launch_task()
             if not is_short_duration:
@@ -600,8 +630,10 @@ def hold_mode(e: keyboard.KeyboardEvent):
 
                 # 松开快捷键后，再按一次，恢复 CapsLock 或 Shift 等按键的状态
                 if not double_clicked and Config.restore_key:
-                    # time.sleep(0.01)
-                    keyboard.send(Config.speech_recognition_shortcut)
+                    time.sleep(0.01)
+                    # 如果存在禁用的exe，直接返回，不启动任务
+                    if not disable_exe_exist:
+                        keyboard.send(Config.speech_recognition_shortcut)
 
                 # 恢复輸出 `簡/繁` 原来的狀態， 恢复这个关于翻译的变量状态
                 double_clicked = False
@@ -609,14 +641,15 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 saved_result_for_online_translate_needed = False
 
             # 20250918: 增加了"key_pressed" 之后这里不应该向 AHK 发送 is_short_duration=True 的信号, 否则会导致"语音输入中"的提示不会进行取消 (跟AHK代码逻辑有关)， 最后，不影响AHK的提示。
-            send_signal_to_hint_while_recording(
-                False,
-                False,
-                Cosmic.offline_translate_needed,
-                Cosmic.online_translate_needed,
-                Config.hold_mode,
-                Config.convert_to_traditional_chinese_main,
-            )
+            if not disable_exe_exist:
+                send_signal_to_hint_while_recording(
+                    False,
+                    False,
+                    Cosmic.offline_translate_needed,
+                    Cosmic.online_translate_needed,
+                    Config.hold_mode,
+                    Config.convert_to_traditional_chinese_main,
+                )
 
             # 恢復音频的播放
             restore_audio_playing()
