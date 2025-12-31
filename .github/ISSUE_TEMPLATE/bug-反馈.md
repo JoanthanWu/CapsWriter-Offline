@@ -1,6 +1,6 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: Bug 反馈
+about: 创建反馈以帮助我们改进
 title: "[BUG] 清晰简洁地描述错误是什么"
 labels: ''
 assignees: ''
