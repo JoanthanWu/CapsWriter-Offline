@@ -1,5 +1,4 @@
 import asyncio
-import dis
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -328,6 +327,11 @@ def launch_task():
 
 
 def cancel_task():
+    global disable_exe_exist
+    # 如果存在禁用的exe，直接返回，不启动任务
+    if disable_exe_exist:
+        return
+
     # 通知停止录音，关掉滚动条
     Cosmic.on = False
     status.stop()
