@@ -45,6 +45,7 @@ client = [
     "typer>=0.21.0",
     "watchdog>=6.0.0",
     "websockets>=15.0.1",
+    "zai-sdk>=0.2.0",
 ]
 editconfiggui = [
     "keyboard>=0.13.5",

@@ -6,6 +6,7 @@ import websockets
 from loguru import logger
 
 from util.check_libretranslate_service import check_libretranslate_service
+from util.client.ai_optimize_language_expression import ai_optimize_language_expression
 from util.client.check_websocket import check_websocket
 from util.client.cosmic import Cosmic, console
 from util.client.hot_sub import hot_sub
@@ -42,6 +43,13 @@ async def recv_result():
             # 如果非最终结果或文本为空，继续等待
             if not message["is_final"] or not text.strip():
                 continue
+
+            # AI优化语言表达
+            ai_optimized_done = False
+            if Config.zhipuai_api_key != "":
+                ai_optimized_text, ai_delay = ai_optimize_language_expression(text)
+                ai_optimized_done = True
+                text = ai_optimized_text
 
             # 消除末尾标点
             text = strip_punc(text)
@@ -91,6 +99,8 @@ async def recv_result():
             # 控制台输出
             console.print(f"    转录时延：{delay:.2f}s")
             console.print(f"    识别结果：[green]{text}")
+            if ai_optimized_done and ai_optimized_text and ai_optimized_text != text:
+                console.print(f"    AI优化时延：{ai_delay:.2f}s")
             if offline_translate_done:
                 console.print(f"    离线翻译结果：[green]{offline_translated_text}")
             if online_translate_done:

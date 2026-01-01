@@ -136,6 +136,9 @@ class ClientConfig:
         "convert_to_traditional_chinese_main"
     ]
     opencc_converter: str = config["client"]["opencc_converter"]
+    zhipuai_api_key: str = config["client"]["zhipuai"]["api_key"]
+    zhipuai_model: str = config["client"]["zhipuai"]["model"]
+    zhipuai_prompt: str = config["client"]["zhipuai"]["prompt"]
 
 
 # LibreTranslate 配置
