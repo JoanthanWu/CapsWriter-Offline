@@ -13,7 +13,7 @@ import win32gui
 import win32print
 from loguru import logger
 from PySide6.QtCore import QPoint, Qt, QTimer
-from PySide6.QtGui import QAction, QFont, QIcon, QWheelEvent
+from PySide6.QtGui import QAction, QActionGroup, QFont, QIcon, QWheelEvent
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -236,6 +236,9 @@ class GUI(QMainWindow):
             old_value_enable_ai_optimize_language_expression: bool = toml_config[
                 "client"
             ]["zhipuai"]["enable_ai_optimize_language_expression"]
+            old_value_prompt_style: str = toml_config["client"]["zhipuai"][
+                "prompt_style"
+            ]
             match old_value_save_audio:
                 case True:
                     self.save_audio_action.setText("✅ 保存音频")
@@ -265,6 +268,18 @@ class GUI(QMainWindow):
                     self.enable_ai_optimize_language_expression_action.setText(
                         "❌ AI 优化语言表达"
                     )
+            match old_value_prompt_style:
+                case "official":
+                    self.prompt_style = "official"
+                case "sweetheart":
+                    self.prompt_style = "sweetheart"
+                case "social":
+                    self.prompt_style = "social"
+                case _:
+                    print(
+                        f"不支持的 AI 提示风格：{old_value_prompt_style}，请在 offical、sweetheart、social 中选择。"
+                    )
+                    self.prompt_style = ""
         except Exception as e:
             init_logging()
             logger.error(f"读取配置文件失败: {e}")
@@ -315,6 +330,8 @@ class GUI(QMainWindow):
         view_menu.addAction(vscode_home_folder_action)
         view_menu.addAction(chatglm_website_action)
 
+        prompt_style_menu = self.create_prompt_style_submenu(tray_menu)
+
         tray_menu.addMenu(edit_menu)
         tray_menu.addMenu(view_menu)
         tray_menu.addSeparator()
@@ -323,6 +340,7 @@ class GUI(QMainWindow):
         tray_menu.addAction(self.save_non_kwd_markdown_action)
         tray_menu.addAction(self.convert_to_traditional_chinese_main_action)
         tray_menu.addAction(self.enable_ai_optimize_language_expression_action)
+        tray_menu.addMenu(prompt_style_menu)
         tray_menu.addSeparator()
         tray_menu.addAction(github_website_action)
         tray_menu.addSeparator()
@@ -331,6 +349,45 @@ class GUI(QMainWindow):
         tray_menu.addAction(quit_action)
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
+
+    def create_prompt_style_submenu(self, tray_menu: QMenu) -> QMenu:
+        prompt_style_menu = QMenu("🤖 AI 优化风格", tray_menu)
+        prompt_style_group = QActionGroup(prompt_style_menu)
+        prompt_style_group.setExclusive(True)
+
+        self.prompt_official_action = QAction("正式公文", prompt_style_menu)
+        self.prompt_sweetheart_action = QAction("甜言蜜语", prompt_style_menu)
+        self.prompt_social_action = QAction("社媒文案", prompt_style_menu)
+
+        self.prompt_official_action.setCheckable(True)
+        self.prompt_sweetheart_action.setCheckable(True)
+        self.prompt_social_action.setCheckable(True)
+
+        self.prompt_official_action.triggered.connect(self.switch_prompt_style)
+        self.prompt_sweetheart_action.triggered.connect(self.switch_prompt_style)
+        self.prompt_social_action.triggered.connect(self.switch_prompt_style)
+
+        prompt_style_group.addAction(self.prompt_official_action)
+        prompt_style_group.addAction(self.prompt_sweetheart_action)
+        prompt_style_group.addAction(self.prompt_social_action)
+
+        prompt_style_menu.addAction(self.prompt_official_action)
+        prompt_style_menu.addAction(self.prompt_sweetheart_action)
+        prompt_style_menu.addAction(self.prompt_social_action)
+
+        match self.prompt_style:
+            case "official":
+                self.prompt_official_action.setChecked(True)
+            case "sweetheart":
+                self.prompt_sweetheart_action.setChecked(True)
+            case "social":
+                self.prompt_social_action.setChecked(True)
+            case _:
+                print(
+                    f"不支持的 AI 提示风格：{self.prompt_style}，请在 offical、sweetheart、social 中选择。"
+                )
+
+        return prompt_style_menu
 
     def toogle_save_audio(self):
         # 获取当前值
@@ -550,6 +607,32 @@ class GUI(QMainWindow):
                     self.enable_ai_optimize_language_expression_action.setText(
                         "✅ AI 优化语言表达"
                     )
+        except Exception as e:
+            init_logging()
+            logger.error(f"修改配置文件失败: {e}")
+
+    def switch_prompt_style(self):
+        # 获取新值
+        new_value: str = ""
+        if self.prompt_official_action.isChecked():
+            new_value = "official"
+        elif self.prompt_sweetheart_action.isChecked():
+            new_value = "sweetheart"
+        elif self.prompt_social_action.isChecked():
+            new_value = "social"
+        else:
+            new_value = ""
+        # 修改配置文件
+        try:
+            # 读取配置文件
+            with open(self.config_toml_path, "r", encoding="utf-8") as f:
+                config_str = f.read()
+                toml_config = parse(config_str)
+            # 修改配置
+            toml_config["client"]["zhipuai"]["prompt_style"] = new_value
+            # 重新写入文件（使用新的文件句柄）
+            with open(self.config_toml_path, "w", encoding="utf-8") as f:
+                f.write(dumps(toml_config))
         except Exception as e:
             init_logging()
             logger.error(f"修改配置文件失败: {e}")

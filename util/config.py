@@ -141,7 +141,10 @@ class ClientConfig:
     ]
     zhipuai_api_key: str = config["client"]["zhipuai"]["api_key"]
     zhipuai_model: str = config["client"]["zhipuai"]["model"]
-    zhipuai_prompt: str = config["client"]["zhipuai"]["prompt"]
+    zhipuai_prompt_style: str = config["client"]["zhipuai"]["prompt_style"]
+    zhipuai_prompt_official: str = config["client"]["zhipuai"]["prompt_official"]
+    zhipuai_prompt_sweetheart: str = config["client"]["zhipuai"]["prompt_sweetheart"]
+    zhipuai_prompt_social: str = config["client"]["zhipuai"]["prompt_social"]
 
 
 # LibreTranslate 配置

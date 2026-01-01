@@ -11,6 +11,24 @@ def ai_optimize_language_expression(text):
     if Config.zhipuai_api_key == "":
         print("请设置智谱AI API密钥")
         return text, time.time() - start
+    prompt: str = ""
+    match Config.zhipuai_prompt_style:
+        case "official":
+            prompt = Config.zhipuai_prompt_official
+        case "sweetheart":
+            prompt = Config.zhipuai_prompt_sweetheart
+        case "social":
+            prompt = Config.zhipuai_prompt_social
+        case _:
+            print(
+                f"不支持的 AI 提示风格：{Config.zhipuai_prompt_style}，请在 offical、sweetheart、social 中选择。"
+            )
+            return text, time.time() - start
+    if prompt == "":
+        print("AI 提示语不能为空，请检查配置文件。")
+        print(f"当前提示风格：{Config.zhipuai_prompt_style}")
+        return text, time.time() - start
+
     try:
         client = ZhipuAiClient(api_key=Config.zhipuai_api_key)
         response = client.chat.completions.create(
@@ -18,7 +36,7 @@ def ai_optimize_language_expression(text):
             messages=[
                 {
                     "role": "user",
-                    "content": Config.zhipuai_prompt,
+                    "content": prompt,
                 },
                 {
                     "role": "assistant",
