@@ -99,7 +99,7 @@ async def recv_result():
             # 控制台输出
             console.print(f"    转录时延：{delay:.2f}s")
             console.print(f"    识别结果：[green]{text}")
-            if ai_optimized_done and ai_optimized_text and ai_optimized_text != text:
+            if ai_optimized_done:
                 console.print(f"    AI优化时延：{ai_delay:.2f}s")
             if offline_translate_done:
                 console.print(f"    离线翻译结果：[green]{offline_translated_text}")
