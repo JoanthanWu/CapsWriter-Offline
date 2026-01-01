@@ -136,6 +136,9 @@ class ClientConfig:
         "convert_to_traditional_chinese_main"
     ]
     opencc_converter: str = config["client"]["opencc_converter"]
+    zhipuai_enable_ai_optimize_language_expression: bool = config["client"]["zhipuai"][
+        "enable_ai_optimize_language_expression"
+    ]
     zhipuai_api_key: str = config["client"]["zhipuai"]["api_key"]
     zhipuai_model: str = config["client"]["zhipuai"]["model"]
     zhipuai_prompt: str = config["client"]["zhipuai"]["prompt"]

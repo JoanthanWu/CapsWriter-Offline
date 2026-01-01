@@ -308,10 +308,12 @@ opencc_converter = "s2t"
 
 
 [client.zhipuai]
+enable_ai_optimize_language_expression = true
+# 是否启用 AI 优化语言表达
+# 启用后预计增加 5s 时间延长
+
 api_key = ""
 # 请填写您自己的 API Key
-# 留空表示不启用 AI优化语言表达
-# 启用后预计增加 5s 时间延长
 # 不要泄露给任何人
 # 获取 API Key https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys
 

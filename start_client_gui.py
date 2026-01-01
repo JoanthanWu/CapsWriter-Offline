@@ -215,6 +215,10 @@ class GUI(QMainWindow):
         self.convert_to_traditional_chinese_main_action = QAction(
             "⚙️ 默认使用 简/繁 体", self
         )
+        self.enable_ai_optimize_language_expression_action = QAction(
+            "⚙️ AI 优化语言表达", self
+        )
+
         # 获取当前值
         try:
             # 读取配置文件
@@ -229,6 +233,9 @@ class GUI(QMainWindow):
             old_value_convert_to_traditional_chinese_main: Literal["简", "繁"] = (
                 toml_config["client"]["convert_to_traditional_chinese_main"]
             )
+            old_value_enable_ai_optimize_language_expression: bool = toml_config[
+                "client"
+            ]["zhipuai"]["enable_ai_optimize_language_expression"]
             match old_value_save_audio:
                 case True:
                     self.save_audio_action.setText("✅ 保存音频")
@@ -249,6 +256,15 @@ class GUI(QMainWindow):
                     self.convert_to_traditional_chinese_main_action.setText("简体中文")
                 case "繁":
                     self.convert_to_traditional_chinese_main_action.setText("繁體中文")
+            match old_value_enable_ai_optimize_language_expression:
+                case True:
+                    self.enable_ai_optimize_language_expression_action.setText(
+                        "✅ AI 优化语言表达"
+                    )
+                case False:
+                    self.enable_ai_optimize_language_expression_action.setText(
+                        "❌ AI 优化语言表达"
+                    )
         except Exception as e:
             init_logging()
             logger.error(f"读取配置文件失败: {e}")
@@ -276,6 +292,9 @@ class GUI(QMainWindow):
         self.convert_to_traditional_chinese_main_action.triggered.connect(
             self.switch_between_simplified_and_traditional
         )
+        self.enable_ai_optimize_language_expression_action.triggered.connect(
+            self.toogle_ai_optimize_language_expression
+        )
         github_website_action.triggered.connect(self.open_github_website)
         show_action.triggered.connect(self.showNormal)
         restart_client_action.triggered.connect(self.restart_client)
@@ -298,11 +317,13 @@ class GUI(QMainWindow):
 
         tray_menu.addMenu(edit_menu)
         tray_menu.addMenu(view_menu)
+        tray_menu.addSeparator()
         tray_menu.addAction(self.save_audio_action)
         tray_menu.addAction(self.save_markdown_action)
         tray_menu.addAction(self.save_non_kwd_markdown_action)
         tray_menu.addAction(self.convert_to_traditional_chinese_main_action)
-
+        tray_menu.addAction(self.enable_ai_optimize_language_expression_action)
+        tray_menu.addSeparator()
         tray_menu.addAction(github_website_action)
         tray_menu.addSeparator()
         tray_menu.addAction(show_action)
@@ -482,6 +503,53 @@ class GUI(QMainWindow):
                     self.convert_to_traditional_chinese_main_action.setText("繁體中文")
                 case "繁":
                     self.convert_to_traditional_chinese_main_action.setText("简体中文")
+        except Exception as e:
+            init_logging()
+            logger.error(f"修改配置文件失败: {e}")
+
+    def toogle_ai_optimize_language_expression(self):
+        # 获取当前值
+        try:
+            # 读取配置文件
+            with open(self.config_toml_path, "r", encoding="utf-8") as f:
+                config_str = f.read()
+                toml_config = parse(config_str)
+            old_value: bool = toml_config["client"]["zhipuai"][
+                "enable_ai_optimize_language_expression"
+            ]
+        except Exception as e:
+            init_logging()
+            logger.error(f"读取配置文件失败: {e}")
+            return
+        # 切换值
+        match old_value:
+            case True:
+                new_value = False
+            case False:
+                new_value = True
+        # 修改配置文件
+        try:
+            # 读取配置文件
+            with open(self.config_toml_path, "r", encoding="utf-8") as f:
+                config_str = f.read()
+                toml_config = parse(config_str)
+            # 修改配置
+            toml_config["client"]["zhipuai"][
+                "enable_ai_optimize_language_expression"
+            ] = new_value
+            # 重新写入文件（使用新的文件句柄）
+            with open(self.config_toml_path, "w", encoding="utf-8") as f:
+                f.write(dumps(toml_config))
+            # 更新托盘菜单
+            match old_value:
+                case True:
+                    self.enable_ai_optimize_language_expression_action.setText(
+                        "❌ AI 优化语言表达"
+                    )
+                case False:
+                    self.enable_ai_optimize_language_expression_action.setText(
+                        "✅ AI 优化语言表达"
+                    )
         except Exception as e:
             init_logging()
             logger.error(f"修改配置文件失败: {e}")
