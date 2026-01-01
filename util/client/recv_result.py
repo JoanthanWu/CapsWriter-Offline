@@ -46,10 +46,7 @@ async def recv_result():
 
             # AI优化语言表达
             ai_optimized_done = False
-            if (
-                Config.zhipuai_enable_ai_optimize_language_expression
-                and Config.zhipuai_api_key != ""
-            ):
+            if Config.zhipuai_enable_ai_optimize_language_expression:
                 ai_optimized_text, ai_delay = ai_optimize_language_expression(text)
                 ai_optimized_done = True
                 text = ai_optimized_text
