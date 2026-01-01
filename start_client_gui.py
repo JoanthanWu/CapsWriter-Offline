@@ -330,7 +330,7 @@ class GUI(QMainWindow):
         view_menu.addAction(vscode_home_folder_action)
         view_menu.addAction(chatglm_website_action)
 
-        prompt_style_menu = self.create_prompt_style_submenu(tray_menu)
+        self.create_prompt_style_submenu(tray_menu)
 
         tray_menu.addMenu(edit_menu)
         tray_menu.addMenu(view_menu)
@@ -340,7 +340,7 @@ class GUI(QMainWindow):
         tray_menu.addAction(self.save_non_kwd_markdown_action)
         tray_menu.addAction(self.convert_to_traditional_chinese_main_action)
         tray_menu.addAction(self.enable_ai_optimize_language_expression_action)
-        tray_menu.addMenu(prompt_style_menu)
+        tray_menu.addMenu(self.prompt_style_menu)
         tray_menu.addSeparator()
         tray_menu.addAction(github_website_action)
         tray_menu.addSeparator()
@@ -351,13 +351,13 @@ class GUI(QMainWindow):
         self.tray_icon.show()
 
     def create_prompt_style_submenu(self, tray_menu: QMenu) -> QMenu:
-        prompt_style_menu = QMenu("🤖 AI 优化风格", tray_menu)
-        prompt_style_group = QActionGroup(prompt_style_menu)
+        self.prompt_style_menu = QMenu("🤖 AI 优化风格", tray_menu)
+        prompt_style_group = QActionGroup(self.prompt_style_menu)
         prompt_style_group.setExclusive(True)
 
-        self.prompt_official_action = QAction("正式公文", prompt_style_menu)
-        self.prompt_sweetheart_action = QAction("甜言蜜语", prompt_style_menu)
-        self.prompt_social_action = QAction("社媒文案", prompt_style_menu)
+        self.prompt_official_action = QAction("正式公文", self.prompt_style_menu)
+        self.prompt_sweetheart_action = QAction("甜言蜜语", self.prompt_style_menu)
+        self.prompt_social_action = QAction("社媒文案", self.prompt_style_menu)
 
         self.prompt_official_action.setCheckable(True)
         self.prompt_sweetheart_action.setCheckable(True)
@@ -371,9 +371,9 @@ class GUI(QMainWindow):
         prompt_style_group.addAction(self.prompt_sweetheart_action)
         prompt_style_group.addAction(self.prompt_social_action)
 
-        prompt_style_menu.addAction(self.prompt_official_action)
-        prompt_style_menu.addAction(self.prompt_sweetheart_action)
-        prompt_style_menu.addAction(self.prompt_social_action)
+        self.prompt_style_menu.addAction(self.prompt_official_action)
+        self.prompt_style_menu.addAction(self.prompt_sweetheart_action)
+        self.prompt_style_menu.addAction(self.prompt_social_action)
 
         match self.prompt_style:
             case "official":
@@ -386,8 +386,6 @@ class GUI(QMainWindow):
                 print(
                     f"不支持的 AI 提示风格：{self.prompt_style}，请在 offical、sweetheart、social 中选择。"
                 )
-
-        return prompt_style_menu
 
     def toogle_save_audio(self):
         # 获取当前值
@@ -603,10 +601,14 @@ class GUI(QMainWindow):
                     self.enable_ai_optimize_language_expression_action.setText(
                         "❌ AI 优化语言表达"
                     )
+                    self.prompt_style_menu.setDisabled(True)
+                    self.prompt_style_menu.setTitle("❗ 请先启用AI优化语言表达")
                 case False:
                     self.enable_ai_optimize_language_expression_action.setText(
                         "✅ AI 优化语言表达"
                     )
+                    self.prompt_style_menu.setEnabled(True)
+                    self.prompt_style_menu.setTitle("🤖 AI 优化风格")
         except Exception as e:
             init_logging()
             logger.error(f"修改配置文件失败: {e}")
