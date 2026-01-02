@@ -616,7 +616,7 @@ class GUI(QMainWindow):
         # TODO: Quit models The above method can not completely exit the model, rename pythonw.exe to pythonw_CapsWriter.exe and taskkill. It's working but not the best way.
         try:
             proc = subprocess.Popen(
-                "taskkill /IM start_client_gui_admin.exe /IM start_client_gui.exe /IM pythonw_CapsWriter_Client.exe /IM hint_while_recording.exe /F",
+                "taskkill /IM start_client_gui_admin.exe /IM start_client_gui.exe /IM python_CapsWriter_Client.exe /IM hint_while_recording.exe /F",
                 creationflags=subprocess.CREATE_NO_WINDOW,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -642,7 +642,7 @@ class GUI(QMainWindow):
     def start_script(self):
         # Start core_client.py and redirect output to the client queue
         self.core_client_process = subprocess.Popen(
-            [".\\runtime\\pythonw_CapsWriter_Client.exe", "core_client.py"],
+            [".\\runtime\\python_CapsWriter_Client.exe", "core_client.py"],
             creationflags=subprocess.CREATE_NO_WINDOW,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -822,9 +822,9 @@ class GUI(QMainWindow):
 
 def start_client_gui():
     Print_Screen_Scale()
-    if Config.only_run_once and check_process("pythonw_CapsWriter_Client.exe"):
+    if Config.only_run_once and check_process("python_CapsWriter_Client.exe"):
         raise Exception(
-            "已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 pythonw_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）"
+            "已经有一个客户端在运行了！（用户配置了 只允许运行一次，禁止多开；而且检测到 python_CapsWriter_Client.exe 进程已在运行。如果你确定需要启动多个客户端同时运行，请先修改 config.py  class ClientConfig:  Only_run_once = False 。）"
         )
     if (
         Config.hint_while_recording_at_edit_position_powered_by_ahk

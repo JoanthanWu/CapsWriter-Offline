@@ -9,6 +9,7 @@ from flask import sessions
 from loguru import logger
 from pycaw.pycaw import AudioUtilities
 
+from util.check_process import check_focus, check_process
 from util.client.cosmic import Cosmic
 from util.client.pause_other_audio import (
     get_audio_playing_apps,
@@ -50,7 +51,7 @@ unmute_task = None
 restore_capslock_task = None
 sessions = []
 saved_special_apps = []
-
+ignore_recording_order = False
 
 def shortcut_correct(e: keyboard.KeyboardEvent):
     # 在我的 Windows 电脑上，left ctrl 和 right ctrl 的 keycode 都是一样的，
@@ -65,6 +66,32 @@ def shortcut_correct(e: keyboard.KeyboardEvent):
     if key_expect != key_actual:
         return False
     return True
+
+
+def handle_disable_exe_list_on_focus():
+    for exe_name in Config.disable_exe_list_on_focus:
+        if check_focus(exe_name):
+            status.update("侦测到 " + exe_name + " 为焦点，忽略此次语音输入请求。")
+            return True
+    return False
+
+
+def handle_disable_exe_list():
+    # 在运行这些程序时，不启用客户端功能
+    for exe_name in Config.disable_exe_list:
+        # if check_process(exe_name) or check_focus(exe_name):
+        if check_process(exe_name):
+            # if check_focus(exe_name):
+            status.update("请关闭 " + exe_name + " 后再试")
+            return True
+    return False
+
+
+async def allow_recording_after_delay():
+    # 异步延迟1秒（不阻塞事件循环）
+    await asyncio.sleep(1) # 这个延迟时间需要自定义定制吗？
+    global key_pressed
+    key_pressed =False
 
 
 def mute_all_sessions():
@@ -122,6 +149,12 @@ def restore_audio_playing():
                     #     f"未配置 {app_info['name']} 的全局暂停快捷键，不需要恢复音频播放"
                     # )
                 else:
+                    # 翻譯功能的"shift"會干擾發送停止播放的快捷鍵, 因此，需要預先釋放
+                    if keyboard.is_pressed(Config.offline_translate_shortcut):
+                        keyboard.release(Config.offline_translate_shortcut)
+                    if keyboard.is_pressed(Config.online_translate_shortcut):
+                        keyboard.release(Config.online_translate_shortcut)
+
                     # 发送相同的快捷键恢复播放
                     keyboard.send(app_info["hotkey"])
                     # print(f"已恢复 {app_info['name']}（{app_info['hotkey']}）")
@@ -172,11 +205,15 @@ def launch_task():
     # 現在不採用異步的方法, 除非有辦法能解決短時間內抬起，不會恢復播放的問題
     # Git: 753321e008117e227d666efba188543c4200b48e
 
+    global \
+        hold_mode_first_time_cancel_task, \
+        unmute_task, \
+        restore_capslock_task
+
     # 开始任务时播放提示音
     if shutil.which("ffplay") and Config.play_start_music:
         play_music(Config.start_music_path, Config.start_music_volume)
 
-    global hold_mode_first_time_cancel_task, unmute_task
     # 确认是否需要翻译
     # 改为独立调用
     # translate_needed()
@@ -322,7 +359,6 @@ def cancel_task():
 
 def finish_task():
     global task
-
     # 通知停止录音，关掉滚动条
     Cosmic.on = False
     status.stop()
@@ -398,12 +434,31 @@ def click_mode(e: keyboard.KeyboardEvent):
         is_short_duration, \
         restore_audio_playing_needed, \
         restore_capslock_task, \
-        return_allowed
-
+        return_allowed,\
+        ignore_recording_order
+    
     if e.event_type == keyboard.KEY_DOWN and not key_pressed:
-        key_pressed = True
-        return_allowed = False
+        key_pressed = True  # 锁上
+        return_allowed = False  # 重置状态
+        ignore_recording_order = False  # 重置状态; 此变量让 "elif e.event_type == keyboard.KEY_UP" 之后的代码可以妥善处理
 
+        # `屏蔽录音命令`的功能放在 "key_pressed 锁" 之后, 减少判断次数; 直接在更接近源头的地方进行判断, 平时没必要进入
+        if Config.disable_exe_list_on_focus:
+            if handle_disable_exe_list_on_focus():
+                ignore_recording_order = True
+                # 进一步减低进来的频率
+                asyncio.run_coroutine_threadsafe(allow_recording_after_delay(), Cosmic.loop)
+                # 模拟按键按下
+                keyboard.press(Config.speech_recognition_shortcut)
+                return
+        if Config.disable_exe_list:
+            if handle_disable_exe_list():
+                ignore_recording_order = True
+                # asyncio.run_coroutine_threadsafe(allow_recording_after_delay(), Cosmic.loop)
+                keyboard.press(Config.speech_recognition_shortcut)
+                key_pressed = False  # 和上面的`allow_recording_after_delay()` 2选1
+                return
+            
         if restore_capslock_task is None:
             restore_capslock_task = asyncio.run_coroutine_threadsafe(
                 original_capslock_function(),  # 提交封装好的异步任务
@@ -415,84 +470,85 @@ def click_mode(e: keyboard.KeyboardEvent):
             True if time.time() - last_time_released < Config.threshold else False
         )
         last_time_pressed = time.time()
-
     elif e.event_type == keyboard.KEY_UP:
-        if restore_capslock_task is not None:
+        if ignore_recording_order:
+            # 模拟按键抬起
+            keyboard.release(Config.speech_recognition_shortcut)
+            return
+        if not ignore_recording_order:
             last_time_released = time.time()
 
-            # 取消 延迟恢复原版CapsLock功能的任务
-            restore_capslock_task_cancelled = restore_capslock_task.cancel()
-            # if restore_capslock_task_cancelled:
-            #     print("成功取消延迟的restore_capslock_task操作")
-            # else:
-            #     print("取消失败（任务可能已执行或已完成）")
-            restore_capslock_task = None
+            if restore_capslock_task is not None:
+                # 取消 延迟恢复原版CapsLock功能的任务
+                restore_capslock_task_cancelled = restore_capslock_task.cancel()
+                # if restore_capslock_task_cancelled:
+                #     print("成功取消延迟的restore_capslock_task操作")
+                # else:
+                #     print("取消失败（任务可能已执行或已完成）")
+                restore_capslock_task = None
 
-        # 如果大于`Config.threshold`的值, 判定为`長按`, 就取消本栈启动的任务(`cancel_task()`)
-        if Config.restore_key and return_allowed:
-            # 判定为`長按`，发送原來的按键功能
-            # keyboard.send(Config.speech_recognition_shortcut)
-            key_pressed = False
-            return
+            # 如果大于`Config.threshold`的值, 判定为`長按`, 就取消本栈启动的任务(`cancel_task()`)
+            if Config.restore_key and return_allowed:
+                # 判定为`長按`，发送原來的按键功能
+                # keyboard.send(Config.speech_recognition_shortcut)
+                last_time_released = 0  # 重置; 用途是解决不再启动录音任务情况
+                key_pressed = False
+                return
 
-        # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀态
-        elif not double_clicked and not is_short_duration:
-            translate_needed()
-            send_signal_to_hint_while_recording(
-                True,
-                is_short_duration,
-                Cosmic.offline_translate_needed,
-                Cosmic.online_translate_needed,
-                Config.hold_mode,
-                Config.convert_to_traditional_chinese_main,
-            )
-            launch_task()
+            # 任务不在进行中, 且不判定为`短击`, 就开始任务, 同时标记 任务在进行中狀态
+            elif not double_clicked and not is_short_duration:
+                translate_needed()
+                send_signal_to_hint_while_recording(
+                    True,
+                    is_short_duration,
+                    Cosmic.offline_translate_needed,
+                    Cosmic.online_translate_needed,
+                    Config.hold_mode,
+                    Config.convert_to_traditional_chinese_main,
+                )
+                launch_task()
+                double_clicked = True
+                key_pressed = False
+                return
 
-            double_clicked = True
-            key_pressed = False
-            return
+            # 任务在进行中, 且不判定为`短击`, 就结束和完成任务
+            elif double_clicked and not is_short_duration:
+                finish_task()
+                send_signal_to_hint_while_recording(
+                    False,
+                    is_short_duration,
+                    Cosmic.offline_translate_needed,
+                    Cosmic.online_translate_needed,
+                    Config.hold_mode,
+                    Config.convert_to_traditional_chinese_main,
+                )
+                last_time_released = 0  # 重置; 用途是解决快速开始任务&结束之后不再进入`launch_task()`情况
+                double_clicked = False
+                key_pressed = False
+                # 恢復音频的播放
+                restore_audio_playing()
+                return
 
-        # 任务在进行中, 且不判定为`短击`, 就结束和完成任务
-        elif double_clicked and not is_short_duration:
-            finish_task()
-            send_signal_to_hint_while_recording(
-                False,
-                is_short_duration,
-                Cosmic.offline_translate_needed,
-                Cosmic.online_translate_needed,
-                Config.hold_mode,
-                Config.convert_to_traditional_chinese_main,
-            )
+            # 任务在进行中, 且为`短击`, 判定爲需要輸出 `簡/繁`, 并且结束函数
+            elif double_clicked and is_short_duration:
+                translate_needed()
+                send_signal_to_hint_while_recording(
+                    True,
+                    is_short_duration,
+                    Cosmic.offline_translate_needed,
+                    Cosmic.online_translate_needed,
+                    Config.hold_mode,
+                    Config.convert_to_traditional_chinese_main,
+                )
 
-            double_clicked = False
-            key_pressed = False
+                Cosmic.opposite_state = not Cosmic.opposite_state
+                key_pressed = False
+                # return
 
-            # 恢復音频的播放
-            restore_audio_playing()
-            return
-
-        # 任务在进行中, 且为`短击`, 判定爲需要輸出 `簡/繁`, 并且结束函数
-        elif double_clicked and is_short_duration:
-            translate_needed()
-            send_signal_to_hint_while_recording(
-                True,
-                is_short_duration,
-                Cosmic.offline_translate_needed,
-                Cosmic.online_translate_needed,
-                Config.hold_mode,
-                Config.convert_to_traditional_chinese_main,
-            )
-
-            Cosmic.opposite_state = not Cosmic.opposite_state
-            key_pressed = False
-            # return
-
-        # print(f'世界的尽头!')
+            # print(f'世界的尽头!')
 
 
 # ======================长按模式==================================
-
-
 def hold_mode(e: keyboard.KeyboardEvent):
     """像对讲机一样，按下录音，松开停止"""
     # - [x] 改進: 20250918: 增加 key_pressed 变量避免函数重复触发。
@@ -533,12 +589,34 @@ def hold_mode(e: keyboard.KeyboardEvent):
         restore_audio_playing_needed, \
         saved_result_for_restore_audio_playing_needed, \
         saved_result_for_offline_translate_needed, \
-        saved_result_for_online_translate_needed
-
+        saved_result_for_online_translate_needed, \
+        ignore_recording_order
+    
     # 处理按键按下事件
     if e.event_type == "down":
         if not key_pressed:
-            key_pressed = True  # 标记为已按下
+            key_pressed = True  # 锁上
+            ignore_recording_order = False  # 重置状态; 此变量让 "e.event_type == "up" 之后的代码可以妥善处理
+
+            # `屏蔽录音命令`的功能放在 "key_pressed 锁" 之后, 减少判断次数; 直接在更接近源头的地方进行判断, 平时没必要进入
+            if Config.disable_exe_list_on_focus:
+                if handle_disable_exe_list_on_focus():
+                    ignore_recording_order = True
+                    # 进一步减低进来的频率
+                    asyncio.run_coroutine_threadsafe(allow_recording_after_delay(), Cosmic.loop)
+                    if Config.suppress:
+                        # 模拟按键按下; "suppress = Ture" 才需要模拟
+                        keyboard.press(Config.speech_recognition_shortcut)
+                    return
+            if Config.disable_exe_list:
+                if handle_disable_exe_list():
+                    ignore_recording_order = True
+                    # asyncio.run_coroutine_threadsafe(allow_recording_after_delay(), Cosmic.loop)
+                    if Config.suppress:
+                        keyboard.press(Config.speech_recognition_shortcut)
+                    key_pressed = False  # 和上面的`allow_recording_after_delay()` 2选1
+                    return
+
             last_time_pressed = time.time()
             # 計算是否屬於短時間內按下`錄音鍵`
             is_short_duration = (
@@ -573,8 +651,12 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 )
 
     elif e.event_type == "up":
+        if Config.suppress and ignore_recording_order:
+            # 模拟按键抬起
+            keyboard.release(Config.speech_recognition_shortcut)
+            return
         # 仅在已按下状态时处理松开事件
-        if key_pressed:
+        if key_pressed and not ignore_recording_order:
             if is_short_duration:
                 Cosmic.offline_translate_needed = (
                     saved_result_for_offline_translate_needed
@@ -600,7 +682,8 @@ def hold_mode(e: keyboard.KeyboardEvent):
 
                 # 松开快捷键后，再按一次，恢复 CapsLock 或 Shift 等按键的状态
                 if not double_clicked and Config.restore_key:
-                    # time.sleep(0.01)
+                    time.sleep(0.01)
+
                     keyboard.send(Config.speech_recognition_shortcut)
 
                 # 恢复輸出 `簡/繁` 原来的狀態， 恢复这个关于翻译的变量状态

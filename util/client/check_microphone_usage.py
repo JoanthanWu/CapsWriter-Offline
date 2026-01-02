@@ -55,7 +55,7 @@ def check_by_registry():
                 sub_path = (
                     r"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone\NonPackaged\\"
                     + str(current_path).replace("\\", "#")
-                    + r"#runtime#pythonw_CapsWriter_Client.exe"
+                    + r"#runtime#python_CapsWriter_Client.exe"
                 )
                 value_name = "LastUsedTimeStop"
 
