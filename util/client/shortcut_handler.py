@@ -491,6 +491,7 @@ def click_mode(e: keyboard.KeyboardEvent):
             if Config.restore_key and return_allowed:
                 # 判定为`長按`，发送原來的按键功能
                 # keyboard.send(Config.speech_recognition_shortcut)
+                last_time_released = 0  # 重置; 用途是解决不再启动录音任务情况
                 key_pressed = False
                 return
 
