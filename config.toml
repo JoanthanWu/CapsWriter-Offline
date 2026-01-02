@@ -83,8 +83,12 @@ offline_translate_port_gemma2b = "11434"
 speech_recognition_shortcut = "caps lock"
 # 控制录音的快捷键，默认是 "caps lock"
 
-disable_exe_list = ["游戏-forhonor.exe"]
-# 在运行这些程序时，不启用客户端功能
+disable_exe_list_on_focus = [""]
+# 在这些程序为焦点时，不启用客户端功能:语音输入
+# 需要添加更多程序时的格式: ["forhonor.exe", "abc.exe", "efg.exe"]
+
+disable_exe_list = [""]
+# 在运行这些程序时(包括在背景运行)，不启用客户端功能:语音输入
 
 use_offline_translate_function = true
 # 是否启用离线翻译功能
@@ -116,7 +120,7 @@ hold_mode = false
 # 且：长按会执行原本的单击功能
 
 suppress = false
-# 是否阻塞按键事件（让其它程序收不到这个按键消息）
+# 是否阻塞按键事件（让其它程序收不到这个按键消息）(只适用于hold_mode)
 
 restore_key = true
 # 录音完成，松开按键后，是否自动再按一遍，以恢复 CapsLock 或 Shift 等按键之前的状态
