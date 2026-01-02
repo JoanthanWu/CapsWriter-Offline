@@ -149,6 +149,12 @@ def restore_audio_playing():
                     #     f"未配置 {app_info['name']} 的全局暂停快捷键，不需要恢复音频播放"
                     # )
                 else:
+                    # 翻譯功能的"shift"會干擾發送停止播放的快捷鍵, 因此，需要預先釋放
+                    if keyboard.is_pressed(Config.offline_translate_shortcut):
+                        keyboard.release(Config.offline_translate_shortcut)
+                    if keyboard.is_pressed(Config.online_translate_shortcut):
+                        keyboard.release(Config.online_translate_shortcut)
+
                     # 发送相同的快捷键恢复播放
                     keyboard.send(app_info["hotkey"])
                     # print(f"已恢复 {app_info['name']}（{app_info['hotkey']}）")
