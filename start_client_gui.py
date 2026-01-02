@@ -12,7 +12,7 @@ import win32con
 import win32gui
 import win32print
 from loguru import logger
-from PySide6.QtCore import QPoint, Qt, QTimer
+from PySide6.QtCore import QFileSystemWatcher, QPoint, Qt, QTimer
 from PySide6.QtGui import QAction, QActionGroup, QFont, QIcon, QWheelEvent
 from PySide6.QtWidgets import (
     QApplication,
@@ -76,6 +76,9 @@ class GUI(QMainWindow):
         self.isBerthLeft = False
         self.isBerthRight = False
 
+        # 初始化文件系统监控器
+        self.init_file_watcher()
+
     def init_ui(self):
         self.resize(425, 425)
         self.setWindowTitle("CapsWriter-Offline-Client")
@@ -122,6 +125,137 @@ class GUI(QMainWindow):
         central_widget.setLayout(self.layout)
         # Set the central widget
         self.setCentralWidget(central_widget)
+
+    def init_file_watcher(self):
+        """初始化文件系统监控器"""
+        self.file_watcher = QFileSystemWatcher()
+        self.file_watcher.addPath(str(self.config_toml_path))
+        self.file_watcher.fileChanged.connect(self.on_config_file_changed)
+
+        # 使用定时器来防止多次触发
+        self.config_update_timer = QTimer()
+        self.config_update_timer.setSingleShot(True)
+        self.config_update_timer.timeout.connect(self.update_tray_menu_from_config)
+
+    def on_config_file_changed(self, path):
+        """当配置文件发生变化时触发"""
+        # 重新添加文件监控（因为文件变化时监控可能会失效）
+        if not self.file_watcher.files():
+            self.file_watcher.addPath(str(self.config_toml_path))
+
+        # 启动定时器，延迟更新，防止多次触发
+        self.config_update_timer.start(1000)  # 1秒后更新
+
+    def update_tray_menu_from_config(self):
+        """从配置文件更新托盘菜单"""
+        try:
+            # 读取配置文件
+            with open(self.config_toml_path, "r", encoding="utf-8") as f:
+                config_str = f.read()
+                toml_config = parse(config_str)
+
+            # 更新保存音频选项
+            old_value_save_audio: bool = toml_config["client"]["save_audio"]
+            match old_value_save_audio:
+                case True:
+                    self.save_audio_action.setText("✅ 保存音频")
+                case False:
+                    self.save_audio_action.setText("❌ 保存音频")
+
+            # 更新保存日记选项
+            old_value_save_markdown: bool = toml_config["client"]["save_markdown"]
+            match old_value_save_markdown:
+                case True:
+                    self.save_markdown_action.setText("✅ 保存日记")
+                    self.save_non_kwd_markdown_action.setEnabled(True)
+                    self.save_non_kwd_markdown_action.setText("⚙️ 保存非关键词日记")
+                case False:
+                    self.save_markdown_action.setText("❌ 保存日记")
+                    self.save_non_kwd_markdown_action.setEnabled(False)
+                    self.save_non_kwd_markdown_action.setText("❗ 请先启用保存日记")
+
+            # 更新保存非关键词日记选项
+            old_value_save_non_kwd_markdown: bool = toml_config["client"][
+                "save_non_kwd_markdown"
+            ]
+            match old_value_save_non_kwd_markdown:
+                case True:
+                    self.save_non_kwd_markdown_action.setText("✅ 保存非关键词日记")
+                case False:
+                    self.save_non_kwd_markdown_action.setText("❌ 保存非关键词日记")
+
+            # 更新简繁体转换选项
+            old_value_convert_to_traditional_chinese_main: Literal["简", "繁"] = (
+                toml_config["client"]["convert_to_traditional_chinese_main"]
+            )
+            match old_value_convert_to_traditional_chinese_main:
+                case "简":
+                    self.convert_to_traditional_chinese_main_action.setText("简体中文")
+                case "繁":
+                    self.convert_to_traditional_chinese_main_action.setText("繁體中文")
+
+            # 更新AI优化语言表达选项
+            old_value_enable_ai_optimize_language_expression: bool = toml_config[
+                "client"
+            ]["zhipuai"]["enable_ai_optimize_language_expression"]
+            match old_value_enable_ai_optimize_language_expression:
+                case True:
+                    self.enable_ai_optimize_language_expression_action.setText(
+                        "✅ AI 优化语言表达"
+                    )
+                    self.prompt_style_menu.setEnabled(True)
+                case False:
+                    self.enable_ai_optimize_language_expression_action.setText(
+                        "❌ AI 优化语言表达"
+                    )
+                    self.prompt_style_menu.setDisabled(True)
+
+            # 更新AI提示风格
+            old_value_prompt_style: str = toml_config["client"]["zhipuai"][
+                "prompt_style"
+            ]
+            self.update_prompt_style_menu(old_value_prompt_style)
+
+            logger.debug("托盘菜单已根据配置文件更新")
+
+        except Exception as e:
+            logger.error(f"更新托盘菜单失败: {e}")
+
+    def update_prompt_style_menu(self, prompt_style: str):
+        """更新提示风格菜单选中状态"""
+        # 先取消所有选中状态
+        for action in [
+            self.prompt_official_action,
+            self.prompt_sweetheart_action,
+            self.prompt_social_action,
+            self.prompt_poetry_action,
+            self.prompt_english_action,
+            self.prompt_academic_action,
+            self.prompt_customer_service_action,
+            self.prompt_creative_writing_action,
+        ]:
+            action.setChecked(False)
+
+        # 根据配置文件设置选中状态
+        match prompt_style:
+            case "official":
+                self.prompt_official_action.setChecked(True)
+            case "sweetheart":
+                self.prompt_sweetheart_action.setChecked(True)
+            case "social":
+                self.prompt_social_action.setChecked(True)
+            case "poetry":
+                self.prompt_poetry_action.setChecked(True)
+            case "english":
+                self.prompt_english_action.setChecked(True)
+            case "academic":
+                self.prompt_academic_action.setChecked(True)
+            case "customer_service":
+                self.prompt_customer_service_action.setChecked(True)
+            case "creative_writing":
+                self.prompt_creative_writing_action.setChecked(True)
+            case _:
+                logger.warning(f"不支持的 AI 提示风格：{prompt_style}")
 
     def create_custom_title_bar(self):
         # 创建自定义标题栏
@@ -825,6 +959,11 @@ class GUI(QMainWindow):
         if hasattr(self, "core_client_process") and self.core_client_process:
             self.core_client_process.terminate()
             self.core_client_process.kill()
+
+        # 停止文件监控器
+        if hasattr(self, "file_watcher"):
+            self.file_watcher.removePaths(self.file_watcher.files())
+            self.config_update_timer.stop()
 
         # Hide the system tray icon
         self.tray_icon.setVisible(False)
