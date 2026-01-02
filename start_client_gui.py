@@ -275,6 +275,10 @@ class GUI(QMainWindow):
                     self.prompt_style = "sweetheart"
                 case "social":
                     self.prompt_style = "social"
+                case "poetry":
+                    self.prompt_style = "poetry"
+                case "english":
+                    self.prompt_style = "english"
                 case _:
                     print(
                         f"不支持的 AI 提示风格：{old_value_prompt_style}，请在 offical、sweetheart、social、poetry、english 中选择。"
@@ -358,22 +362,32 @@ class GUI(QMainWindow):
         self.prompt_official_action = QAction("正式公文", self.prompt_style_menu)
         self.prompt_sweetheart_action = QAction("甜言蜜语", self.prompt_style_menu)
         self.prompt_social_action = QAction("社媒文案", self.prompt_style_menu)
+        self.prompt_poetry_action = QAction("赋诗一首", self.prompt_style_menu)
+        self.prompt_english_action = QAction("英语大师", self.prompt_style_menu)
 
         self.prompt_official_action.setCheckable(True)
         self.prompt_sweetheart_action.setCheckable(True)
         self.prompt_social_action.setCheckable(True)
+        self.prompt_poetry_action.setCheckable(True)
+        self.prompt_english_action.setCheckable(True)
 
         self.prompt_official_action.triggered.connect(self.switch_prompt_style)
         self.prompt_sweetheart_action.triggered.connect(self.switch_prompt_style)
         self.prompt_social_action.triggered.connect(self.switch_prompt_style)
+        self.prompt_poetry_action.triggered.connect(self.switch_prompt_style)
+        self.prompt_english_action.triggered.connect(self.switch_prompt_style)
 
         prompt_style_group.addAction(self.prompt_official_action)
         prompt_style_group.addAction(self.prompt_sweetheart_action)
         prompt_style_group.addAction(self.prompt_social_action)
+        prompt_style_group.addAction(self.prompt_poetry_action)
+        prompt_style_group.addAction(self.prompt_english_action)
 
         self.prompt_style_menu.addAction(self.prompt_official_action)
         self.prompt_style_menu.addAction(self.prompt_sweetheart_action)
         self.prompt_style_menu.addAction(self.prompt_social_action)
+        self.prompt_style_menu.addAction(self.prompt_poetry_action)
+        self.prompt_style_menu.addAction(self.prompt_english_action)
 
         match self.prompt_style:
             case "official":
@@ -382,6 +396,10 @@ class GUI(QMainWindow):
                 self.prompt_sweetheart_action.setChecked(True)
             case "social":
                 self.prompt_social_action.setChecked(True)
+            case "poetry":
+                self.prompt_poetry_action.setChecked(True)
+            case "english":
+                self.prompt_english_action.setChecked(True)
             case _:
                 print(
                     f"不支持的 AI 提示风格：{self.prompt_style}，请在 offical、sweetheart、social、poetry、english 中选择。"
@@ -622,6 +640,10 @@ class GUI(QMainWindow):
             new_value = "sweetheart"
         elif self.prompt_social_action.isChecked():
             new_value = "social"
+        elif self.prompt_poetry_action.isChecked():
+            new_value = "poetry"
+        elif self.prompt_english_action.isChecked():
+            new_value = "english"
         else:
             new_value = ""
         # 修改配置文件
