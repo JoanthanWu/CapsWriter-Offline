@@ -33,8 +33,14 @@
 <details>
 <summary><h1">展开最近更新</h1></summary>
 
+## 新增 配置项 禁用程序列表
+> disable_exe_list_on_focus：在这些程序为焦点时，不启用客户端功能:语音输入
+> disable_exe_list：在运行这些程序时(包括在背景运行)，不启用客户端功能:语音输入
+> 需要添加更多程序时的格式: ["forhonor.exe", "abc.exe", "efg.exe"]
+
 ## 新增 客户端托盘菜单 热切换 AI 优化风格
 > 正式公文 / 甜言蜜语 / 社媒文案 / 赋诗一首 / 英语大师 / 学术论文 / 客户服务 / 创意写作
+> 获取 API Key https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys
 
 ## 新增 可通过客户端托盘菜单 热切换 是否启用 AI 优化语言表达
 > 启用后预计增加 5s 时间延长
@@ -397,6 +403,13 @@ offline_translate_port_gemma2b = "11434"
 speech_recognition_shortcut = "caps lock"
 # 控制录音的快捷键，默认是 "caps lock"
 
+disable_exe_list_on_focus = [""]
+# 在这些程序为焦点时，不启用客户端功能:语音输入
+# 需要添加更多程序时的格式: ["forhonor.exe", "abc.exe", "efg.exe"]
+
+disable_exe_list = [""]
+# 在运行这些程序时(包括在背景运行)，不启用客户端功能:语音输入
+
 use_offline_translate_function = true
 # 是否启用离线翻译功能
 
@@ -427,7 +440,7 @@ hold_mode = true
 # 且：长按会执行原本的单击功能
 
 suppress = false
-# 是否阻塞按键事件（让其它程序收不到这个按键消息）
+# 是否阻塞按键事件（让其它程序收不到这个按键消息）(只适用于hold_mode)
 
 restore_key = true
 # 录音完成，松开按键后，是否自动再按一遍，以恢复 CapsLock 或 Shift 等按键之前的状态
