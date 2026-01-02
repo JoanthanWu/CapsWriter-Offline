@@ -24,9 +24,15 @@ def ai_optimize_language_expression(text):
             prompt = Config.zhipuai_prompt_poetry
         case "english":
             prompt = Config.zhipuai_prompt_english
+        case "academic":
+            prompt = Config.zhipuai_prompt_academic
+        case "customer_service":
+            prompt = Config.zhipuai_prompt_customer_service
+        case "creative_writing":
+            prompt = Config.zhipuai_prompt_creative_writing
         case _:
             print(
-                f"不支持的 AI 提示风格：{Config.zhipuai_prompt_style}，请在 offical、sweetheart、social、poetry、english 中选择。"
+                f"不支持的 AI 提示风格：{Config.zhipuai_prompt_style}，请在 offical、sweetheart、social、poetry、english、academic、customer_service、creative_writing 中选择。"
             )
             return text, time.time() - start
     if prompt == "":

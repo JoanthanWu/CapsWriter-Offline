@@ -147,6 +147,13 @@ class ClientConfig:
     zhipuai_prompt_social: str = config["client"]["zhipuai"]["prompt_social"]
     zhipuai_prompt_poetry: str = config["client"]["zhipuai"]["prompt_poetry"]
     zhipuai_prompt_english: str = config["client"]["zhipuai"]["prompt_english"]
+    zhipuai_prompt_academic: str = config["client"]["zhipuai"]["prompt_academic"]
+    zhipuai_prompt_customer_service: str = config["client"]["zhipuai"][
+        "prompt_customer_service"
+    ]
+    zhipuai_prompt_creative_writing: str = config["client"]["zhipuai"][
+        "prompt_creative_writing"
+    ]
 
 
 # LibreTranslate 配置
