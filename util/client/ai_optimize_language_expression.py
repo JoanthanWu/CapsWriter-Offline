@@ -1,9 +1,10 @@
+import time
+
 from loguru import logger
 from zai import ZhipuAiClient
 
 from util.config import ClientConfig as Config
 from util.safe_logger import init_logging
-import time
 
 
 def ai_optimize_language_expression(text):
@@ -19,9 +20,13 @@ def ai_optimize_language_expression(text):
             prompt = Config.zhipuai_prompt_sweetheart
         case "social":
             prompt = Config.zhipuai_prompt_social
+        case "poetry":
+            prompt = Config.zhipuai_prompt_poetry
+        case "english":
+            prompt = Config.zhipuai_prompt_english
         case _:
             print(
-                f"不支持的 AI 提示风格：{Config.zhipuai_prompt_style}，请在 offical、sweetheart、social 中选择。"
+                f"不支持的 AI 提示风格：{Config.zhipuai_prompt_style}，请在 offical、sweetheart、social、poetry、english 中选择。"
             )
             return text, time.time() - start
     if prompt == "":

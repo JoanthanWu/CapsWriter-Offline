@@ -277,7 +277,7 @@ class GUI(QMainWindow):
                     self.prompt_style = "social"
                 case _:
                     print(
-                        f"不支持的 AI 提示风格：{old_value_prompt_style}，请在 offical、sweetheart、social 中选择。"
+                        f"不支持的 AI 提示风格：{old_value_prompt_style}，请在 offical、sweetheart、social、poetry、english 中选择。"
                     )
                     self.prompt_style = ""
         except Exception as e:
@@ -384,7 +384,7 @@ class GUI(QMainWindow):
                 self.prompt_social_action.setChecked(True)
             case _:
                 print(
-                    f"不支持的 AI 提示风格：{self.prompt_style}，请在 offical、sweetheart、social 中选择。"
+                    f"不支持的 AI 提示风格：{self.prompt_style}，请在 offical、sweetheart、social、poetry、english 中选择。"
                 )
 
     def toogle_save_audio(self):
