@@ -160,7 +160,9 @@ def update_api_key(new_config):
 
     if old_value != new_value:
         Config.zhipuai_api_key = new_value
-        console.print(f"[green4]API Key已更新， {old_value} -> {new_value} [/]")
+        console.print(
+            f"[green4]API Key已更新， {mask_key(old_value)} -> {mask_key(new_value)} [/]"
+        )
 
 
 def update_prompt_style(new_config):
@@ -171,6 +173,14 @@ def update_prompt_style(new_config):
     if old_value != new_value:
         Config.zhipuai_prompt_style = new_value
         console.print(f"[green4]提示词样式已更新，提示词样式为 {new_value} [/]")
+
+
+def mask_key(key):
+    if not key:
+        return ""
+    if len(key) <= 10:
+        return key
+    return f"{key[:5]}...{key[-5:]}"
 
 
 def update_hot_all():
