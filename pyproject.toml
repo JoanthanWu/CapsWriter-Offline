@@ -2,7 +2,7 @@
 name = "CapsWriter-Offline"
 authors = [{ name = "HaujetZhao" }]
 maintainers = [{ name = "H1DDENADM1N" }, { name = "JoanthanWu" }]
-version = "3.4.0"
+version = "3.5.0"
 description = "离线语音输入简/繁体、中译英、字幕转录；在线多译多、云剪贴板等等 （选用SenseVoice模型 支持中粤英日韩多语种）"
 readme = "readme.md"
 requires-python = "==3.13.11"
@@ -45,6 +45,7 @@ client = [
     "typer>=0.21.0",
     "watchdog>=6.0.0",
     "websockets>=15.0.1",
+    "zai-sdk>=0.2.0",
 ]
 editconfiggui = [
     "keyboard>=0.13.5",

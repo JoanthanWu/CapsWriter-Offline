@@ -6,6 +6,7 @@ import websockets
 from loguru import logger
 
 from util.check_libretranslate_service import check_libretranslate_service
+from util.client.ai_optimize_language_expression import ai_optimize_language_expression
 from util.client.check_websocket import check_websocket
 from util.client.cosmic import Cosmic, console
 from util.client.hot_sub import hot_sub
@@ -36,23 +37,44 @@ async def recv_result():
             # 接收消息
             message = await Cosmic.websocket.recv()
             message = json.loads(message)
-            text = message["text"]
+            asr_text = message["text"]
             delay = message["time_complete"] - message["time_submit"]
 
             # 如果非最终结果或文本为空，继续等待
-            if not message["is_final"] or not text.strip():
+            if not message["is_final"] or not asr_text.strip():
                 continue
+
+            # 控制台输出
+            console.print(f"    转录时延：{delay:.2f}s")
+            console.print(f"    识别结果：[green]{asr_text}")
+
+            # text 用于打字
+            # asr_text 用于录音文件命名和写入 md
+            text = asr_text
+
+            # AI优化语言表达
+            ai_optimized_done = False
+            if Config.zhipuai_enable_ai_optimize_language_expression:
+                ai_optimized_text, ai_delay = ai_optimize_language_expression(text)
+            else:
+                ai_optimized_text = asr_text
+            if text != ai_optimized_text:
+                ai_optimized_done = True
+                text = ai_optimized_text
 
             # 消除末尾标点
             text = strip_punc(text)
+            asr_text = strip_punc(asr_text)
 
             # 热词替换
             text = hot_sub(text)
+            asr_text = hot_sub(asr_text)
 
             # 简繁转换
             convert_to_traditional_chinese_done = False
             converter = opencc.OpenCC(Config.opencc_converter)
             traditional_text = converter.convert(text)
+            traditional_asr_text = converter.convert(asr_text)
             convert_to_traditional_chinese_done = True
 
             # 离线翻译
@@ -73,7 +95,7 @@ async def recv_result():
                 # 重命名录音文件
                 try:
                     file_audio = rename_audio(
-                        message["task_id"], text, message["time_start"]
+                        message["task_id"], asr_text, message["time_start"]
                     )
                 except Exception:
                     file_audio = None
@@ -84,13 +106,24 @@ async def recv_result():
                 # 记录写入 md 文件
                 match Config.convert_to_traditional_chinese_main:
                     case "繁":
-                        write_md(traditional_text, message["time_start"], file_audio)
+                        write_md(
+                            traditional_asr_text,
+                            traditional_text,
+                            message["time_start"],
+                            file_audio,
+                        )
                     case _:
-                        write_md(text, message["time_start"], file_audio)
+                        write_md(
+                            asr_text,
+                            text,
+                            message["time_start"],
+                            file_audio,
+                        )
 
             # 控制台输出
-            console.print(f"    转录时延：{delay:.2f}s")
-            console.print(f"    识别结果：[green]{text}")
+            if ai_optimized_done:
+                console.print(f"    AI优化时延：{ai_delay:.2f}s")
+                console.print(f"    AI优化结果：[green]{text}")
             if offline_translate_done:
                 console.print(f"    离线翻译结果：[green]{offline_translated_text}")
             if online_translate_done:
@@ -123,6 +156,18 @@ async def recv_result():
                 else:
                     await type_result(text)
                 convert_to_traditional_chinese_done = False
+
+            # 清空变量
+            asr_text = ""
+            text = ""
+            traditional_asr_text = ""
+            traditional_text = ""
+            online_translated_text = ""
+            offline_translated_text = ""
+            ai_optimized_done = False
+            convert_to_traditional_chinese_done = False
+            offline_translate_done = False
+            online_translate_done = False
             Cosmic.opposite_state = False
     except websockets.ConnectionClosedError:
         console.print("[red]连接断开\n")

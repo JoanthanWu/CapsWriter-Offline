@@ -37,7 +37,7 @@ def create_md(file_md):
         f.write(header_md)
 
 
-def write_md(text: str, time_start: float, file_audio: Path):
+def write_md(asr_text: str, text: str, time_start: float, file_audio: Path):
     time_year = time.strftime("%Y", time.localtime(time_start))
     time_month = time.strftime("%m", time.localtime(time_start))
     time_day = time.strftime("%d", time.localtime(time_start))
@@ -49,7 +49,7 @@ def write_md(text: str, time_start: float, file_audio: Path):
     md_list = [
         (kwd, folder_path / f"{kwd + '-' if kwd else ''}{time_day}.md")
         for kwd in kwd_list
-        if text.startswith(kwd)
+        if asr_text.startswith(kwd)
     ]
 
     # 为 md 文件写入识别记录
@@ -64,14 +64,18 @@ def write_md(text: str, time_start: float, file_audio: Path):
 
         # 写入 md
         with open(file_md, "a", encoding="utf-8") as f:
-            text_ = text[len(kwd) :].lstrip("，。,.")
+            asr_text_ = asr_text[len(kwd) :].lstrip("，。,.")
             if file_audio is not None:
                 path_ = (
                     file_audio.relative_to(file_md.parent)
                     .as_posix()
                     .replace(" ", "%20")
                 )
-                f.write(f"[{time_hms}]({path_}) {text_}\n\n")
+                f.write(f"[{time_hms}]({path_}) {asr_text_}\n\n")
+                if asr_text_ != text:
+                    f.write(f"AI 优化后：\n```\n{text}\n```\n\n")
             else:
                 # path_ = ""
-                f.write(f"[{time_hms}]() {text_}\n\n")
+                f.write(f"[{time_hms}]() {asr_text_}\n\n")
+                if asr_text_ != text:
+                    f.write(f"AI 优化后：\n```\n{text}\n```\n\n")

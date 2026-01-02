@@ -88,6 +88,9 @@ def update_config():
             update_save_markdown(new_config)
             update_save_non_kwd_markdown(new_config)
             update_convert_to_traditional_chinese(new_config)
+            update_enable_ai_optimize_language_expression(new_config)
+            update_api_key(new_config)
+            update_prompt_style(new_config)
         return True
     except Exception as e:
         console.print(f"[red]配置热更新失败: {e}[/]")
@@ -136,6 +139,38 @@ def update_convert_to_traditional_chinese(new_config):
     if old_value != new_value:
         Config.convert_to_traditional_chinese_main = new_value
         console.print(f"[green4]繁简体转换配置已更新，单键输出 {new_value} 体[/]")
+
+
+def update_enable_ai_optimize_language_expression(new_config):
+    """更新启用AI语言优化配置"""
+    old_value: bool = Config.zhipuai_enable_ai_optimize_language_expression
+    new_value: bool = new_config["client"]["zhipuai"][
+        "enable_ai_optimize_language_expression"
+    ]
+
+    if old_value != new_value:
+        Config.zhipuai_enable_ai_optimize_language_expression = new_value
+        console.print(f"[green4]AI语言优化配置已更新，启用AI语言优化为 {new_value} [/]")
+
+
+def update_api_key(new_config):
+    """更新API Key配置"""
+    old_value: str = Config.zhipuai_api_key
+    new_value: str = new_config["client"]["zhipuai"]["api_key"]
+
+    if old_value != new_value:
+        Config.zhipuai_api_key = new_value
+        console.print(f"[green4]API Key已更新， {old_value} -> {new_value} [/]")
+
+
+def update_prompt_style(new_config):
+    """更新提示词样式"""
+    old_value: str = Config.zhipuai_prompt_style
+    new_value: str = new_config["client"]["zhipuai"]["prompt_style"]
+
+    if old_value != new_value:
+        Config.zhipuai_prompt_style = new_value
+        console.print(f"[green4]提示词样式已更新，提示词样式为 {new_value} [/]")
 
 
 def update_hot_all():
