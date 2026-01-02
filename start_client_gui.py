@@ -279,6 +279,12 @@ class GUI(QMainWindow):
                     self.prompt_style = "poetry"
                 case "english":
                     self.prompt_style = "english"
+                case "academic":
+                    self.prompt_style = "academic"
+                case "customer_service":
+                    self.prompt_style = "customer_service"
+                case "creative_writing":
+                    self.prompt_style = "creative_writing"
                 case _:
                     print(
                         f"不支持的 AI 提示风格：{old_value_prompt_style}，请在 offical、sweetheart、social、poetry、english、academic、customer_service、creative_writing 中选择。"
@@ -364,30 +370,49 @@ class GUI(QMainWindow):
         self.prompt_social_action = QAction("社媒文案", self.prompt_style_menu)
         self.prompt_poetry_action = QAction("赋诗一首", self.prompt_style_menu)
         self.prompt_english_action = QAction("英语大师", self.prompt_style_menu)
+        self.prompt_academic_action = QAction("学术论文", self.prompt_style_menu)
+        self.prompt_customer_service_action = QAction(
+            "客户服务", self.prompt_style_menu
+        )
+        self.prompt_creative_writing_action = QAction(
+            "创意写作", self.prompt_style_menu
+        )
 
         self.prompt_official_action.setCheckable(True)
         self.prompt_sweetheart_action.setCheckable(True)
         self.prompt_social_action.setCheckable(True)
         self.prompt_poetry_action.setCheckable(True)
         self.prompt_english_action.setCheckable(True)
+        self.prompt_academic_action.setCheckable(True)
+        self.prompt_customer_service_action.setCheckable(True)
+        self.prompt_creative_writing_action.setCheckable(True)
 
         self.prompt_official_action.triggered.connect(self.switch_prompt_style)
         self.prompt_sweetheart_action.triggered.connect(self.switch_prompt_style)
         self.prompt_social_action.triggered.connect(self.switch_prompt_style)
         self.prompt_poetry_action.triggered.connect(self.switch_prompt_style)
         self.prompt_english_action.triggered.connect(self.switch_prompt_style)
+        self.prompt_academic_action.triggered.connect(self.switch_prompt_style)
+        self.prompt_customer_service_action.triggered.connect(self.switch_prompt_style)
+        self.prompt_creative_writing_action.triggered.connect(self.switch_prompt_style)
 
         prompt_style_group.addAction(self.prompt_official_action)
         prompt_style_group.addAction(self.prompt_sweetheart_action)
         prompt_style_group.addAction(self.prompt_social_action)
         prompt_style_group.addAction(self.prompt_poetry_action)
         prompt_style_group.addAction(self.prompt_english_action)
+        prompt_style_group.addAction(self.prompt_academic_action)
+        prompt_style_group.addAction(self.prompt_customer_service_action)
+        prompt_style_group.addAction(self.prompt_creative_writing_action)
 
         self.prompt_style_menu.addAction(self.prompt_official_action)
         self.prompt_style_menu.addAction(self.prompt_sweetheart_action)
         self.prompt_style_menu.addAction(self.prompt_social_action)
         self.prompt_style_menu.addAction(self.prompt_poetry_action)
         self.prompt_style_menu.addAction(self.prompt_english_action)
+        self.prompt_style_menu.addAction(self.prompt_academic_action)
+        self.prompt_style_menu.addAction(self.prompt_customer_service_action)
+        self.prompt_style_menu.addAction(self.prompt_creative_writing_action)
 
         match self.prompt_style:
             case "official":
@@ -400,6 +425,12 @@ class GUI(QMainWindow):
                 self.prompt_poetry_action.setChecked(True)
             case "english":
                 self.prompt_english_action.setChecked(True)
+            case "academic":
+                self.prompt_academic_action.setChecked(True)
+            case "customer_service":
+                self.prompt_customer_service_action.setChecked(True)
+            case "creative_writing":
+                self.prompt_creative_writing_action.setChecked(True)
             case _:
                 print(
                     f"不支持的 AI 提示风格：{self.prompt_style}，请在 offical、sweetheart、social、poetry、english、academic、customer_service、creative_writing 中选择。"
@@ -644,6 +675,12 @@ class GUI(QMainWindow):
             new_value = "poetry"
         elif self.prompt_english_action.isChecked():
             new_value = "english"
+        elif self.prompt_academic_action.isChecked():
+            new_value = "academic"
+        elif self.prompt_customer_service_action.isChecked():
+            new_value = "customer_service"
+        elif self.prompt_creative_writing_action.isChecked():
+            new_value = "creative_writing"
         else:
             new_value = ""
         # 修改配置文件
