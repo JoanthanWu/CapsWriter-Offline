@@ -362,6 +362,13 @@ class GUI(QMainWindow):
 
     def create_prompt_style_submenu(self, tray_menu: QMenu) -> QMenu:
         self.prompt_style_menu = QMenu("🤖 AI 优化风格", tray_menu)
+        if (
+            self.enable_ai_optimize_language_expression_action.text()
+            == "❌ AI 优化语言表达"
+        ):
+            self.prompt_style_menu.setDisabled(True)
+        else:
+            self.prompt_style_menu.setEnabled(True)
         prompt_style_group = QActionGroup(self.prompt_style_menu)
         prompt_style_group.setExclusive(True)
 
