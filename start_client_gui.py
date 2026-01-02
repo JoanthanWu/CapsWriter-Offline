@@ -16,8 +16,11 @@ from PySide6.QtGui import QAction, QActionGroup, QFont, QIcon, QWheelEvent
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
+    QDialog,
+    QDialogButtonBox,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QMainWindow,
     QMenu,
     QPushButton,
@@ -62,6 +65,268 @@ class Hint_While_Recording_At_Cursor_Position(QLabel):
             self.setVisible(True)
         else:
             self.setVisible(False)
+
+
+class InputDialog_Zhipuai_Api_Key:
+    @staticmethod
+    def get_text(
+        parent=None,
+        title="标题",
+        label="标签",
+        default="",
+        on_submit=None,
+        on_cancel=None,
+        show_link=False,
+        link_text="前往官网获取API Key",
+        link_url="https://open.bigmodel.cn/usercenter/apikeys",
+        is_password=True,
+        placeholder="请输入API Key",
+        validator=None,  # 输入验证器
+    ):
+        """
+        显示增强版非模态输入弹窗
+        Args:
+            parent: 父窗口
+            title: 窗口标题
+            label: 提示标签
+            default: 默认文本
+            on_submit: 提交回调函数
+            on_cancel: 取消回调函数
+            show_link: 是否显示超链接
+            link_text: 超链接显示文本
+            link_url: 超链接URL
+            is_password: 是否为密码输入
+            placeholder: 输入框占位符文本
+            validator: QValidator 输入验证器
+        Returns:
+            QDialog: 创建的对话框对象
+        """
+        dialog = QDialog(parent)
+        dialog.setWindowTitle(title)
+        dialog.setModal(False)
+
+        # 设置窗口大小和置顶
+        dialog.setFixedSize(500, 180)
+        dialog.setWindowFlags(dialog.windowFlags() | Qt.WindowStaysOnTopHint)
+
+        # 创建主布局
+        main_layout = QVBoxLayout(dialog)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+
+        # 标签区域
+        if label:
+            label_widget = QLabel(label)
+            label_widget.setWordWrap(True)
+            main_layout.addWidget(label_widget)
+
+        # 超链接区域
+        if show_link:
+            link_container = QHBoxLayout()
+
+            # 图标
+            link_icon = QLabel("🔗")
+            link_container.addWidget(link_icon)
+
+            # 链接文本
+            link_label = QLabel(
+                f'<a href="{link_url}" style="color: #0066cc; text-decoration: none;">{link_text}</a>'
+            )
+            link_label.setOpenExternalLinks(True)
+            link_label.setTextFormat(Qt.TextFormat.RichText)
+            link_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextBrowserInteraction
+            )
+            link_container.addWidget(link_label)
+
+            link_container.addStretch()
+            main_layout.addLayout(link_container)
+
+        # 输入区域
+        input_container = QVBoxLayout()
+        input_container.setSpacing(5)
+
+        # 输入框和按钮的水平布局
+        input_row = QHBoxLayout()
+
+        # 输入框
+        line_edit = QLineEdit()
+        line_edit.setText(default)
+        line_edit.setPlaceholderText(placeholder)
+
+        # 设置回显模式
+        if is_password:
+            line_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        else:
+            line_edit.setEchoMode(QLineEdit.EchoMode.Normal)
+
+        # 设置验证器（如果有）
+        if validator:
+            line_edit.setValidator(validator)
+
+        input_row.addWidget(line_edit)
+
+        # 按钮容器
+        button_container = QHBoxLayout()
+        button_container.setSpacing(2)
+
+        # 眼睛按钮（切换明文/密文）- 仅当是密码输入时显示
+        if is_password:
+            eye_button = QPushButton("按住显示明文")
+
+            # 设置字体确保emoji显示正常
+            font = eye_button.font()
+            font_families = [
+                "Segoe UI Emoji",  # Windows
+                "Apple Color Emoji",  # macOS
+                "Noto Color Emoji",  # Linux
+                font.family(),
+            ]
+            font.setFamilies(font_families)
+            eye_button.setFont(font)
+
+            # 定时器用于鼠标移出检测（可选）
+            mouse_leave_timer = QTimer()
+            mouse_leave_timer.setSingleShot(False)
+            mouse_leave_timer.setInterval(100)  # 每100ms检查一次
+
+            # 标志位
+            is_button_pressed = False
+
+            def show_password():
+                """按下按钮时显示明文"""
+                nonlocal is_button_pressed
+                is_button_pressed = True
+                line_edit.setEchoMode(QLineEdit.EchoMode.Normal)
+                eye_button.setText("明文显示中")
+
+                # 可选：启动定时器检测鼠标是否还在按钮上
+                mouse_leave_timer.start()
+
+            def hide_password():
+                """松开按钮时隐藏密码"""
+                nonlocal is_button_pressed
+                is_button_pressed = False
+                line_edit.setEchoMode(QLineEdit.EchoMode.Password)
+                eye_button.setText("按住显示明文")
+                mouse_leave_timer.stop()
+
+            def check_mouse_position():
+                """检查鼠标是否还在按钮上（可选功能）"""
+                if is_button_pressed and not eye_button.underMouse():
+                    hide_password()
+
+            # 连接事件
+            eye_button.pressed.connect(show_password)
+            eye_button.released.connect(hide_password)
+
+            # 连接定时器（可选）
+            mouse_leave_timer.timeout.connect(check_mouse_position)
+
+            # 确保即使鼠标移开，也能在鼠标释放时恢复密文
+            # 添加一个鼠标移动事件处理，确保按钮释放时总是调用hide_password
+            original_mouse_move_event = eye_button.mouseMoveEvent
+
+            def custom_mouse_move_event(event):
+                original_mouse_move_event(event)
+                if is_button_pressed and not eye_button.underMouse():
+                    # 如果鼠标移出按钮区域，检查鼠标是否还在按下状态
+                    pass
+
+            eye_button.mouseMoveEvent = custom_mouse_move_event
+
+            button_container.addWidget(eye_button)
+
+        input_row.addLayout(button_container)
+        input_container.addLayout(input_row)
+
+        main_layout.addLayout(input_container)
+
+        # 按钮区域
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.setCenterButtons(True)
+
+        # 样式化按钮
+        ok_button = button_box.button(QDialogButtonBox.Ok)
+        cancel_button = button_box.button(QDialogButtonBox.Cancel)
+
+        ok_button.setMinimumWidth(80)
+        cancel_button.setMinimumWidth(80)
+
+        # 添加样式
+        ok_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                padding: 6px 12px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+
+        cancel_button.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                padding: 6px 12px;
+                border-radius: 4px;
+            }
+            QPushButton:hover {
+                background-color: #da190b;
+            }
+        """)
+
+        main_layout.addWidget(button_box)
+
+        # 连接信号
+        def accept():
+            if on_submit:
+                on_submit(line_edit.text())
+            dialog.accept()
+
+        def reject():
+            if on_cancel:
+                on_cancel()
+            dialog.reject()
+
+        button_box.accepted.connect(accept)
+        button_box.rejected.connect(reject)
+
+        # 回车键支持
+        line_edit.returnPressed.connect(accept)
+
+        # 显示对话框并居中
+        dialog.show()
+        InputDialog_Zhipuai_Api_Key.center_dialog(dialog)
+
+        # 激活窗口并设置焦点
+        dialog.activateWindow()
+        line_edit.setFocus()
+        line_edit.selectAll()
+
+        # 窗口关闭时清理定时器
+        def on_dialog_finished():
+            if is_password and "mouse_leave_timer" in locals():
+                mouse_leave_timer.stop()
+
+        dialog.finished.connect(on_dialog_finished)
+
+        return dialog
+
+    @staticmethod
+    def center_dialog(dialog):
+        """将窗口居中显示在屏幕上"""
+        frame_geometry = dialog.frameGeometry()
+        screen = (
+            dialog.screen()
+            if hasattr(dialog, "screen")
+            else QApplication.primaryScreen()
+        )
+        center_point = screen.availableGeometry().center()
+        frame_geometry.moveCenter(center_point)
+        dialog.move(frame_geometry.topLeft())
 
 
 class GUI(QMainWindow):
@@ -420,6 +685,7 @@ class GUI(QMainWindow):
         self.enable_ai_optimize_language_expression_action = QAction(
             "⚙️ AI 优化语言表达", self
         )
+        self.edit_zhipuai_api_key_action = QAction("🔑 修改 API Key", self)
 
         # 从内存配置中获取当前值
         old_value_save_audio = self.get_config_value("client.save_audio", False)
@@ -497,6 +763,7 @@ class GUI(QMainWindow):
         self.enable_ai_optimize_language_expression_action.triggered.connect(
             self.toogle_ai_optimize_language_expression
         )
+        self.edit_zhipuai_api_key_action.triggered.connect(self.edit_zhipuai_api_key)
         github_website_action.triggered.connect(self.open_github_website)
         show_action.triggered.connect(self.showNormal)
         restart_client_action.triggered.connect(self.restart_client)
@@ -527,6 +794,7 @@ class GUI(QMainWindow):
         tray_menu.addAction(self.save_non_kwd_markdown_action)
         tray_menu.addAction(self.convert_to_traditional_chinese_main_action)
         tray_menu.addAction(self.enable_ai_optimize_language_expression_action)
+        tray_menu.addAction(self.edit_zhipuai_api_key_action)
         tray_menu.addMenu(self.prompt_style_menu)
         tray_menu.addSeparator()
         tray_menu.addAction(github_website_action)
@@ -728,6 +996,34 @@ class GUI(QMainWindow):
                     )
                     self.prompt_style_menu.setEnabled(True)
                     self.prompt_style_menu.setTitle("🤖 AI 优化风格")
+            else:
+                logger.error("保存配置文件失败")
+        else:
+            logger.error("更新内存配置失败")
+
+    def edit_zhipuai_api_key(self):
+        # 从内存配置中获取当前值
+        old_value = self.get_config_value("client.zhipuai.api_key", "")
+        # 获取新值
+        InputDialog_Zhipuai_Api_Key.get_text(
+            parent=self,
+            title="智谱AI API Key",
+            label="请在此输入您的智谱AI API Key。如需获取新的API Key，请点击下方链接:",
+            on_submit=self.update_zhipuai_api_key,
+            # on_cancel=lambda: print("[yellow4]取消修改 API Key[/]"),
+            default=old_value,
+            placeholder="请输入API Key",
+            show_link=True,
+            link_text="访问智谱AI官网获取API Key",
+            link_url="https://open.bigmodel.cn/usercenter/apikeys",
+        )
+
+    def update_zhipuai_api_key(self, new_value):
+        # print(f"[green4]更新 API Key: {new_value}[/]")
+        # 更新内存配置并保存到文件
+        if self.set_config_value("client.zhipuai.api_key", new_value):
+            if self.save_config():
+                pass
             else:
                 logger.error("保存配置文件失败")
         else:
