@@ -657,6 +657,12 @@ def hold_mode(e: keyboard.KeyboardEvent):
             return
         # 仅在已按下状态时处理松开事件
         if key_pressed and not ignore_recording_order:
+            # 标记最后弹起的时间
+            last_time_released = time.time()
+
+            # 计算按键弹起来和按下的间隔
+            is_short_press = (last_time_released - last_time_pressed) < Config.threshold
+
             if is_short_duration:
                 Cosmic.offline_translate_needed = (
                     saved_result_for_offline_translate_needed
@@ -665,14 +671,16 @@ def hold_mode(e: keyboard.KeyboardEvent):
                     saved_result_for_online_translate_needed
                 )
 
-            # 标记最后弹起的时间
-            last_time_released = time.time()
-            # 计算按键弹起来和按下的间隔
-            is_short_press = (last_time_released - last_time_pressed) < Config.threshold
+                if Config.suppress:
+                    keyboard.send(Config.speech_recognition_shortcut)
+                    
             # 取消或完成任务
             if is_short_press and not double_clicked:
                 hold_mode_first_time_cancel_task = True
                 cancel_task()
+
+                if Config.suppress:
+                    keyboard.send(Config.speech_recognition_shortcut)
 
             else:
                 finish_task()
@@ -681,7 +689,7 @@ def hold_mode(e: keyboard.KeyboardEvent):
                 last_time_released = 0
 
                 # 松开快捷键后，再按一次，恢复 CapsLock 或 Shift 等按键的状态
-                if not double_clicked and Config.restore_key:
+                if not double_clicked and Config.restore_key and not Config.suppress:
                     time.sleep(0.01)
 
                     keyboard.send(Config.speech_recognition_shortcut)
