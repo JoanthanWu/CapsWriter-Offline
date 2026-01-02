@@ -5,7 +5,6 @@ import sys
 import threading
 from pathlib import Path
 from queue import Queue
-from typing import Literal
 
 import win32api
 import win32con
@@ -69,6 +68,8 @@ class GUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.config_toml_path = Path() / "config.toml"
+        self.config_data = None  # 存储配置数据
+        self.load_config()  # 初始加载配置
         self.init_ui()
         self.output_queue_client = Queue()
         self.start_script()
@@ -78,6 +79,77 @@ class GUI(QMainWindow):
 
         # 初始化文件系统监控器
         self.init_file_watcher()
+
+    def load_config(self):
+        """加载配置文件到内存"""
+        try:
+            with open(self.config_toml_path, "r", encoding="utf-8") as f:
+                config_str = f.read()
+                self.config_data = parse(config_str)
+            logger.debug("配置文件已加载到内存")
+        except Exception as e:
+            init_logging()
+            logger.error(f"读取配置文件失败: {e}")
+            self.config_data = None
+
+    def save_config(self):
+        """保存配置数据到文件"""
+        try:
+            with open(self.config_toml_path, "w", encoding="utf-8") as f:
+                f.write(dumps(self.config_data))
+            logger.debug("配置已保存到文件")
+            return True
+        except Exception as e:
+            logger.error(f"保存配置文件失败: {e}")
+            return False
+
+    def get_config_value(self, path: str, default=None):
+        """通过点分隔的路径获取配置值"""
+        if not self.config_data:
+            self.load_config()
+            if not self.config_data:
+                return default
+
+        try:
+            # 使用点分割路径
+            keys = path.split(".")
+            value = self.config_data
+
+            # 逐层访问嵌套字典
+            for key in keys:
+                if key in value:
+                    value = value[key]
+                else:
+                    return default
+            return value
+        except Exception as e:
+            logger.error(f"获取配置值失败 [{path}]: {e}")
+            return default
+
+    def set_config_value(self, path: str, value):
+        """通过点分隔的路径设置配置值"""
+        if not self.config_data:
+            self.load_config()
+            if not self.config_data:
+                return False
+
+        try:
+            # 使用点分割路径
+            keys = path.split(".")
+            data = self.config_data
+
+            # 逐层访问嵌套字典，如果不存在则创建
+            for i, key in enumerate(keys[:-1]):
+                if key not in data:
+                    data[key] = {}
+                data = data[key]
+
+            # 设置最终的值
+            data[keys[-1]] = value
+            return True
+        except Exception as e:
+            logger.error(f"设置配置值失败 [{path}]: {e}")
+            return False
 
     def init_ui(self):
         self.resize(425, 425)
@@ -143,19 +215,17 @@ class GUI(QMainWindow):
         if not self.file_watcher.files():
             self.file_watcher.addPath(str(self.config_toml_path))
 
+        # 重新加载配置到内存
+        self.load_config()
+
         # 启动定时器，延迟更新，防止多次触发
         self.config_update_timer.start(1000)  # 1秒后更新
 
     def update_tray_menu_from_config(self):
-        """从配置文件更新托盘菜单"""
+        """从内存中的配置数据更新托盘菜单"""
         try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-
             # 更新保存音频选项
-            old_value_save_audio: bool = toml_config["client"]["save_audio"]
+            old_value_save_audio = self.get_config_value("client.save_audio", False)
             match old_value_save_audio:
                 case True:
                     self.save_audio_action.setText("✅ 保存音频")
@@ -163,7 +233,9 @@ class GUI(QMainWindow):
                     self.save_audio_action.setText("❌ 保存音频")
 
             # 更新保存日记选项
-            old_value_save_markdown: bool = toml_config["client"]["save_markdown"]
+            old_value_save_markdown = self.get_config_value(
+                "client.save_markdown", False
+            )
             match old_value_save_markdown:
                 case True:
                     self.save_markdown_action.setText("✅ 保存日记")
@@ -175,18 +247,21 @@ class GUI(QMainWindow):
                     self.save_non_kwd_markdown_action.setText("❗ 请先启用保存日记")
 
             # 更新保存非关键词日记选项
-            old_value_save_non_kwd_markdown: bool = toml_config["client"][
-                "save_non_kwd_markdown"
-            ]
+            old_value_save_non_kwd_markdown = self.get_config_value(
+                "client.save_non_kwd_markdown", False
+            )
             match old_value_save_non_kwd_markdown:
                 case True:
                     self.save_non_kwd_markdown_action.setText("✅ 保存非关键词日记")
                 case False:
                     self.save_non_kwd_markdown_action.setText("❌ 保存非关键词日记")
+            if old_value_save_markdown is False:
+                self.save_non_kwd_markdown_action.setEnabled(False)
+                self.save_non_kwd_markdown_action.setText("❗ 请先启用保存日记")
 
             # 更新简繁体转换选项
-            old_value_convert_to_traditional_chinese_main: Literal["简", "繁"] = (
-                toml_config["client"]["convert_to_traditional_chinese_main"]
+            old_value_convert_to_traditional_chinese_main = self.get_config_value(
+                "client.convert_to_traditional_chinese_main", "简"
             )
             match old_value_convert_to_traditional_chinese_main:
                 case "简":
@@ -195,9 +270,9 @@ class GUI(QMainWindow):
                     self.convert_to_traditional_chinese_main_action.setText("繁體中文")
 
             # 更新AI优化语言表达选项
-            old_value_enable_ai_optimize_language_expression: bool = toml_config[
-                "client"
-            ]["zhipuai"]["enable_ai_optimize_language_expression"]
+            old_value_enable_ai_optimize_language_expression = self.get_config_value(
+                "client.zhipuai.enable_ai_optimize_language_expression", False
+            )
             match old_value_enable_ai_optimize_language_expression:
                 case True:
                     self.enable_ai_optimize_language_expression_action.setText(
@@ -208,12 +283,12 @@ class GUI(QMainWindow):
                     self.enable_ai_optimize_language_expression_action.setText(
                         "❌ AI 优化语言表达"
                     )
-                    self.prompt_style_menu.setDisabled(True)
+                    self.prompt_style_menu.setEnabled(False)
 
             # 更新AI提示风格
-            old_value_prompt_style: str = toml_config["client"]["zhipuai"][
-                "prompt_style"
-            ]
+            old_value_prompt_style = self.get_config_value(
+                "client.zhipuai.prompt_style", "official"
+            )
             self.update_prompt_style_menu(old_value_prompt_style)
 
             logger.debug("托盘菜单已根据配置文件更新")
@@ -301,13 +376,6 @@ class GUI(QMainWindow):
         # 设置默认状态
         self.monitor_checkbox.setChecked(True)
 
-    # def create_stay_on_top_checkbox(self):
-    #     self.stay_on_top_checkbox = QCheckBox('置顶')
-    #     self.stay_on_top_checkbox.setToolTip("置顶窗口，将它显示在其他窗口之上 / 不置顶")
-    #     self.stay_on_top_checkbox.setMaximumSize(65, 30)
-    #     self.stay_on_top_checkbox.stateChanged.connect(self.window_stay_on_top_toggled)
-    #     self.stay_on_top_checkbox.setChecked(True)
-
     def create_wordcount_label(self):
         self.text_box_wordCountLabel = QLabel("字符数字节数", self)
         self.text_box_wordCountLabel.setToolTip("光标已选中字符数 / 总字符数 | 字节数")
@@ -353,81 +421,56 @@ class GUI(QMainWindow):
             "⚙️ AI 优化语言表达", self
         )
 
-        # 获取当前值
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            old_value_save_audio: bool = toml_config["client"]["save_audio"]
-            old_value_save_markdown: bool = toml_config["client"]["save_markdown"]
-            old_value_save_non_kwd_markdown: bool = toml_config["client"][
-                "save_non_kwd_markdown"
-            ]
-            old_value_convert_to_traditional_chinese_main: Literal["简", "繁"] = (
-                toml_config["client"]["convert_to_traditional_chinese_main"]
-            )
-            old_value_enable_ai_optimize_language_expression: bool = toml_config[
-                "client"
-            ]["zhipuai"]["enable_ai_optimize_language_expression"]
-            old_value_prompt_style: str = toml_config["client"]["zhipuai"][
-                "prompt_style"
-            ]
-            match old_value_save_audio:
-                case True:
-                    self.save_audio_action.setText("✅ 保存音频")
-                case False:
-                    self.save_audio_action.setText("❌ 保存音频")
-            match old_value_save_markdown:
-                case True:
-                    self.save_markdown_action.setText("✅ 保存日记")
-                case False:
-                    self.save_markdown_action.setText("❌ 保存日记")
-            match old_value_save_non_kwd_markdown:
-                case True:
-                    self.save_non_kwd_markdown_action.setText("✅ 保存非关键词日记")
-                case False:
-                    self.save_non_kwd_markdown_action.setText("❌ 保存非关键词日记")
-            match old_value_convert_to_traditional_chinese_main:
-                case "简":
-                    self.convert_to_traditional_chinese_main_action.setText("简体中文")
-                case "繁":
-                    self.convert_to_traditional_chinese_main_action.setText("繁體中文")
-            match old_value_enable_ai_optimize_language_expression:
-                case True:
-                    self.enable_ai_optimize_language_expression_action.setText(
-                        "✅ AI 优化语言表达"
-                    )
-                case False:
-                    self.enable_ai_optimize_language_expression_action.setText(
-                        "❌ AI 优化语言表达"
-                    )
-            match old_value_prompt_style:
-                case "official":
-                    self.prompt_style = "official"
-                case "sweetheart":
-                    self.prompt_style = "sweetheart"
-                case "social":
-                    self.prompt_style = "social"
-                case "poetry":
-                    self.prompt_style = "poetry"
-                case "english":
-                    self.prompt_style = "english"
-                case "academic":
-                    self.prompt_style = "academic"
-                case "customer_service":
-                    self.prompt_style = "customer_service"
-                case "creative_writing":
-                    self.prompt_style = "creative_writing"
-                case _:
-                    print(
-                        f"不支持的 AI 提示风格：{old_value_prompt_style}，请在 offical、sweetheart、social、poetry、english、academic、customer_service、creative_writing 中选择。"
-                    )
-                    self.prompt_style = ""
-        except Exception as e:
-            init_logging()
-            logger.error(f"读取配置文件失败: {e}")
-            return
+        # 从内存配置中获取当前值
+        old_value_save_audio = self.get_config_value("client.save_audio", False)
+        old_value_save_markdown = self.get_config_value("client.save_markdown", False)
+        old_value_save_non_kwd_markdown = self.get_config_value(
+            "client.save_non_kwd_markdown", False
+        )
+        old_value_convert_to_traditional_chinese_main = self.get_config_value(
+            "client.convert_to_traditional_chinese_main", "简"
+        )
+        old_value_enable_ai_optimize_language_expression = self.get_config_value(
+            "client.zhipuai.enable_ai_optimize_language_expression", False
+        )
+        old_value_prompt_style = self.get_config_value(
+            "client.zhipuai.prompt_style", "official"
+        )
+
+        match old_value_save_audio:
+            case True:
+                self.save_audio_action.setText("✅ 保存音频")
+            case False:
+                self.save_audio_action.setText("❌ 保存音频")
+        match old_value_save_markdown:
+            case True:
+                self.save_markdown_action.setText("✅ 保存日记")
+            case False:
+                self.save_markdown_action.setText("❌ 保存日记")
+        match old_value_save_non_kwd_markdown:
+            case True:
+                self.save_non_kwd_markdown_action.setText("✅ 保存非关键词日记")
+            case False:
+                self.save_non_kwd_markdown_action.setText("❌ 保存非关键词日记")
+        if old_value_save_markdown is False:
+            self.save_non_kwd_markdown_action.setEnabled(False)
+            self.save_non_kwd_markdown_action.setText("❗ 请先启用保存日记")
+        match old_value_convert_to_traditional_chinese_main:
+            case "简":
+                self.convert_to_traditional_chinese_main_action.setText("简体中文")
+            case "繁":
+                self.convert_to_traditional_chinese_main_action.setText("繁體中文")
+        match old_value_enable_ai_optimize_language_expression:
+            case True:
+                self.enable_ai_optimize_language_expression_action.setText(
+                    "✅ AI 优化语言表达"
+                )
+            case False:
+                self.enable_ai_optimize_language_expression_action.setText(
+                    "❌ AI 优化语言表达"
+                )
+
+        self.prompt_style = old_value_prompt_style
 
         github_website_action = QAction("🌐 GitHub Website", self)
         show_action = QAction("🪟 Show", self)
@@ -555,253 +598,140 @@ class GUI(QMainWindow):
         self.prompt_style_menu.addAction(self.prompt_customer_service_action)
         self.prompt_style_menu.addAction(self.prompt_creative_writing_action)
 
-        match self.prompt_style:
-            case "official":
-                self.prompt_official_action.setChecked(True)
-            case "sweetheart":
-                self.prompt_sweetheart_action.setChecked(True)
-            case "social":
-                self.prompt_social_action.setChecked(True)
-            case "poetry":
-                self.prompt_poetry_action.setChecked(True)
-            case "english":
-                self.prompt_english_action.setChecked(True)
-            case "academic":
-                self.prompt_academic_action.setChecked(True)
-            case "customer_service":
-                self.prompt_customer_service_action.setChecked(True)
-            case "creative_writing":
-                self.prompt_creative_writing_action.setChecked(True)
-            case _:
-                print(
-                    f"不支持的 AI 提示风格：{self.prompt_style}，请在 offical、sweetheart、social、poetry、english、academic、customer_service、creative_writing 中选择。"
-                )
+        self.update_prompt_style_menu(self.prompt_style)
 
     def toogle_save_audio(self):
-        # 获取当前值
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            old_value: bool = toml_config["client"]["save_audio"]
-        except Exception as e:
-            init_logging()
-            logger.error(f"读取配置文件失败: {e}")
-            return
+        # 从内存配置中获取当前值
+        old_value = self.get_config_value("client.save_audio", False)
         # 切换值
-        match old_value:
-            case True:
-                new_value = False
-            case False:
-                new_value = True
-        # 修改配置文件
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            # 修改配置
-            toml_config["client"]["save_audio"] = new_value
-            # 重新写入文件（使用新的文件句柄）
-            with open(self.config_toml_path, "w", encoding="utf-8") as f:
-                f.write(dumps(toml_config))
-            # 更新托盘菜单
-            match old_value:
-                case True:
+        new_value = not old_value
+        # 更新内存配置并保存到文件
+        if self.set_config_value("client.save_audio", new_value):
+            if self.save_config():
+                # 更新托盘菜单
+                if old_value:
                     self.save_audio_action.setText("❌ 保存音频")
-                case False:
+                else:
                     self.save_audio_action.setText("✅ 保存音频")
-        except Exception as e:
-            init_logging()
-            logger.error(f"修改配置文件失败: {e}")
+            else:
+                logger.error("保存配置文件失败")
+        else:
+            logger.error("更新内存配置失败")
 
     def toogle_save_markdown(self):
-        # 获取当前值
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            old_value: bool = toml_config["client"]["save_markdown"]
-        except Exception as e:
-            init_logging()
-            logger.error(f"读取配置文件失败: {e}")
-            return
+        # 从内存配置中获取当前值
+        old_value = self.get_config_value("client.save_markdown", False)
         # 切换值
-        match old_value:
-            case True:
-                new_value = False
-            case False:
-                new_value = True
-        # 修改配置文件
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            # 修改配置
-            toml_config["client"]["save_markdown"] = new_value
-            # 重新写入文件（使用新的文件句柄）
-            with open(self.config_toml_path, "w", encoding="utf-8") as f:
-                f.write(dumps(toml_config))
-            # 更新托盘菜单
-            match old_value:
-                case True:
+        new_value = not old_value
+        # 更新内存配置并保存到文件
+        if self.set_config_value("client.save_markdown", new_value):
+            if self.save_config():
+                # 更新托盘菜单
+                if old_value:
                     self.save_markdown_action.setText("❌ 保存日记")
                     self.save_non_kwd_markdown_action.setText("❗ 请先启用保存日记")
                     self.save_non_kwd_markdown_action.setEnabled(False)
-                case False:
+                else:
                     self.save_markdown_action.setText("✅ 保存日记")
                     self.save_non_kwd_markdown_action.setText("⚙️ 保存非关键词日记")
                     self.save_non_kwd_markdown_action.setEnabled(True)
-                    self.update_save_non_kwd_markdown(toml_config)
-        except Exception as e:
-            init_logging()
-            logger.error(f"修改配置文件失败: {e}")
+                    self.update_save_non_kwd_markdown()
+            else:
+                logger.error("保存配置文件失败")
+        else:
+            logger.error("更新内存配置失败")
 
     def toogle_save_non_kwd_markdown(self):
-        # 获取当前值
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            old_value: bool = toml_config["client"]["save_non_kwd_markdown"]
-        except Exception as e:
-            init_logging()
-            logger.error(f"读取配置文件失败: {e}")
-            return
+        # 从内存配置中获取当前值
+        old_value = self.get_config_value("client.save_non_kwd_markdown", False)
         # 切换值
-        match old_value:
-            case True:
-                new_value = False
-            case False:
-                new_value = True
-        # 修改配置文件
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            # 修改配置
-            toml_config["client"]["save_non_kwd_markdown"] = new_value
-            # 重新写入文件（使用新的文件句柄）
-            with open(self.config_toml_path, "w", encoding="utf-8") as f:
-                f.write(dumps(toml_config))
-            # 更新托盘菜单
-            match old_value:
-                case True:
+        new_value = not old_value
+        # 更新内存配置并保存到文件
+        if self.set_config_value("client.save_non_kwd_markdown", new_value):
+            if self.save_config():
+                # 更新托盘菜单
+                if old_value:
                     self.save_non_kwd_markdown_action.setText("❌ 保存非关键词日记")
-                case False:
+                else:
                     self.save_non_kwd_markdown_action.setText("✅ 保存非关键词日记")
-        except Exception as e:
-            init_logging()
-            logger.error(f"修改配置文件失败: {e}")
+            else:
+                logger.error("保存配置文件失败")
+        else:
+            logger.error("更新内存配置失败")
 
-    def update_save_non_kwd_markdown(self, toml_config):
+    def update_save_non_kwd_markdown(self):
         try:
-            old_value: bool = toml_config["client"]["save_non_kwd_markdown"]
-            match old_value:
-                case True:
-                    self.save_non_kwd_markdown_action.setText("✅ 保存非关键词日记")
-                case False:
-                    self.save_non_kwd_markdown_action.setText("❌ 保存非关键词日记")
+            old_value = self.get_config_value("client.save_non_kwd_markdown", False)
+            if old_value:
+                self.save_non_kwd_markdown_action.setText("✅ 保存非关键词日记")
+            else:
+                self.save_non_kwd_markdown_action.setText("❌ 保存非关键词日记")
         except Exception as e:
             init_logging()
             logger.error(f"更新托盘菜单失败: {e}")
 
     def switch_between_simplified_and_traditional(self):
-        # 获取当前值
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            old_value: Literal["简", "繁"] = toml_config["client"][
-                "convert_to_traditional_chinese_main"
-            ]
-        except Exception as e:
-            init_logging()
-            logger.error(f"读取配置文件失败: {e}")
-            return
+        # 从内存配置中获取当前值
+        old_value = self.get_config_value(
+            "client.convert_to_traditional_chinese_main", "简"
+        )
         # 切换值
         match old_value:
             case "简":
                 new_value = "繁"
             case "繁":
                 new_value = "简"
-        # 修改配置文件
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            # 修改配置
-            toml_config["client"]["convert_to_traditional_chinese_main"] = new_value
-            # 重新写入文件（使用新的文件句柄）
-            with open(self.config_toml_path, "w", encoding="utf-8") as f:
-                f.write(dumps(toml_config))
-            # 更新托盘菜单
-            match old_value:
-                case "简":
-                    self.convert_to_traditional_chinese_main_action.setText("繁體中文")
-                case "繁":
-                    self.convert_to_traditional_chinese_main_action.setText("简体中文")
-        except Exception as e:
-            init_logging()
-            logger.error(f"修改配置文件失败: {e}")
+            case _:
+                new_value = "简"
+        # 更新内存配置并保存到文件
+        if self.set_config_value(
+            "client.convert_to_traditional_chinese_main", new_value
+        ):
+            if self.save_config():
+                # 更新托盘菜单
+                match old_value:
+                    case "简":
+                        self.convert_to_traditional_chinese_main_action.setText(
+                            "繁體中文"
+                        )
+                    case "繁":
+                        self.convert_to_traditional_chinese_main_action.setText(
+                            "简体中文"
+                        )
+            else:
+                logger.error("保存配置文件失败")
+        else:
+            logger.error("更新内存配置失败")
 
     def toogle_ai_optimize_language_expression(self):
-        # 获取当前值
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            old_value: bool = toml_config["client"]["zhipuai"][
-                "enable_ai_optimize_language_expression"
-            ]
-        except Exception as e:
-            init_logging()
-            logger.error(f"读取配置文件失败: {e}")
-            return
+        # 从内存配置中获取当前值
+        old_value = self.get_config_value(
+            "client.zhipuai.enable_ai_optimize_language_expression", False
+        )
         # 切换值
-        match old_value:
-            case True:
-                new_value = False
-            case False:
-                new_value = True
-        # 修改配置文件
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            # 修改配置
-            toml_config["client"]["zhipuai"][
-                "enable_ai_optimize_language_expression"
-            ] = new_value
-            # 重新写入文件（使用新的文件句柄）
-            with open(self.config_toml_path, "w", encoding="utf-8") as f:
-                f.write(dumps(toml_config))
-            # 更新托盘菜单
-            match old_value:
-                case True:
+        new_value = not old_value
+        # 更新内存配置并保存到文件
+        if self.set_config_value(
+            "client.zhipuai.enable_ai_optimize_language_expression", new_value
+        ):
+            if self.save_config():
+                # 更新托盘菜单
+                if old_value:
                     self.enable_ai_optimize_language_expression_action.setText(
                         "❌ AI 优化语言表达"
                     )
                     self.prompt_style_menu.setDisabled(True)
                     self.prompt_style_menu.setTitle("❗ 请先启用AI优化语言表达")
-                case False:
+                else:
                     self.enable_ai_optimize_language_expression_action.setText(
                         "✅ AI 优化语言表达"
                     )
                     self.prompt_style_menu.setEnabled(True)
                     self.prompt_style_menu.setTitle("🤖 AI 优化风格")
-        except Exception as e:
-            init_logging()
-            logger.error(f"修改配置文件失败: {e}")
+            else:
+                logger.error("保存配置文件失败")
+        else:
+            logger.error("更新内存配置失败")
 
     def switch_prompt_style(self):
         # 获取新值
@@ -824,20 +754,13 @@ class GUI(QMainWindow):
             new_value = "creative_writing"
         else:
             new_value = ""
-        # 修改配置文件
-        try:
-            # 读取配置文件
-            with open(self.config_toml_path, "r", encoding="utf-8") as f:
-                config_str = f.read()
-                toml_config = parse(config_str)
-            # 修改配置
-            toml_config["client"]["zhipuai"]["prompt_style"] = new_value
-            # 重新写入文件（使用新的文件句柄）
-            with open(self.config_toml_path, "w", encoding="utf-8") as f:
-                f.write(dumps(toml_config))
-        except Exception as e:
-            init_logging()
-            logger.error(f"修改配置文件失败: {e}")
+
+        # 更新内存配置并保存到文件
+        if self.set_config_value("client.zhipuai.prompt_style", new_value):
+            if not self.save_config():
+                logger.error("保存配置文件失败")
+        else:
+            logger.error("更新内存配置失败")
 
     def restart_client(self):
         subprocess.Popen(
@@ -882,13 +805,6 @@ class GUI(QMainWindow):
         except AttributeError:
             pass  # 'GUI' object has no attribute 'update_timer' # 忽略该错误，因为初始化时还没有创建update_timer
 
-    # def window_stay_on_top_toggled(self):
-    #     # 切换窗口置顶状态
-    #     if self.windowFlags() & Qt.WindowStaysOnTopHint:
-    #         self.setWindowFlags(self.windowFlags() ^ Qt.WindowStaysOnTopHint)
-    #     else:
-    #         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-    #     self.show()  # 重新显示窗口以应用更改
     def window_stay_on_top_toggled(self):
         # 切换窗口置顶状态
         if self.windowFlags() & Qt.WindowStaysOnTopHint:
