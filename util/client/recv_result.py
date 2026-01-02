@@ -44,10 +44,15 @@ async def recv_result():
             if not message["is_final"] or not text.strip():
                 continue
 
+            # 控制台输出
+            console.print(f"    转录时延：{delay:.2f}s")
+            console.print(f"    识别结果：[green]{text}")
+
             # AI优化语言表达
             ai_optimized_done = False
             if Config.zhipuai_enable_ai_optimize_language_expression:
                 ai_optimized_text, ai_delay = ai_optimize_language_expression(text)
+            if text != ai_optimized_text:
                 ai_optimized_done = True
                 text = ai_optimized_text
 
@@ -97,10 +102,9 @@ async def recv_result():
                         write_md(text, message["time_start"], file_audio)
 
             # 控制台输出
-            console.print(f"    转录时延：{delay:.2f}s")
             if ai_optimized_done:
                 console.print(f"    AI优化时延：{ai_delay:.2f}s")
-            console.print(f"    识别结果：[green]{text}")
+                console.print(f"    AI优化结果：[green]{text}")
             if offline_translate_done:
                 console.print(f"    离线翻译结果：[green]{offline_translated_text}")
             if online_translate_done:

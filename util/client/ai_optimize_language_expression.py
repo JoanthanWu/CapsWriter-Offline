@@ -10,7 +10,7 @@ from util.safe_logger import init_logging
 def ai_optimize_language_expression(text):
     start = time.time()
     if Config.zhipuai_api_key == "":
-        print("请设置智谱AI API密钥")
+        print("智谱AI API密钥为空，请设置智谱AI API密钥，或者关闭AI优化语言表达功能。")
         return text, time.time() - start
     prompt: str = ""
     match Config.zhipuai_prompt_style:
