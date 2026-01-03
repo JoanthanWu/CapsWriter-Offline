@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
     QDialogButtonBox,
+    QFileDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -739,6 +740,7 @@ class GUI(QMainWindow):
         self.prompt_style = old_value_prompt_style
 
         github_website_action = QAction("🌐 GitHub Website", self)
+        transcribe_file_action = QAction("📽️ Transcribe File", self)
         show_action = QAction("🪟 Show", self)
         restart_client_action = QAction("🔄 Restart Client", self)
         quit_action = QAction("❌ Quit", self)
@@ -765,6 +767,7 @@ class GUI(QMainWindow):
         )
         self.edit_zhipuai_api_key_action.triggered.connect(self.edit_zhipuai_api_key)
         github_website_action.triggered.connect(self.open_github_website)
+        transcribe_file_action.triggered.connect(self.transcribe_file)
         show_action.triggered.connect(self.showNormal)
         restart_client_action.triggered.connect(self.restart_client)
         quit_action.triggered.connect(self.quit_app)
@@ -798,6 +801,7 @@ class GUI(QMainWindow):
         tray_menu.addMenu(self.prompt_style_menu)
         tray_menu.addSeparator()
         tray_menu.addAction(github_website_action)
+        tray_menu.addAction(transcribe_file_action)
         tray_menu.addSeparator()
         tray_menu.addAction(show_action)
         tray_menu.addAction(restart_client_action)
@@ -1158,6 +1162,53 @@ class GUI(QMainWindow):
 
     def open_github_website(self):
         os.system("start https://github.com/H1DDENADM1N/CapsWriter-Offline")
+
+    def transcribe_file(self):
+        """转录音频/视频文件 - 修复版本"""
+        try:
+            media_filter = "媒体文件 (*.mp4 *.avi *.mkv *.mov *.wav *.mp3)"
+            files, _ = QFileDialog.getOpenFileNames(
+                self,  # 改为 self，而不是 None
+                "选择媒体文件",
+                "",
+                f"{media_filter};;所有文件 (*.*)",
+            )
+
+            if not files:
+                return
+
+            logger.info(f"选择了 {len(files)} 个文件进行转录:")
+            for file in files:
+                logger.info(f"  - {file}")
+
+            # 显示通知
+            self.tray_icon.showMessage(
+                "开始转录",
+                f"已选择 {len(files)} 个文件，正在启动处理...",
+                QSystemTrayIcon.Information,
+                2000,
+            )
+
+            # 启动文件处理，但不要退出当前进程
+            self.start_batch_transcription(files)
+
+        except Exception as e:
+            logger.error(f"选择文件时出错: {e}")
+            self.tray_icon.showMessage(
+                "错误", f"处理文件时出错: {str(e)}", QSystemTrayIcon.Critical, 3000
+            )
+
+    def start_batch_transcription(self, files):
+        """启动批量转录"""
+        try:
+            CapsWriter_path = Path(__file__).parent
+            script_path = CapsWriter_path / "core_client.py"
+            python_exe_path = CapsWriter_path / "runtime" / "python.exe"
+            files_quoted = [str(file) for file in files]
+            command = [str(python_exe_path), str(script_path)] + files_quoted
+            subprocess.Popen(command, cwd=str(CapsWriter_path))
+        except Exception as e:
+            logger.error(f"启动转录进程失败: {e}")
 
     def closeEvent(self, event):
         # Minimize to system tray instead of closing the window when the user clicks the close button
