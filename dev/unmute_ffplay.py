@@ -1,4 +1,7 @@
 # start.mp3 和 stop.mp3 播放没有声音时，用此脚本修复 ffplay.exe 音频播放
+# 先使用 ffplay.exe 播放 一个大文件，保持播放
+# 然后运行此脚本
+# .\runtime\python.exe .\dev\unmute_ffplay.py
 
 from pycaw.pycaw import AudioUtilities
 
