@@ -11,7 +11,7 @@ import win32con
 import win32gui
 import win32print
 from loguru import logger
-from PySide6.QtCore import QFileSystemWatcher, QPoint, Qt, QTimer
+from PySide6.QtCore import QFileSystemWatcher, QPoint, QStandardPaths, Qt, QTimer
 from PySide6.QtGui import QAction, QActionGroup, QFont, QIcon, QWheelEvent
 from PySide6.QtWidgets import (
     QApplication,
@@ -1166,11 +1166,14 @@ class GUI(QMainWindow):
     def transcribe_file(self):
         """转录音频/视频文件 - 修复版本"""
         try:
+            download_path = QStandardPaths.writableLocation(
+                QStandardPaths.DownloadLocation
+            )
             media_filter = "媒体文件 (*.mp4 *.avi *.mkv *.mov *.wav *.mp3)"
             files, _ = QFileDialog.getOpenFileNames(
                 self,  # 改为 self，而不是 None
                 "选择媒体文件",
-                "",
+                download_path,
                 f"{media_filter};;所有文件 (*.*)",
             )
 
