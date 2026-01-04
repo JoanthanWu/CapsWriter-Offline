@@ -89,8 +89,13 @@ def update_config():
             update_save_non_kwd_markdown(new_config)
             update_convert_to_traditional_chinese(new_config)
             update_enable_ai_optimize_language_expression(new_config)
-            update_api_key(new_config)
-            update_prompt_style(new_config)
+            update_ai_provider(new_config)
+            update_prompt_style_selection(new_config)
+            update_openai_api_key(new_config)
+            update_openai_model(new_config)
+            update_openai_base_url(new_config)
+            update_zhipuai_api_key(new_config)
+            update_zhipuai_model(new_config)
         return True
     except Exception as e:
         console.print(f"[red]配置热更新失败: {e}[/]")
@@ -143,18 +148,68 @@ def update_convert_to_traditional_chinese(new_config):
 
 def update_enable_ai_optimize_language_expression(new_config):
     """更新启用AI语言优化配置"""
-    old_value: bool = Config.zhipuai_enable_ai_optimize_language_expression
-    new_value: bool = new_config["client"]["zhipuai"][
-        "enable_ai_optimize_language_expression"
-    ]
+    old_value: bool = Config.enable_ai_optimize_language_expression
+    new_value: bool = new_config["client"]["enable_ai_optimize_language_expression"]
 
     if old_value != new_value:
-        Config.zhipuai_enable_ai_optimize_language_expression = new_value
+        Config.enable_ai_optimize_language_expression = new_value
         console.print(f"[green4]AI语言优化配置已更新，启用AI语言优化为 {new_value} [/]")
 
 
-def update_api_key(new_config):
-    """更新API Key配置"""
+def update_ai_provider(new_config):
+    """更新AI供应商"""
+    old_value: str = Config.ai_provider
+    new_value: str = new_config["client"]["ai_provider"]
+
+    if old_value != new_value:
+        Config.ai_provider = new_value
+        console.print(f"[green4]AI供应商已更新，AI供应商为 {new_value} [/]")
+
+
+def update_prompt_style_selection(new_config):
+    """更新提示词样式选中"""
+    old_value: str = Config.prompt_style_selection
+    new_value: str = new_config["client"]["prompt_style_selection"]
+
+    if old_value != new_value:
+        Config.prompt_style_selection = new_value
+        console.print(f"[green4]提示词样式已更新，提示词样式为 {new_value} [/]")
+
+
+def update_openai_api_key(new_config):
+    """更新 OpenAI API Key配置"""
+    old_value: str = Config.openai_api_key
+    new_value: str = new_config["client"]["openai"]["api_key"]
+
+    if old_value != new_value:
+        Config.openai_api_key = new_value
+        console.print(
+            f"[green4]API Key已更新， {mask_key(old_value)} -> {mask_key(new_value)} [/]"
+        )
+
+
+def update_openai_model(new_config):
+    """更新 OpenAI 模型配置"""
+    old_value: str = Config.openai_model
+    new_value: str = new_config["client"]["openai"]["model"]
+
+    if old_value != new_value:
+        Config.openai_model = new_value
+        console.print(f"[green4]模型已更新，模型为 {new_value} [/]")
+
+
+def update_openai_base_url(new_config):
+    """更新 OpenAI 基础 URL 配置"""
+    old_value: str = Config.openai_base_url
+    new_value: str = new_config["client"]["openai"]["base_url"]
+
+    if old_value != new_value:
+        Config.openai_base_url = new_value
+        console.print(f"[green4]基础 URL 已更新，基础 URL 为 {new_value} [/]")
+
+
+def update_zhipuai_api_key(new_config):
+    """更新 智谱AI API Key配置"""
     old_value: str = Config.zhipuai_api_key
     new_value: str = new_config["client"]["zhipuai"]["api_key"]
 
@@ -165,14 +220,14 @@ def update_api_key(new_config):
         )
 
 
-def update_prompt_style(new_config):
-    """更新提示词样式"""
-    old_value: str = Config.zhipuai_prompt_style
-    new_value: str = new_config["client"]["zhipuai"]["prompt_style"]
+def update_zhipuai_model(new_config):
+    """更新 智谱AI 模型配置"""
+    old_value: str = Config.zhipuai_model
+    new_value: str = new_config["client"]["zhipuai"]["model"]
 
     if old_value != new_value:
-        Config.zhipuai_prompt_style = new_value
-        console.print(f"[green4]提示词样式已更新，提示词样式为 {new_value} [/]")
+        Config.zhipuai_model = new_value
+        console.print(f"[green4]模型已更新，模型为 {new_value} [/]")
 
 
 def mask_key(key):

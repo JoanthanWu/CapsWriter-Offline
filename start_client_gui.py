@@ -68,7 +68,7 @@ class Hint_While_Recording_At_Cursor_Position(QLabel):
             self.setVisible(False)
 
 
-class InputDialog_Zhipuai_Api_Key:
+class InputDialog_Api_Key:
     @staticmethod
     def get_text(
         parent=None,
@@ -107,7 +107,7 @@ class InputDialog_Zhipuai_Api_Key:
         dialog.setModal(False)
 
         # 设置窗口大小和置顶
-        dialog.setFixedSize(500, 180)
+        dialog.setFixedSize(520, 220)
         dialog.setWindowFlags(dialog.windowFlags() | Qt.WindowStaysOnTopHint)
 
         # 创建主布局
@@ -300,7 +300,7 @@ class InputDialog_Zhipuai_Api_Key:
 
         # 显示对话框并居中
         dialog.show()
-        InputDialog_Zhipuai_Api_Key.center_dialog(dialog)
+        InputDialog_Api_Key.center_dialog(dialog)
 
         # 激活窗口并设置焦点
         dialog.activateWindow()
@@ -537,7 +537,7 @@ class GUI(QMainWindow):
 
             # 更新AI优化语言表达选项
             old_value_enable_ai_optimize_language_expression = self.get_config_value(
-                "client.zhipuai.enable_ai_optimize_language_expression", False
+                "client.enable_ai_optimize_language_expression", False
             )
             match old_value_enable_ai_optimize_language_expression:
                 case True:
@@ -552,10 +552,10 @@ class GUI(QMainWindow):
                     self.prompt_style_menu.setEnabled(False)
 
             # 更新AI提示风格
-            old_value_prompt_style = self.get_config_value(
-                "client.zhipuai.prompt_style", "official"
+            old_value_prompt_style_selection = self.get_config_value(
+                "client.prompt_style_selection", "official"
             )
-            self.update_prompt_style_menu(old_value_prompt_style)
+            self.update_prompt_style_menu(old_value_prompt_style_selection)
 
             logger.debug("托盘菜单已根据配置文件更新")
 
@@ -686,7 +686,7 @@ class GUI(QMainWindow):
         self.enable_ai_optimize_language_expression_action = QAction(
             "⚙️ AI 优化语言表达", self
         )
-        self.edit_zhipuai_api_key_action = QAction("🔑 修改 API Key", self)
+        self.edit_api_key_action = QAction("🔑 修改 API Key", self)
 
         # 从内存配置中获取当前值
         old_value_save_audio = self.get_config_value("client.save_audio", False)
@@ -698,10 +698,10 @@ class GUI(QMainWindow):
             "client.convert_to_traditional_chinese_main", "简"
         )
         old_value_enable_ai_optimize_language_expression = self.get_config_value(
-            "client.zhipuai.enable_ai_optimize_language_expression", False
+            "client.enable_ai_optimize_language_expression", False
         )
-        old_value_prompt_style = self.get_config_value(
-            "client.zhipuai.prompt_style", "official"
+        old_value_prompt_style_selection = self.get_config_value(
+            "client.prompt_style_selection", "official"
         )
 
         match old_value_save_audio:
@@ -737,7 +737,7 @@ class GUI(QMainWindow):
                     "❌ AI 优化语言表达"
                 )
 
-        self.prompt_style = old_value_prompt_style
+        self.prompt_style_selection = old_value_prompt_style_selection
 
         github_website_action = QAction("🌐 GitHub Website", self)
         transcribe_file_action = QAction("📽️ Transcribe File", self)
@@ -765,7 +765,10 @@ class GUI(QMainWindow):
         self.enable_ai_optimize_language_expression_action.triggered.connect(
             self.toogle_ai_optimize_language_expression
         )
-        self.edit_zhipuai_api_key_action.triggered.connect(self.edit_zhipuai_api_key)
+        if Config.ai_provider == "zhipuai":
+            self.edit_api_key_action.triggered.connect(self.edit_zhipuai_api_key)
+        else:
+            self.edit_api_key_action.triggered.connect(self.edit_openai_api_key)
         github_website_action.triggered.connect(self.open_github_website)
         transcribe_file_action.triggered.connect(self.transcribe_file)
         show_action.triggered.connect(self.showNormal)
@@ -797,7 +800,7 @@ class GUI(QMainWindow):
         tray_menu.addAction(self.save_non_kwd_markdown_action)
         tray_menu.addAction(self.convert_to_traditional_chinese_main_action)
         tray_menu.addAction(self.enable_ai_optimize_language_expression_action)
-        tray_menu.addAction(self.edit_zhipuai_api_key_action)
+        tray_menu.addAction(self.edit_api_key_action)
         tray_menu.addMenu(self.prompt_style_menu)
         tray_menu.addSeparator()
         tray_menu.addAction(github_website_action)
@@ -843,14 +846,24 @@ class GUI(QMainWindow):
         self.prompt_customer_service_action.setCheckable(True)
         self.prompt_creative_writing_action.setCheckable(True)
 
-        self.prompt_official_action.triggered.connect(self.switch_prompt_style)
-        self.prompt_sweetheart_action.triggered.connect(self.switch_prompt_style)
-        self.prompt_social_action.triggered.connect(self.switch_prompt_style)
-        self.prompt_poetry_action.triggered.connect(self.switch_prompt_style)
-        self.prompt_english_action.triggered.connect(self.switch_prompt_style)
-        self.prompt_academic_action.triggered.connect(self.switch_prompt_style)
-        self.prompt_customer_service_action.triggered.connect(self.switch_prompt_style)
-        self.prompt_creative_writing_action.triggered.connect(self.switch_prompt_style)
+        self.prompt_official_action.triggered.connect(
+            self.switch_prompt_style_selection
+        )
+        self.prompt_sweetheart_action.triggered.connect(
+            self.switch_prompt_style_selection
+        )
+        self.prompt_social_action.triggered.connect(self.switch_prompt_style_selection)
+        self.prompt_poetry_action.triggered.connect(self.switch_prompt_style_selection)
+        self.prompt_english_action.triggered.connect(self.switch_prompt_style_selection)
+        self.prompt_academic_action.triggered.connect(
+            self.switch_prompt_style_selection
+        )
+        self.prompt_customer_service_action.triggered.connect(
+            self.switch_prompt_style_selection
+        )
+        self.prompt_creative_writing_action.triggered.connect(
+            self.switch_prompt_style_selection
+        )
 
         prompt_style_group.addAction(self.prompt_official_action)
         prompt_style_group.addAction(self.prompt_sweetheart_action)
@@ -870,7 +883,7 @@ class GUI(QMainWindow):
         self.prompt_style_menu.addAction(self.prompt_customer_service_action)
         self.prompt_style_menu.addAction(self.prompt_creative_writing_action)
 
-        self.update_prompt_style_menu(self.prompt_style)
+        self.update_prompt_style_menu(self.prompt_style_selection)
 
     def toogle_save_audio(self):
         # 从内存配置中获取当前值
@@ -978,13 +991,13 @@ class GUI(QMainWindow):
     def toogle_ai_optimize_language_expression(self):
         # 从内存配置中获取当前值
         old_value = self.get_config_value(
-            "client.zhipuai.enable_ai_optimize_language_expression", False
+            "client.enable_ai_optimize_language_expression", False
         )
         # 切换值
         new_value = not old_value
         # 更新内存配置并保存到文件
         if self.set_config_value(
-            "client.zhipuai.enable_ai_optimize_language_expression", new_value
+            "client.enable_ai_optimize_language_expression", new_value
         ):
             if self.save_config():
                 # 更新托盘菜单
@@ -1009,7 +1022,7 @@ class GUI(QMainWindow):
         # 从内存配置中获取当前值
         old_value = self.get_config_value("client.zhipuai.api_key", "")
         # 获取新值
-        InputDialog_Zhipuai_Api_Key.get_text(
+        InputDialog_Api_Key.get_text(
             parent=self,
             title="智谱AI API Key",
             label="请在此输入您的智谱AI API Key。如需获取新的API Key，请点击下方链接:",
@@ -1020,6 +1033,23 @@ class GUI(QMainWindow):
             show_link=True,
             link_text="访问智谱AI官网获取API Key",
             link_url="https://open.bigmodel.cn/usercenter/apikeys",
+        )
+
+    def edit_openai_api_key(self):
+        # 从内存配置中获取当前值
+        old_value = self.get_config_value("client.openai.api_key", "")
+        # 获取新值
+        InputDialog_Api_Key.get_text(
+            parent=self,
+            title="API Key",
+            label="请在此输入您的 OpenAI（兼容） API Key。如需获取新的API Key，请点击下方链接:",
+            on_submit=self.update_openai_api_key,
+            # on_cancel=lambda: print("[yellow4]取消修改 API Key[/]"),
+            default=old_value,
+            placeholder="请输入API Key",
+            show_link=True,
+            link_text="访问 硅基流动 官网获取 API Key",
+            link_url="https://cloud.siliconflow.cn/me/account/ak",
         )
 
     def update_zhipuai_api_key(self, new_value):
@@ -1033,7 +1063,18 @@ class GUI(QMainWindow):
         else:
             logger.error("更新内存配置失败")
 
-    def switch_prompt_style(self):
+    def update_openai_api_key(self, new_value):
+        # print(f"[green4]更新 API Key: {new_value}[/]")
+        # 更新内存配置并保存到文件
+        if self.set_config_value("client.openai.api_key", new_value):
+            if self.save_config():
+                pass
+            else:
+                logger.error("保存配置文件失败")
+        else:
+            logger.error("更新内存配置失败")
+
+    def switch_prompt_style_selection(self):
         # 获取新值
         new_value: str = ""
         if self.prompt_official_action.isChecked():
@@ -1056,7 +1097,7 @@ class GUI(QMainWindow):
             new_value = ""
 
         # 更新内存配置并保存到文件
-        if self.set_config_value("client.zhipuai.prompt_style", new_value):
+        if self.set_config_value("client.prompt_style_selection", new_value):
             if not self.save_config():
                 logger.error("保存配置文件失败")
         else:

@@ -138,22 +138,26 @@ class ClientConfig:
         "convert_to_traditional_chinese_main"
     ]
     opencc_converter: str = config["client"]["opencc_converter"]
-    zhipuai_enable_ai_optimize_language_expression: bool = config["client"]["zhipuai"][
+    enable_ai_optimize_language_expression: bool = config["client"][
         "enable_ai_optimize_language_expression"
     ]
+    ai_provider: Literal["zhipuai", "openai"] = config["client"]["ai_provider"]
+    prompt_style_selection: str = config["client"]["prompt_style_selection"]
     zhipuai_api_key: str = config["client"]["zhipuai"]["api_key"]
     zhipuai_model: str = config["client"]["zhipuai"]["model"]
-    zhipuai_prompt_style: str = config["client"]["zhipuai"]["prompt_style"]
-    zhipuai_prompt_official: str = config["client"]["zhipuai"]["prompt_official"]
-    zhipuai_prompt_sweetheart: str = config["client"]["zhipuai"]["prompt_sweetheart"]
-    zhipuai_prompt_social: str = config["client"]["zhipuai"]["prompt_social"]
-    zhipuai_prompt_poetry: str = config["client"]["zhipuai"]["prompt_poetry"]
-    zhipuai_prompt_english: str = config["client"]["zhipuai"]["prompt_english"]
-    zhipuai_prompt_academic: str = config["client"]["zhipuai"]["prompt_academic"]
-    zhipuai_prompt_customer_service: str = config["client"]["zhipuai"][
+    openai_api_key: str = config["client"]["openai"]["api_key"]
+    openai_base_url: str = config["client"]["openai"]["base_url"]
+    openai_model: str = config["client"]["openai"]["model"]
+    prompt_official: str = config["client"]["prompt_style"]["prompt_official"]
+    prompt_sweetheart: str = config["client"]["prompt_style"]["prompt_sweetheart"]
+    prompt_social: str = config["client"]["prompt_style"]["prompt_social"]
+    prompt_poetry: str = config["client"]["prompt_style"]["prompt_poetry"]
+    prompt_english: str = config["client"]["prompt_style"]["prompt_english"]
+    prompt_academic: str = config["client"]["prompt_style"]["prompt_academic"]
+    prompt_customer_service: str = config["client"]["prompt_style"][
         "prompt_customer_service"
     ]
-    zhipuai_prompt_creative_writing: str = config["client"]["zhipuai"][
+    prompt_creative_writing: str = config["client"]["prompt_style"][
         "prompt_creative_writing"
     ]
 
