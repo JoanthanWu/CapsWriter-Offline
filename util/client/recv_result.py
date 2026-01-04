@@ -55,6 +55,7 @@ async def recv_result():
             # AI优化语言表达
             ai_optimized_done = False
             if Config.zhipuai_enable_ai_optimize_language_expression:
+                console.print(f"正在 AI 优化（{Config.zhipuai_prompt_style}）...")
                 ai_optimized_text, ai_delay = ai_optimize_language_expression(text)
             else:
                 ai_optimized_text = asr_text
