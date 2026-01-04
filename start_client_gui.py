@@ -551,6 +551,12 @@ class GUI(QMainWindow):
                     )
                     self.prompt_style_menu.setEnabled(False)
 
+            # 更新AI供应商
+            old_value_ai_provider_selection = self.get_config_value(
+                "client.ai_provider", ""
+            )
+            self.update_ai_provider_menu(old_value_ai_provider_selection)
+
             # 更新AI提示风格
             old_value_prompt_style_selection = self.get_config_value(
                 "client.prompt_style_selection", "official"
@@ -561,6 +567,24 @@ class GUI(QMainWindow):
 
         except Exception as e:
             logger.error(f"更新托盘菜单失败: {e}")
+
+    def update_ai_provider_menu(self, ai_provider: str):
+        """更新AI供应商菜单选中状态"""
+        # 先取消所有选中状态
+        for action in [
+            self.ai_provider_zhipuai_action,
+            self.ai_provider_openai_action,
+        ]:
+            action.setChecked(False)
+
+        # 根据配置文件设置选中状态
+        match ai_provider:
+            case "zhipuai":
+                self.ai_provider_zhipuai_action.setChecked(True)
+            case "openai":
+                self.ai_provider_openai_action.setChecked(True)
+            case _:
+                logger.warning(f"不支持的 AI 提供商：{ai_provider}")
 
     def update_prompt_style_menu(self, prompt_style: str):
         """更新提示风格菜单选中状态"""
@@ -700,6 +724,9 @@ class GUI(QMainWindow):
         old_value_enable_ai_optimize_language_expression = self.get_config_value(
             "client.enable_ai_optimize_language_expression", False
         )
+        old_value_ai_provider_selection = self.get_config_value(
+            "client.ai_provider", ""
+        )
         old_value_prompt_style_selection = self.get_config_value(
             "client.prompt_style_selection", "official"
         )
@@ -737,6 +764,7 @@ class GUI(QMainWindow):
                     "❌ AI 优化语言表达"
                 )
 
+        self.ai_provider_selection = old_value_ai_provider_selection
         self.prompt_style_selection = old_value_prompt_style_selection
 
         github_website_action = QAction("🌐 GitHub Website", self)
@@ -763,12 +791,9 @@ class GUI(QMainWindow):
             self.switch_between_simplified_and_traditional
         )
         self.enable_ai_optimize_language_expression_action.triggered.connect(
-            self.toogle_ai_optimize_language_expression
+            self.toogle_ai_provider_and_ai_optimize_language_expression
         )
-        if Config.ai_provider == "zhipuai":
-            self.edit_api_key_action.triggered.connect(self.edit_zhipuai_api_key)
-        else:
-            self.edit_api_key_action.triggered.connect(self.edit_openai_api_key)
+        self.edit_api_key_action.triggered.connect(self.edit_api_key)
         github_website_action.triggered.connect(self.open_github_website)
         transcribe_file_action.triggered.connect(self.transcribe_file)
         show_action.triggered.connect(self.showNormal)
@@ -790,6 +815,7 @@ class GUI(QMainWindow):
         view_menu.addAction(vscode_home_folder_action)
         view_menu.addAction(chatglm_website_action)
 
+        self.create_ai_provider_submenu(tray_menu)
         self.create_prompt_style_submenu(tray_menu)
 
         tray_menu.addMenu(edit_menu)
@@ -800,6 +826,7 @@ class GUI(QMainWindow):
         tray_menu.addAction(self.save_non_kwd_markdown_action)
         tray_menu.addAction(self.convert_to_traditional_chinese_main_action)
         tray_menu.addAction(self.enable_ai_optimize_language_expression_action)
+        tray_menu.addMenu(self.ai_provider_menu)
         tray_menu.addAction(self.edit_api_key_action)
         tray_menu.addMenu(self.prompt_style_menu)
         tray_menu.addSeparator()
@@ -812,7 +839,38 @@ class GUI(QMainWindow):
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
 
-    def create_prompt_style_submenu(self, tray_menu: QMenu) -> QMenu:
+    def create_ai_provider_submenu(self, tray_menu: QMenu):
+        self.ai_provider_menu = QMenu("🤖 AI 服务商", tray_menu)
+        if (
+            self.enable_ai_optimize_language_expression_action.text()
+            == "❌ AI 优化语言表达"
+        ):
+            self.ai_provider_menu.setDisabled(True)
+        else:
+            self.ai_provider_menu.setEnabled(True)
+        ai_provider_group = QActionGroup(self.ai_provider_menu)
+        ai_provider_group.setExclusive(True)
+
+        self.ai_provider_openai_action = QAction(
+            "OpenAI（兼容）", self.ai_provider_menu
+        )
+        self.ai_provider_zhipuai_action = QAction("智谱AI", self.ai_provider_menu)
+
+        self.ai_provider_openai_action.setCheckable(True)
+        self.ai_provider_zhipuai_action.setCheckable(True)
+
+        self.ai_provider_openai_action.triggered.connect(self.switch_ai_provider)
+        self.ai_provider_zhipuai_action.triggered.connect(self.switch_ai_provider)
+
+        ai_provider_group.addAction(self.ai_provider_openai_action)
+        ai_provider_group.addAction(self.ai_provider_zhipuai_action)
+
+        self.ai_provider_menu.addAction(self.ai_provider_openai_action)
+        self.ai_provider_menu.addAction(self.ai_provider_zhipuai_action)
+
+        self.update_ai_provider_menu(self.ai_provider_selection)
+
+    def create_prompt_style_submenu(self, tray_menu: QMenu):
         self.prompt_style_menu = QMenu("🤖 AI 优化风格", tray_menu)
         if (
             self.enable_ai_optimize_language_expression_action.text()
@@ -988,7 +1046,7 @@ class GUI(QMainWindow):
         else:
             logger.error("更新内存配置失败")
 
-    def toogle_ai_optimize_language_expression(self):
+    def toogle_ai_provider_and_ai_optimize_language_expression(self):
         # 从内存配置中获取当前值
         old_value = self.get_config_value(
             "client.enable_ai_optimize_language_expression", False
@@ -1005,18 +1063,34 @@ class GUI(QMainWindow):
                     self.enable_ai_optimize_language_expression_action.setText(
                         "❌ AI 优化语言表达"
                     )
+                    self.ai_provider_menu.setDisabled(True)
+                    self.ai_provider_menu.setTitle("❗ 请先启用AI优化语言表达")
                     self.prompt_style_menu.setDisabled(True)
                     self.prompt_style_menu.setTitle("❗ 请先启用AI优化语言表达")
                 else:
                     self.enable_ai_optimize_language_expression_action.setText(
                         "✅ AI 优化语言表达"
                     )
+                    self.ai_provider_menu.setEnabled(True)
+                    self.ai_provider_menu.setTitle("🤖 AI 服务商")
                     self.prompt_style_menu.setEnabled(True)
                     self.prompt_style_menu.setTitle("🤖 AI 优化风格")
             else:
                 logger.error("保存配置文件失败")
         else:
             logger.error("更新内存配置失败")
+
+    def edit_api_key(self):
+        """根据当前配置动态编辑相应的 API Key"""
+        ai_provider = self.get_config_value("client.ai_provider", "zhipuai")
+
+        match ai_provider:
+            case "zhipuai":
+                self.edit_zhipuai_api_key()
+            case "openai":
+                self.edit_openai_api_key()
+            case _:
+                self.show_unsupported_provider_warning(ai_provider)
 
     def edit_zhipuai_api_key(self):
         # 从内存配置中获取当前值
@@ -1052,6 +1126,19 @@ class GUI(QMainWindow):
             link_url="https://cloud.siliconflow.cn/me/account/ak",
         )
 
+    def show_unsupported_provider_warning(self, provider):
+        """显示不支持的 AI 提供商警告"""
+        # 在系统托盘显示气泡通知
+        self.tray_icon.showMessage(
+            "不支持的 AI 提供商",
+            f"当前配置的 AI 提供商 '{provider}' 不支持\n请修改 config.toml 文件中的 ai_provider 设置",
+            QSystemTrayIcon.Warning,
+            3000,  # 显示3秒
+        )
+
+        # 同时记录到日志
+        logger.warning(f"不支持的 AI 提供商：{provider}")
+
     def update_zhipuai_api_key(self, new_value):
         # print(f"[green4]更新 API Key: {new_value}[/]")
         # 更新内存配置并保存到文件
@@ -1070,6 +1157,23 @@ class GUI(QMainWindow):
             if self.save_config():
                 pass
             else:
+                logger.error("保存配置文件失败")
+        else:
+            logger.error("更新内存配置失败")
+
+    def switch_ai_provider(self):
+        # 获取新值
+        new_value: str = ""
+        if self.ai_provider_openai_action.isChecked():
+            new_value = "openai"
+        elif self.ai_provider_zhipuai_action.isChecked():
+            new_value = "zhipuai"
+        else:
+            new_value = ""
+
+        # 更新内存配置并保存到文件
+        if self.set_config_value("client.ai_provider", new_value):
+            if not self.save_config():
                 logger.error("保存配置文件失败")
         else:
             logger.error("更新内存配置失败")
