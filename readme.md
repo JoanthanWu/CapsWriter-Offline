@@ -16,7 +16,7 @@
 5. 按下客户端主界面的 <img src="assets/readme/云贴按钮.png" alt="alt text"  /> 按钮，即可将客户端文本框中内容发布到 [云剪贴板](https://share.lanol.cn) ，并生成获取链接和二维码
 6. 快速双击 `CapsLock` ，可语音输入繁体。还可通过托盘图标右键菜单快速切换简/繁体配置
 7.  可通过 `edit_config_gui.exe` 图形化配置界面安全地修改客户端/服务端配置，也可手动修改 `config.toml` 文件
-8. 可通过客户端托盘菜单 热切换 是否启用 AI 优化语言表达
+8. 可通过客户端托盘菜单 热切换 是否启用 AI 优化语言表达 以及 AI 服务商、修改 API Key 和 AI 优化风格
 
 - [✨ 特性](#-特性)
 - [⬇️ 下载地址](#-下载地址)
@@ -38,14 +38,15 @@
 > disable_exe_list：在运行这些程序时(包括在背景运行)，不启用客户端功能:语音输入
 > 需要添加更多程序时的格式: ["forhonor.exe", "abc.exe", "efg.exe"]
 
+## 新增 客户端托盘菜单 热切换 AI 服务商
+> OpenAI（兼容） / 智谱AI
+
 ## 新增 客户端托盘菜单 热切换 AI 优化风格
 > 正式公文 / 甜言蜜语 / 社媒文案 / 赋诗一首 / 英语大师 / 学术论文 / 客户服务 / 创意写作
-> 获取 API Key https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys
 
 ## 新增 可通过客户端托盘菜单 热切换 是否启用 AI 优化语言表达
 > 启用后预计增加 5s 时间延长
 > 先在 config.toml 中配置 api_key （智谱AI API密钥）
-> 获取 API Key https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys
 
 
 ## 新增 客户端托盘菜单 热切换 保存音频 保存日记 保存非关键词日记
@@ -166,6 +167,7 @@
 20. 将文本上传至云剪切板，方便向 ios 设备分享。基于 https://share.lanol.cn (https://github.com/vastsa/FileCodeBox)，一个无依赖即用即走的剪切板。
 21. 默认启用双击`录音键`临时转换 `简/繁` 体中文输出的功能，通过 `config.toml` 中 `enable_double_click_opposite_state` 配置
 22. 默认使用简体中文作为主要输出，快速双击输出繁体中文。设置 `config.toml` 中 `convert_to_traditional_chinese_main = '繁'` 可以默认使用繁体中文，双击输出简体中文
+23. 修改 AI 服务商 后，点击 客户端托盘菜单 `🔑 修改 API Key` 会弹出对应的API Key 输入框
 
 # 🪳 无力解决的 Bug
 
@@ -616,39 +618,16 @@ opencc_converter = "s2t"
 # t2jp Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji (Shinjitai) 繁体（OpenCC 标准，旧字体）到日文新字体
 # jp2t New Japanese Kanji (Shinjitai) to Traditional Chinese Characters (Kyūjitai) 日文新字体到繁体（OpenCC 标准，旧字体）
 
-
-[client.additional_special_apps]
-"vlc.exe" = { hotkey = "ctrl + alt + f9", name = "VLC Media Player" } # VLC 设置全局快捷键后需要重启 VLC 才能生效
-# 如果还有除了 QQ音乐、网易云音乐、PotPlayer、foobar2000
-# 以外，还有 其他特殊应用
-# 也希望使用对应程序设置的全局快捷键 在录音时播放/暂停
-# 首先，启用 pause_other_audio
-# 然后，在对应程序 设置的全局 播放/暂停 的快捷键
-# 注意避免快捷键冲突
-# 
-# 附加特殊应用列表 格式：
-# "<进程名>" = { hotkey = "<对应程序设置的全局快捷键>", name = "<用于输出日志的对应程序名称>" }
-# 
-# 如果N个特殊应用在播放，支持全部暂停
-# 如果N个非特殊应用在播放，不暂停
-# 如果一个特殊应用和N个非特殊应用在播放，只暂停特殊应用
-
-
-[client.zhipuai]
 enable_ai_optimize_language_expression = true
 # 是否启用 AI 优化语言表达
 # 启用后预计增加 5s 时间延长
 
-api_key = ""
-# 请填写您自己的 API Key
-# 不要泄露给任何人
-# 获取 API Key https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys
+ai_provider = "openai"
+# AI 优化语言表达 使用的 AI 服务商
+# "zhipuai"  智谱
+# "openai"  OpenAI 以及兼容 OpenAI API 的服务商
 
-model = "glm-4.5-flash"
-# 模型名称 默认免费模型 glm-4.5-flash
-# 了解更多 https://open.bigmodel.cn/
-
-prompt_style = "english"
+prompt_style_selection = "english"
 # 提示风格
 # official 正式公文文本校对助手
 # sweetheart 贴心的男友式文本润色助手
@@ -659,6 +638,38 @@ prompt_style = "english"
 # customer_service 客户服务回复助手
 # creative_writing 创意写作助手
 
+
+[client.zhipuai]
+api_key = ""
+# 请填写您自己的 API Key
+# 不要泄露给任何人
+# 获取 API Key https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys
+
+model = "glm-4.5-flash"
+# 模型名称 默认免费模型 glm-4.5-flash
+# 了解更多 https://open.bigmodel.cn/
+
+
+[client.openai]
+# OpenAI 以及 兼容 OpenAI API 的服务商
+api_key = ""
+# 请填写您自己的 API Key
+# 不要泄露给任何人
+base_url = "https://api.siliconflow.cn/v1"
+model = "Qwen/Qwen2.5-14B-Instruct"
+# 硅基流动 注册邀请码：WDsBZwpv
+# https://cloud.siliconflow.cn/i/WDsBZwpv
+# SiliconFlow 邀请奖励持续进行，2000 万 Tokens 送不停！
+# 1. 邀请好友赚 2000 万 Tokens：每成功邀请一位新用户通过手机号码注册，您将获得 2000 万 Tokens；
+# 2. 注册即送 2000 万 Tokens：受邀好友作为新用户完成 SiliconFlow 账号注册，立刻获得 2000万 Tokens。
+# 特别说明
+# 平台 2000 万 Tokens 特指 Qwen2.5-14B-Instruct 模型单价下的数量，实际到账为 14 元平台配额；
+# 奖励 Tokens 对应的平台配额资金仅限于 SiliconFlow 平台使用，不可提现；
+# 为了确保活动公平，严禁奖励转卖、刷单等违规行为，平台将对违反规则的账户取消奖励资格并追究相关责任；
+# 在法律允许范围内，本活动的最终解释权归硅基流动所有。
+
+
+[client.prompt_style]
 prompt_official = """
 你是一位专业的公文文本校对助手。你的任务是对语音转录生成的文本进行校对和润色，使其符合正式公文的规范要求。
 
@@ -873,6 +884,23 @@ prompt_creative_writing = """
 
 输出要求：直接呈现具有文学美感的创意文本。
 """
+
+[client.additional_special_apps]
+"vlc.exe" = { hotkey = "ctrl + alt + f9", name = "VLC Media Player" } # VLC 设置全局快捷键后需要重启 VLC 才能生效
+# 如果还有除了 QQ音乐、网易云音乐、PotPlayer、foobar2000
+# 以外，还有 其他特殊应用
+# 也希望使用对应程序设置的全局快捷键 在录音时播放/暂停
+# 首先，启用 pause_other_audio
+# 然后，在对应程序 设置的全局 播放/暂停 的快捷键
+# 注意避免快捷键冲突
+# 
+# 附加特殊应用列表 格式：
+# "<进程名>" = { hotkey = "<对应程序设置的全局快捷键>", name = "<用于输出日志的对应程序名称>" }
+# 
+# 如果N个特殊应用在播放，支持全部暂停
+# 如果N个非特殊应用在播放，不暂停
+# 如果一个特殊应用和N个非特殊应用在播放，只暂停特殊应用
+
 
 # ======================LibreTranslate 配置==================================
 [libretranslate]
