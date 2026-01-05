@@ -63,7 +63,7 @@ def handle_special_media_apps(playing_apps):
         tuple: (是否处理了特殊应用, 处理的特殊应用列表)
         处理的应用列表格式: [{"exe": "QQMusic.exe", "windows": ["窗口1", "窗口2"]}, ...]
     """
-
+    
     global offline_translate_shortcut_pressed, online_translate_shortcut_pressed
     # 翻譯功能的"shift"會干擾發送停止播放的快捷鍵, 因此，需要預先釋放
     if keyboard.is_pressed(Config.offline_translate_shortcut):

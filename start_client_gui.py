@@ -1,3 +1,4 @@
+# start_client_gui.py
 import argparse
 import os
 import subprocess
@@ -11,8 +12,8 @@ import win32con
 import win32gui
 import win32print
 from loguru import logger
-from PySide6.QtCore import QFileSystemWatcher, QPoint, QStandardPaths, Qt, QTimer
-from PySide6.QtGui import QAction, QActionGroup, QFont, QIcon, QWheelEvent
+from PySide6.QtCore import QFileSystemWatcher, QPoint, QStandardPaths, Qt, QTimer, Signal, QObject
+from PySide6.QtGui import QAction, QActionGroup, QFont, QIcon, QWheelEvent, QIcon, QWheelEvent
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -37,8 +38,55 @@ from tomlkit import dumps, parse
 
 from util.check_process import check_process
 from util.client.check_microphone_usage import is_microphone_in_use
+from util.check_process import check_process
 from util.config import ClientConfig as Config
 from util.safe_logger import init_logging
+
+# ----------- smart_history_actions_panel -----------
+if Config.history_actions_panel_enabled:
+    import json
+    import util.history_actions_panel.history_actions_panel
+    load_reviewed_lines = util.history_actions_panel.history_actions_panel.load_reviewed_lines
+    load_pinned = util.history_actions_panel.history_actions_panel.load_pinned
+    KeyboardThread = util.history_actions_panel.history_actions_panel.KeyboardThread
+    show_widgets = util.history_actions_panel.history_actions_panel.show_widgets
+    add_sentence_group = util.history_actions_panel.history_actions_panel.add_sentence_group
+
+
+    class MyController(QObject):
+        # 定义信号（保持不变）
+        show_widgets_signal = Signal()
+
+        def __init__(self):
+            super().__init__()
+            # 1. 加锁：保护is_visible和widget的操作
+            self.lock = threading.Lock()
+            # 2. 信号绑定（保持不变）
+            self.show_widgets_signal.connect(self._on_show_widgets)
+            # 3. 窗口引用+状态（保持不变）
+            self.widget = None
+            self.is_visible = False
+
+        def _on_show_widgets(self):
+            # 加锁：避免并发修改is_visible
+            with self.lock:
+                # 1. 窗口未创建 → 安全创建（确保在UI主线程）
+                if self.widget is None:
+                    self.widget = show_widgets()  # 必须返回Qt窗口实例（如QWidget/QMainWindow）
+                    # 关键：给窗口设置父对象，避免垃圾回收
+                    self.widget.setParent(None)  # 无父窗口则设为None，有主窗口则传主窗口实例
+
+                # 2. 安全切换显示/隐藏（UI主线程执行，无风险）
+                if self.is_visible:
+                    self.widget.hide()
+                else:
+                    self.widget.show()
+                    self.widget.raise_()  # 可选：窗口置顶
+                    # self.widget.activateWindow()  # 可选：激活窗口
+
+                # 3. 反转状态（锁内操作，避免并发）
+                self.is_visible = not self.is_visible
+# ----------- smart_history_actions_panel -----------
 
 
 class Hint_While_Recording_At_Cursor_Position(QLabel):
@@ -801,7 +849,7 @@ class GUI(QMainWindow):
         quit_action.triggered.connect(self.quit_app)
 
         self.tray_icon.activated.connect(self.on_tray_icon_activated)
-
+        global tray_menu
         tray_menu = QMenu()
         edit_menu = QMenu("📝 Edit Hot Rules", tray_menu)
         view_menu = QMenu("👁️ View", tray_menu)
@@ -1431,10 +1479,47 @@ class GUI(QMainWindow):
         self.update_timer.timeout.connect(self.update_text_box)
         self.update_timer.start(100)
 
-    def enqueue_output(self, out, queue):
-        for line in iter(out.readline, ""):
-            line = line.strip()
-            queue.put(line)
+    # ----------- smart_history_actions_panel -----------
+    if Config.history_actions_panel_enabled:
+        def enqueue_output(self, out, queue):
+            """读取 PIPE 输出：过滤 List_A 标记行，保留原有queue逻辑（GUI显示核心）"""
+            for line in iter(out.readline, ""):
+                line_stripped = line.strip()
+                # if not line_stripped:  # 跳过空行，避免无效数据
+                #      continue
+
+                # ----------- 识别子进程的「显示界面」指令 -----------
+                if line_stripped.startswith("###SHOW_GUI###"):
+                    # 发射信号，切换到UI主线程显示界面（关键！不能直接调用self.show_gui()）
+                    controller.show_widgets_signal.emit()
+                    continue
+
+                # ----------- 识别List_A标记 -----------
+                # 处理List_A标记行：只提取，不放入queue（不显示到GUI）
+                if line_stripped.startswith("###LIST_A###"):
+                    try:
+                        # 提取List_A内容（去掉标记+反序列化）
+                        list_a_str = line_stripped.replace("###LIST_A###", "")
+                        self.List_A = json.loads(list_a_str)
+                        # 仅调试/记录，不影响GUI显示
+                        '''
+                        print(f"【程序内部提取】List_A：{self.List_A}")
+                        with open("history_yes.log", "a", encoding="utf-8") as f:
+                            f.write(f"in enqueue_output: self.List_A = {self.List_A}\n")
+                        '''
+                        add_sentence_group(self.List_A)
+                    except json.JSONDecodeError:
+                        print(f"【警告】List_A解析失败：{line_stripped}")
+                    continue  # 跳过，不放入queue
+
+                # ----------- 原有：普通内容放入队列供console显示 -----------
+                queue.put(line_stripped)
+    else:
+        def enqueue_output(self, out, queue):
+            for line in iter(out.readline, ""):
+                line = line.strip()
+                queue.put(line)
+        # ----------- smart_history_actions_panel -----------
 
     def update_text_box(self):
         # Update client text box
@@ -1608,13 +1693,29 @@ def start_client_gui():
     if Config.hint_while_recording_at_cursor_position:
         tooltip = Hint_While_Recording_At_Cursor_Position()
         tooltip.show()
-    apply_stylesheet(
-        app, theme="dark_teal.xml", css_file="util\\client\\gui_theme_custom.css"
-    )
+
     global gui
     gui = GUI()
+
+    apply_stylesheet(gui, theme="dark_teal.xml", css_file="util\\client\\gui_theme_custom.css")
+    apply_stylesheet(tray_menu, theme="dark_teal.xml", css_file="util\\client\\gui_theme_custom.css")
+
     if not Config.shrink_automatically_to_tray:
         gui.show()
+
+    # ----------- smart_history_actions_panel -----------
+    if Config.history_actions_panel_enabled:
+        global controller
+        controller = MyController()
+        load_reviewed_lines()
+        load_pinned()
+
+        if Config.sub_activate_panel_shortcut:
+            kb_thread = KeyboardThread(Config.sub_activate_panel_shortcut, Config.sub_activate_panel_shortcut_suppress)
+            kb_thread.trigger.connect(controller.show_widgets_signal.emit)
+            kb_thread.start()
+    # ----------- smart_history_actions_panel -----------
+
     sys.exit(app.exec())
 
 

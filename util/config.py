@@ -162,6 +162,27 @@ class ClientConfig:
     ]
 
 
+    history_actions_panel_enabled: bool = config["client"]["history_actions_panel_enabled"]
+    sub_activate_panel_shortcut: str = config["client"]["sub_activate_panel_shortcut"]
+    sub_activate_panel_shortcut_suppress: str = config["client"]["sub_activate_panel_shortcut_suppress"]
+
+    # 简体主体相关
+    output_traditional_when_simplified: bool = config["client"]["output_traditional_when_simplified"]
+    output_simplified_when_simplified_opposite_state: bool = config["client"]["output_simplified_when_simplified_opposite_state"]
+    output_traditional_when_simplified_offline_translate: bool = config["client"]["output_traditional_when_simplified_offline_translate"]
+    output_simplified_when_simplified_offline_translate: bool = config["client"]["output_simplified_when_simplified_offline_translate"]
+    output_traditional_when_simplified_online_translate: bool = config["client"]["output_traditional_when_simplified_online_translate"]
+    output_simplified_when_simplified_online_translate: bool = config["client"]["output_simplified_when_simplified_online_translate"]
+
+    # 繁体主体相关
+    output_simplified_when_traditional: bool = config["client"]["output_simplified_when_traditional"]
+    output_traditional_when_traditional_opposite_state: bool = config["client"]["output_traditional_when_traditional_opposite_state"]
+    output_simplified_when_traditional_offline_translate: bool = config["client"]["output_simplified_when_traditional_offline_translate"]
+    output_traditional_when_traditional_offline_translate: bool = config["client"]["output_traditional_when_traditional_offline_translate"]
+    output_simplified_when_traditional_online_translate: bool = config["client"]["output_simplified_when_traditional_online_translate"]
+    output_traditional_when_traditional_online_translate: bool = config["client"]["output_traditional_when_traditional_online_translate"]
+    
+
 # LibreTranslate 配置
 class LibreTranslateConfig:
     api: str = config["libretranslate"]["api"]

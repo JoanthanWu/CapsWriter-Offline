@@ -28,10 +28,24 @@ if not Cosmic.transcribe_subtitles:
 warnings.filterwarnings("ignore")
 
 
+# ----------- smart_history_actions_panel -----------
+if Config.history_actions_panel_enabled:
+    import sys
+    from util.history_actions_panel.history_panel_situation_selector import situation_selector, history_panel_output_selector
+# ----------- smart_history_actions_panel -----------
+
+
 async def recv_result():
     if not await check_websocket():
         return
     console.print("[green]连接成功\n")
+
+    # ----------- smart_history_actions_panel -----------
+    if Config.history_actions_panel_enabled:
+        offline_translated_text = ""
+        online_translated_text = ""
+    # ----------- smart_history_actions_panel -----------
+
     try:
         while True:
             # 接收消息
@@ -43,6 +57,11 @@ async def recv_result():
             # 如果非最终结果或文本为空，继续等待
             if not message["is_final"] or not asr_text.strip():
                 continue
+            
+            # ----------- smart_history_actions_panel -----------
+            if Config.history_actions_panel_enabled:
+                situation = situation_selector(Cosmic.opposite_state, Cosmic.offline_translate_needed, Cosmic.online_translate_needed)
+            # ----------- smart_history_actions_panel -----------
 
             # 控制台输出
             console.print(f"    转录时延：{delay:.2f}s")
@@ -159,6 +178,18 @@ async def recv_result():
                 else:
                     await type_result(text)
                 convert_to_traditional_chinese_done = False
+
+            # ----------- smart_history_actions_panel -----------
+            if Config.history_actions_panel_enabled:
+                history_panel_output_selector(
+                    situation,
+                    text,
+                    traditional_text,
+                    offline_translated_text,
+                    online_translated_text
+                )
+                sys.stdout.flush()
+            # ----------- smart_history_actions_panel -----------
 
             # 清空变量
             asr_text = ""
